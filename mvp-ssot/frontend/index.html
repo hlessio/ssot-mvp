@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MVP SSOT Dinamico - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>🌟 MVP SSOT Dinamico</h1>
+        <p>Dimostrazione di Unica Fonte di Verità con Propagazione in Tempo Reale</p>
+    </header>
+
+    <nav class="module-navigation">
+        <button id="btn-tabular" class="nav-btn active" onclick="showModule('tabular')">
+            📊 Modulo Tabellare
+        </button>
+        <button id="btn-contact" class="nav-btn" onclick="showModule('contact')">
+            👤 Scheda Contatto
+        </button>
+        <div class="new-window-controls">
+            <span class="separator">|</span>
+            <span class="new-window-label">Apri in nuova finestra:</span>
+            <button id="btn-tabular-newwindow" class="new-window-btn" onclick="openModuleInNewWindow('tabular')" title="Apri Modulo Tabellare in nuova finestra">
+                📊🪟 Tabella
+            </button>
+            <button id="btn-contact-newwindow" class="new-window-btn" onclick="openModuleInNewWindow('contact')" title="Apri Scheda Contatto in nuova finestra">
+                👤🪟 Scheda
+            </button>
+        </div>
+    </nav>
+
+    <div class="connection-status">
+        <span id="connection-indicator" class="status-disconnected">⚫ Disconnesso</span>
+        <span id="connection-message">Tentativo di connessione...</span>
+    </div>
+
+    <main>
+        <!-- Modulo Tabellare -->
+        <div id="tabular-module-container" class="module-container">
+            <div class="module-header">
+                <h2>📊 Modulo Tabellare</h2>
+                <p>Visualizza e modifica entità in formato tabellare. Aggiungi righe (entità) e colonne (attributi).</p>
+                
+                <div class="module-controls">
+                    <button id="btn-add-row" class="control-btn">➕ Aggiungi Riga (Nuova Entità)</button>
+                    <button id="btn-add-column" class="control-btn">📝 Aggiungi Colonna (Nuovo Attributo)</button>
+                    <button id="btn-refresh-table" class="control-btn">🔄 Aggiorna</button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="entities-table">
+                    <thead>
+                        <tr id="table-header">
+                            <th>ID</th>
+                            <!-- Le colonne degli attributi verranno aggiunte dinamicamente -->
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Le righe delle entità verranno aggiunte dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modulo Scheda Contatto -->
+        <div id="contact-card-module-container" class="module-container" style="display: none;">
+            <div class="module-header">
+                <h2>👤 Modulo Scheda Contatto</h2>
+                <p>Visualizza e modifica una singola entità. Le modifiche si propagano in tempo reale al modulo tabellare.</p>
+                
+                <div class="module-controls">
+                    <label for="entity-selector">Seleziona Entità:</label>
+                    <select id="entity-selector">
+                        <option value="">-- Seleziona un'entità --</option>
+                    </select>
+                    <button id="btn-refresh-entities" class="control-btn">🔄 Aggiorna Lista</button>
+                </div>
+            </div>
+            
+            <div class="contact-card">
+                <div id="entity-details">
+                    <p class="no-entity">Nessuna entità selezionata</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="debug-panel">
+            <h3>🔧 Debug Panel</h3>
+            <div id="debug-messages" class="debug-messages">
+                <p>Panel di debug pronto...</p>
+            </div>
+            <button id="btn-clear-debug" class="debug-btn">Pulisci Debug</button>
+        </div>
+    </footer>
+
+    <!-- Script principali -->
+    <script src="modules/TabularModule.js"></script>
+    <script src="modules/ContactCardModule.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
