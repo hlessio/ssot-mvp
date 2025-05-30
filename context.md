@@ -53,7 +53,7 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 
 ### Task in Corso:
 
-*   [ ] **Fase 8.5**: Test della sincronizzazione bidirezionale tra moduli aperti in finestre diverse secondo i nuovi scenari del manuale.
+*   [ ] **Fase 9: Potenziamento Core Engine e Gestione Schemi (vedi doc_tecnico_evoluzione_core_v1.md)**
 
 ### Decisioni Prese:
 
@@ -77,6 +77,7 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
     *   Estensione dei moduli esistenti (`TabularModule` e `ContactCardModule`) con metodi `handleExternalUpdate()` e `notifyEntityUpdate()`
     *   Meccanismo di sovrascrittura dinamica dei metodi di notifica per propagazione cross-window
     *   Script `start` aggiunto al `package.json` per avvio semplificato del server
+*   **Avvio Fase di Evoluzione Backend**: Creato il documento tecnico `doc_tecnico_evoluzione_core_v1.md` per dettagliare il potenziamento del core engine e del sistema di gestione degli schemi, come prossimo macro passo evolutivo.
 
 ### Problemi Riscontrati (e Risolti):
 
@@ -85,6 +86,7 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 *   Neo4jConnector non inizializzato nei test. Risolto chiamando `neo4jConnector.connect()` prima dell'uso.
 *   Server non si avviava dalla directory sbagliata. Risolto eseguendo dalla cartella mvp-ssot.
 *   Errore frontend `forEach of undefined` dovuto alla gestione iniziale degli attributi dallo schema. Risolto assicurando che l'endpoint `/api/schema/:entityType/attributes` restituisca sempre un array e che lo schema venga popolato tramite auto-discovery all'avvio e durante le operazioni.
+*   ✅ Auto-discovery attributi per schema dinamico
 
 ### Architettura Implementata (Pre-Estensione):
 
@@ -114,21 +116,13 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 
 ### Prossimi Passi (Focus Estensione MVP):
 
-*   [x] **Fase 8.5**: Test approfonditi degli scenari di sincronizzazione cross-window.
-*   [x] Verifica della robustezza della comunicazione tra finestre multiple.
-*   [x] Test dei seguenti scenari estesi:
-    1. **Scenario Cross-Window Tabella**: Apertura modulo tabellare in nuova finestra, modifica dati, verifica sincronizzazione bidirezionale ✅
-    2. **Scenario Cross-Window Scheda**: Apertura modulo scheda in nuova finestra, modifica attributi, verifica propagazione ✅
-    3. **Scenario Cross-Module Cross-Window**: Modulo tabellare in una finestra, modulo scheda in un'altra, verifica sincronizzazione incrociata ✅
-    4. **Scenario Multi-Window**: Apertura di più istanze dello stesso modulo in finestre diverse, verifica sincronizzazione simultanea ✅
-*   [x] Documentazione finale dei test di dimostrazione dell'estensione MVP.
-*   [x] Creazione del documento tecnico `architettura_mvp.md`.
+*   [ ] Inizio implementazione **Fase 9: Potenziamento Core Engine e Gestione Schemi** secondo `doc_tecnico_evoluzione_core_v1.md`.
 *   [ ] Ulteriori rifiniture e test.
 
 **Status MVP (Post Completamento Iniziale)**: ✅🚀 **MVP COMPLETATO E DIMOSTRATO CON SUCCESSO!** 🚀✅
 **Status Estensione MVP (Fase 8)**: ✅🎯 **ESTENSIONE CROSS-WINDOW COMPLETATA!** 🎯✅ 
 **Status Stile Finestre Figlie**: ✅🎨 **STILE WEB 1.0 PRIMITIVO IMPLEMENTATO!** 🎨✅
-**Status Complessivo**: 🏁 **IN ATTESA DI NUOVE DIRETTIVE O FASE DI REFINEMENT** 
+**Status Complessivo**: 🚀 **FASE DI EVOLUZIONE CORE ENGINE AVVIATA** 🚀
 
 ### 🌟 Funzionalità Chiave Implementate nell'Estensione (Fase 8):
 
