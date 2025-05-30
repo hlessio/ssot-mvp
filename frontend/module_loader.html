@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MVP SSOT - Modulo</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Stili specifici per le finestre figlie */
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+        }
+        
+        .window-header {
+            background: #007bff;
+            color: white;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #0056b3;
+        }
+        
+        .window-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .window-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .sync-indicator {
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .sync-active {
+            background: #28a745;
+            color: white;
+        }
+        
+        .sync-inactive {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .module-content {
+            height: calc(100vh - 60px);
+            overflow: auto;
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="window-header">
+        <div class="window-title" id="window-title">
+            🪟 Modulo SSOT
+        </div>
+        <div class="window-controls">
+            <span id="sync-indicator" class="sync-indicator sync-inactive">
+                🔄 Sincronizzazione
+            </span>
+        </div>
+    </div>
+
+    <div class="connection-status">
+        <span id="connection-indicator" class="status-disconnected">⚫ Disconnesso</span>
+    </div>
+
+    <div class="module-content">
+        <div id="module-container" class="module-container">
+            <!-- Il contenuto del modulo sarà caricato dinamicamente -->
+            <div style="padding: 2rem; text-align: center; color: #6c757d;">
+                <p>🔄 Caricamento modulo...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script dei moduli -->
+    <script src="modules/TabularModule.js"></script>
+    <script src="modules/ContactCardModule.js"></script>
+    <script src="app_module.js"></script>
+</body>
+</html> 

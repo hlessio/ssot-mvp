@@ -16,6 +16,8 @@ class MVPApp {
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectInterval = 2000;
+        this.openWindows = new Map(); // Tiene traccia delle finestre aperte
+        this.crossWindowChannel = null; // BroadcastChannel per comunicazione cross-window
         
         this.initializeApp();
     }
@@ -28,6 +30,9 @@ class MVPApp {
         
         // Attacca event listeners
         this.attachEventListeners();
+        
+        // Inizializza comunicazione cross-window
+        this.initCrossWindowCommunication();
         
         // Connetti WebSocket
         this.connectWebSocket();
@@ -63,10 +68,23 @@ class MVPApp {
         // Event listeners per il debug panel
         this.btnClearDebug.addEventListener('click', () => this.clearDebugMessages());
         
-        // Gestione chiusura finestra per cleanup WebSocket
+        // Gestione chiusura finestra per cleanup WebSocket e finestre figlie
         window.addEventListener('beforeunload', () => {
+            // Chiudi tutte le finestre figlie
+            this.openWindows.forEach((windowData, windowId) => {
+                if (windowData.window && !windowData.window.closed) {
+                    windowData.window.close();
+                }
+            });
+            
+            // Chiudi WebSocket
             if (this.websocket) {
                 this.websocket.close();
+            }
+            
+            // Chiudi canale cross-window
+            if (this.crossWindowChannel) {
+                this.crossWindowChannel.close();
             }
         });
     }
@@ -93,9 +111,9 @@ class MVPApp {
     async loadModuleData(moduleName) {
         try {
             if (moduleName === 'tabular' && window.tabularModule) {
-                await window.tabularModule.loadData();
+                await window.tabularModule.init();
             } else if (moduleName === 'contact' && window.contactCardModule) {
-                await window.contactCardModule.loadEntities();
+                await window.contactCardModule.init();
             }
         } catch (error) {
             this.debugLog(`Errore nel caricamento dati modulo ${moduleName}: ${error.message}`, 'error');
@@ -106,10 +124,10 @@ class MVPApp {
         this.debugLog('Caricamento dati iniziali...', 'info');
         
         try {
-            // Carica dati per entrambi i moduli in parallelo
+            // Inizializza entrambi i moduli usando il loro metodo init()
             await Promise.all([
-                window.tabularModule ? window.tabularModule.loadData() : Promise.resolve(),
-                window.contactCardModule ? window.contactCardModule.loadEntities() : Promise.resolve()
+                window.tabularModule ? window.tabularModule.init() : Promise.resolve(),
+                window.contactCardModule ? window.contactCardModule.init() : Promise.resolve()
             ]);
             
             this.debugLog('Dati iniziali caricati', 'success');
@@ -264,12 +282,117 @@ class MVPApp {
             }
         }
     }
+
+    // Gestione finestre separate per moduli
+    openModuleInNewWindow(moduleType) {
+        this.debugLog(`Apertura modulo ${moduleType} in nuova finestra`, 'info');
+        
+        const windowFeatures = 'width=1000,height=700,resizable=yes,scrollbars=yes,status=yes';
+        const windowUrl = `module_loader.html?module=${moduleType}`;
+        
+        try {
+            const newWindow = window.open(windowUrl, `ssot-${moduleType}-${Date.now()}`, windowFeatures);
+            
+            if (newWindow) {
+                // Traccia la finestra aperta
+                const windowId = `${moduleType}-${Date.now()}`;
+                this.openWindows.set(windowId, {
+                    window: newWindow,
+                    moduleType: moduleType,
+                    opened: Date.now()
+                });
+                
+                // Monitora la chiusura della finestra
+                const checkClosed = setInterval(() => {
+                    if (newWindow.closed) {
+                        this.debugLog(`Finestra modulo ${moduleType} chiusa`, 'info');
+                        this.openWindows.delete(windowId);
+                        clearInterval(checkClosed);
+                    }
+                }, 1000);
+                
+                this.debugLog(`Finestra modulo ${moduleType} aperta con ID: ${windowId}`, 'success');
+            } else {
+                throw new Error('Impossibile aprire la finestra. Verifica le impostazioni del browser per i popup.');
+            }
+        } catch (error) {
+            this.debugLog(`Errore apertura finestra modulo ${moduleType}: ${error.message}`, 'error');
+        }
+    }
+
+    initCrossWindowCommunication() {
+        // Inizializza BroadcastChannel per comunicazione cross-window
+        if ('BroadcastChannel' in window) {
+            this.crossWindowChannel = new BroadcastChannel('ssot-sync');
+            this.crossWindowChannel.onmessage = (event) => {
+                this.handleCrossWindowMessage(event.data);
+            };
+            this.debugLog('Comunicazione cross-window inizializzata (BroadcastChannel)', 'info');
+        } else {
+            // Fallback a localStorage events per browser più vecchi
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'ssot-sync') {
+                    try {
+                        const data = JSON.parse(event.newValue);
+                        this.handleCrossWindowMessage(data);
+                    } catch (error) {
+                        console.error('Errore parsing messaggio cross-window:', error);
+                    }
+                }
+            });
+            this.debugLog('Comunicazione cross-window inizializzata (localStorage fallback)', 'info');
+        }
+    }
+
+    handleCrossWindowMessage(data) {
+        if (data.type === 'entity-update') {
+            this.debugLog(`Ricevuto aggiornamento cross-window: ${data.entityId}:${data.attributeName} = ${data.newValue}`, 'info');
+            
+            // Propaga l'aggiornamento ai moduli locali (evitando loop)
+            if (window.tabularModule && window.tabularModule.handleExternalUpdate) {
+                window.tabularModule.handleExternalUpdate(data.entityId, data.attributeName, data.newValue);
+            }
+            
+            if (window.contactCardModule && window.contactCardModule.handleExternalUpdate) {
+                window.contactCardModule.handleExternalUpdate(data.entityId, data.attributeName, data.newValue);
+            }
+        }
+    }
+
+    broadcastToOtherWindows(entityId, attributeName, newValue) {
+        const message = {
+            type: 'entity-update',
+            entityId,
+            attributeName,
+            newValue,
+            timestamp: Date.now(),
+            source: 'main-window'
+        };
+
+        if (this.crossWindowChannel) {
+            this.crossWindowChannel.postMessage(message);
+        } else {
+            // Fallback localStorage
+            localStorage.setItem('ssot-sync', JSON.stringify(message));
+            // Rimuovi subito per triggerare l'evento storage
+            setTimeout(() => localStorage.removeItem('ssot-sync'), 10);
+        }
+        
+        this.debugLog(`Trasmesso aggiornamento cross-window: ${entityId}:${attributeName}`, 'info');
+    }
 }
 
 // Funzione globale per la navigazione (chiamata dai pulsanti)
 window.showModule = function(moduleName) {
     if (window.mvpApp) {
         window.mvpApp.showModule(moduleName);
+    }
+};
+
+// Funzione globale per aprire moduli in nuove finestre (chiamata dai bottoni)
+window.openModuleInNewWindow = function(moduleType) {
+    if (window.mvpApp) {
+        window.mvpApp.openModuleInNewWindow(moduleType);
     }
 };
 

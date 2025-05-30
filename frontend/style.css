@@ -59,7 +59,7 @@ header p {
 .nav-btn.active {
     background: #007bff;
     color: white;
-    border-color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
 }
 
 /* Status connessione */
@@ -370,4 +370,47 @@ footer {
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+}
+
+/* Controlli per nuove finestre */
+.new-window-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 1rem;
+    padding-left: 1rem;
+    border-left: 1px solid #e0e0e0;
+}
+
+.separator {
+    color: #6c757d;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.new-window-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.new-window-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.new-window-btn:hover {
+    background: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.new-window-btn:active {
+    transform: translateY(0);
 }

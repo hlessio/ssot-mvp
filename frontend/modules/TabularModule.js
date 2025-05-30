@@ -17,8 +17,20 @@ class TabularModule {
         this.websocket = null;
         this.isUpdatingCell = false; // Flag per evitare loop di aggiornamento
         
-        this.initializeElements();
-        this.attachEventListeners();
+        // Solo inizializza se gli elementi DOM sono disponibili
+        if (document.getElementById('btn-add-row')) {
+            this.initializeElements();
+            this.attachEventListeners();
+        }
+    }
+
+    // Metodo di inizializzazione esplicito
+    async init() {
+        if (!this.btnAddRow) {
+            this.initializeElements();
+            this.attachEventListeners();
+        }
+        await this.loadData();
     }
 
     initializeElements() {
@@ -189,6 +201,9 @@ class TabularModule {
                     entity[attributeName] = newValue;
                 }
                 
+                // Notifica l'aggiornamento per propagazione cross-window
+                this.notifyEntityUpdate(entityId, attributeName, newValue);
+                
                 // Rimuovi l'indicatore di modifica
                 setTimeout(() => {
                     input.classList.remove('modified');
@@ -331,6 +346,48 @@ class TabularModule {
                 input.classList.remove('modified');
                 this.isUpdatingCell = false;
             }, 1000);
+        }
+    }
+
+    // Gestisce aggiornamenti esterni (cross-window communication)
+    handleExternalUpdate(entityId, attributeName, newValue) {
+        if (this.isUpdatingCell) return; // Evita loop
+        
+        this.debugLog(`Ricevuto aggiornamento cross-window: ${attributeName} = "${newValue}" per entità ${entityId}`, 'info');
+        
+        // Trova l'input corrispondente nella tabella
+        const input = document.querySelector(
+            `input[data-entity-id="${entityId}"][data-attribute-name="${attributeName}"]`
+        );
+        
+        if (input && input !== document.activeElement) { // Non aggiornare se l'utente sta editando
+            this.isUpdatingCell = true;
+            input.value = newValue;
+            input.classList.add('modified');
+            
+            // Aggiorna l'entità locale
+            const entity = this.entities.find(e => e.id === entityId);
+            if (entity) {
+                entity[attributeName] = newValue;
+            }
+            
+            // Rimuovi l'indicatore dopo un breve periodo
+            setTimeout(() => {
+                input.classList.remove('modified');
+                this.isUpdatingCell = false;
+            }, 1000);
+        }
+    }
+
+    // Notifica aggiornamenti di entità (usato per propagazione cross-window)
+    notifyEntityUpdate(entityId, attributeName, newValue) {
+        // Questo metodo viene sovrascritto dalla finestra principale o dalle finestre figlie
+        // per implementare la comunicazione cross-window
+        this.debugLog(`Notifica aggiornamento entità: ${entityId}:${attributeName} = ${newValue}`, 'info');
+        
+        // Se siamo nella finestra principale, propaga ai moduli e alle altre finestre
+        if (window.mvpApp && window.mvpApp.broadcastToOtherWindows) {
+            window.mvpApp.broadcastToOtherWindows(entityId, attributeName, newValue);
         }
     }
 

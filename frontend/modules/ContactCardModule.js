@@ -17,8 +17,20 @@ class ContactCardModule {
         this.websocket = null;
         this.isUpdatingField = false; // Flag per evitare loop di aggiornamento
         
-        this.initializeElements();
-        this.attachEventListeners();
+        // Solo inizializza se gli elementi DOM sono disponibili
+        if (document.getElementById('entity-selector')) {
+            this.initializeElements();
+            this.attachEventListeners();
+        }
+    }
+
+    // Metodo di inizializzazione esplicito
+    async init() {
+        if (!this.entitySelector) {
+            this.initializeElements();
+            this.attachEventListeners();
+        }
+        await this.loadEntities();
     }
 
     initializeElements() {
@@ -220,6 +232,9 @@ class ContactCardModule {
                     cachedEntity[attributeName] = newValue;
                 }
                 
+                // Notifica l'aggiornamento per propagazione cross-window
+                this.notifyEntityUpdate(entityId, attributeName, newValue);
+                
                 // Rimuovi l'indicatore di modifica
                 setTimeout(() => {
                     input.classList.remove('modified');
@@ -301,6 +316,69 @@ class ContactCardModule {
                     }
                 }
             }
+        }
+    }
+
+    // Gestisce aggiornamenti esterni (cross-window communication)
+    handleExternalUpdate(entityId, attributeName, newValue) {
+        if (this.isUpdatingField) return; // Evita loop
+        
+        this.debugLog(`Ricevuto aggiornamento cross-window: ${attributeName} = "${newValue}" per entità ${entityId}`, 'info');
+        
+        // Aggiorna solo se l'entità corrente è quella modificata
+        if (this.currentEntity && this.currentEntity.id === entityId) {
+            // Trova il campo corrispondente
+            const input = document.querySelector(
+                `input[data-entity-id="${entityId}"][data-attribute-name="${attributeName}"]`
+            );
+            
+            if (input && input !== document.activeElement) { // Non aggiornare se l'utente sta editando
+                this.isUpdatingField = true;
+                input.value = newValue;
+                input.classList.add('modified');
+                
+                // Aggiorna l'entità locale
+                this.currentEntity[attributeName] = newValue;
+                
+                // Aggiorna anche la cache delle entità
+                const cachedEntity = this.entities.find(e => e.id === entityId);
+                if (cachedEntity) {
+                    cachedEntity[attributeName] = newValue;
+                }
+                
+                // Rimuovi l'indicatore dopo un breve periodo
+                setTimeout(() => {
+                    input.classList.remove('modified');
+                    this.isUpdatingField = false;
+                }, 1000);
+            }
+        } else if (entityId) {
+            // Se l'entità modificata non è quella corrente, aggiorna solo la cache
+            const cachedEntity = this.entities.find(e => e.id === entityId);
+            if (cachedEntity) {
+                cachedEntity[attributeName] = newValue;
+                
+                // Se l'attributo modificato è 'nome', aggiorna anche il dropdown
+                if (attributeName === 'nome') {
+                    this.populateEntitySelector();
+                    // Ripristina la selezione corrente
+                    if (this.currentEntity) {
+                        this.entitySelector.value = this.currentEntity.id;
+                    }
+                }
+            }
+        }
+    }
+
+    // Notifica aggiornamenti di entità (usato per propagazione cross-window)
+    notifyEntityUpdate(entityId, attributeName, newValue) {
+        // Questo metodo viene sovrascritto dalla finestra principale o dalle finestre figlie
+        // per implementare la comunicazione cross-window
+        this.debugLog(`Notifica aggiornamento entità: ${entityId}:${attributeName} = ${newValue}`, 'info');
+        
+        // Se siamo nella finestra principale, propaga ai moduli e alle altre finestre
+        if (window.mvpApp && window.mvpApp.broadcastToOtherWindows) {
+            window.mvpApp.broadcastToOtherWindows(entityId, attributeName, newValue);
         }
     }
 
