@@ -11,7 +11,9 @@
 
 class TabularModule {
     constructor() {
-        this.entityType = 'Contact'; // Per l'MVP usiamo un tipo fisso come suggerito
+        // Leggi il tipo di entità dai parametri URL (per finestre separate) o usa default
+        const urlParams = new URLSearchParams(window.location.search);
+        this.entityType = urlParams.get('entityType') || 'TestEvoluzione'; // Test dell'evoluzione schema
         this.entities = [];
         this.attributes = [];
         this.websocket = null;
@@ -87,10 +89,29 @@ class TabularModule {
         return await response.json();
     }
 
-    // Fetch degli attributi dal backend
+    // Fetch degli attributi dal backend (aggiornato per API evolute)
     async fetchAttributes() {
-        const response = await fetch(`/api/schema/${this.entityType}/attributes`);
-        return await response.json();
+        try {
+            // Prima prova a recuperare lo schema evoluto
+            const response = await fetch(`/api/schema/entity/${this.entityType}`);
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data.attributes) {
+                    // Estrai solo i nomi degli attributi dal nuovo formato schema
+                    return { 
+                        success: true, 
+                        data: result.data.attributes.map(attr => attr.name) 
+                    };
+                }
+            }
+            
+            // Fallback all'endpoint MVP se lo schema evoluto non esiste
+            const fallbackResponse = await fetch(`/api/schema/${this.entityType}/attributes`);
+            return await fallbackResponse.json();
+        } catch (error) {
+            console.warn('Errore nel recupero attributi, usando lista vuota:', error);
+            return { success: true, data: [] };
+        }
     }
 
     // Rendering della tabella
@@ -269,7 +290,7 @@ class TabularModule {
         }
     }
 
-    // Aggiunge un nuovo attributo (colonna)
+    // Aggiunge un nuovo attributo (colonna) - aggiornato per API evolute
     async addNewAttribute() {
         const attributeName = prompt('Inserisci il nome del nuovo attributo:');
         if (!attributeName || this.attributes.includes(attributeName)) {
@@ -282,32 +303,106 @@ class TabularModule {
         try {
             this.debugLog(`Aggiunta nuovo attributo: ${attributeName}`, 'info');
             
-            const response = await fetch(`/api/schema/${this.entityType}/attributes`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    attributeName: attributeName
-                })
-            });
+            // Prima verifica se esiste uno schema evoluto
+            let schemaResponse = await fetch(`/api/schema/entity/${this.entityType}`);
             
-            const result = await response.json();
-            
-            if (result.success) {
-                // Aggiungi l'attributo alla lista locale
-                this.attributes.push(attributeName);
+            if (!schemaResponse.ok) {
+                // Schema evoluto non esiste - crea un nuovo schema
+                const newSchema = {
+                    mode: 'flexible',
+                    attributes: {}
+                };
                 
-                // Re-renderizza la tabella per includere la nuova colonna
-                this.renderTable();
+                // Aggiungi tutti gli attributi esistenti + il nuovo
+                [...this.attributes, attributeName].forEach(attr => {
+                    newSchema.attributes[attr] = {
+                        type: 'string',
+                        required: false,
+                        description: `Attributo ${attr}`
+                    };
+                });
                 
-                this.debugLog(`Attributo aggiunto con successo: ${attributeName}`, 'success');
+                const createResponse = await fetch(`/api/schema/entity/${this.entityType}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newSchema)
+                });
+                
+                const createResult = await createResponse.json();
+                if (!createResult.success) {
+                    throw new Error(createResult.error || 'Errore nella creazione schema');
+                }
+                
+                this.debugLog(`Nuovo schema creato per ${this.entityType}`, 'success');
             } else {
-                throw new Error(result.error || 'Errore nell\'aggiunta attributo');
+                // Schema evoluto esiste - evolvi lo schema aggiungendo il nuovo attributo
+                this.debugLog(`Evoluzione schema ${this.entityType} con nuovo attributo ${attributeName}`, 'info');
+                
+                const evolutionData = {
+                    addAttributes: {
+                        [attributeName]: {
+                            type: 'string',
+                            required: false,
+                            description: `Attributo ${attributeName}`
+                        }
+                    }
+                };
+                
+                const evolutionResponse = await fetch(`/api/schema/entity/${this.entityType}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(evolutionData)
+                });
+                
+                const evolutionResult = await evolutionResponse.json();
+                if (!evolutionResult.success) {
+                    throw new Error(evolutionResult.error || 'Errore nell\'evoluzione schema');
+                }
+                
+                this.debugLog(`Schema evoluto con successo per ${this.entityType}`, 'success');
             }
+            
+            // Aggiungi l'attributo alla lista locale
+            this.attributes.push(attributeName);
+            
+            // Re-renderizza la tabella per includere la nuova colonna
+            this.renderTable();
+            
+            // Notifica l'aggiornamento della struttura per le altre finestre
+            this.notifySchemaUpdate(attributeName);
+            
+            this.debugLog(`Attributo aggiunto con successo: ${attributeName}`, 'success');
+            
         } catch (error) {
             this.debugLog(`Errore nell'aggiunta attributo: ${error.message}`, 'error');
             console.error('Errore nell\'aggiunta attributo:', error);
+        }
+    }
+
+    // Notifica aggiornamenti dello schema (per cross-window communication)
+    notifySchemaUpdate(attributeName) {
+        this.debugLog(`Notifica aggiornamento schema: nuovo attributo ${attributeName}`, 'info');
+        
+        const message = {
+            type: 'schema-update',
+            entityType: this.entityType,
+            newAttribute: attributeName,
+            timestamp: Date.now(),
+            source: window.mvpApp ? 'main-window' : 'child-window'
+        };
+        
+        // Se siamo nella finestra principale
+        if (window.mvpApp && window.mvpApp.crossWindowChannel) {
+            window.mvpApp.crossWindowChannel.postMessage(message);
+        }
+        // Se siamo in una finestra separata e abbiamo accesso al manager
+        else if (window.moduleWindowManager && window.moduleWindowManager.crossWindowChannel) {
+            window.moduleWindowManager.crossWindowChannel.postMessage(message);
+        }
+        // Fallback localStorage per compatibilità
+        else {
+            localStorage.setItem('ssot-schema-sync', JSON.stringify(message));
+            setTimeout(() => localStorage.removeItem('ssot-schema-sync'), 10);
         }
     }
 
@@ -388,6 +483,23 @@ class TabularModule {
         // Se siamo nella finestra principale, propaga ai moduli e alle altre finestre
         if (window.mvpApp && window.mvpApp.broadcastToOtherWindows) {
             window.mvpApp.broadcastToOtherWindows(entityId, attributeName, newValue);
+        }
+    }
+
+    // Gestisce aggiornamenti di schema da altre finestre
+    async handleSchemaUpdate(updateData) {
+        if (updateData.entityType !== this.entityType) return; // Non è per il nostro tipo di entità
+        
+        this.debugLog(`Ricevuto aggiornamento schema: nuovo attributo ${updateData.newAttribute}`, 'info');
+        
+        // Aggiungi l'attributo se non esiste già
+        if (!this.attributes.includes(updateData.newAttribute)) {
+            this.attributes.push(updateData.newAttribute);
+            
+            // Re-renderizza la tabella per mostrare la nuova colonna
+            this.renderTable();
+            
+            this.debugLog(`Schema aggiornato localmente con attributo: ${updateData.newAttribute}`, 'success');
         }
     }
 

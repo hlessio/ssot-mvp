@@ -199,6 +199,504 @@ class Neo4jDAO {
             throw error;
         }
     }
+
+    // =============================================
+    // GESTIONE SCHEMI - Nuove funzioni per l'evoluzione
+    // =============================================
+
+    /**
+     * Salva uno schema di tipo entità su Neo4j
+     * @param {object} schema - Lo schema da salvare (EntitySchema)
+     * @returns {Promise<object>} Lo schema salvato
+     */
+    async saveEntitySchema(schema) {
+        const now = new Date().toISOString();
+        
+        // Prima creiamo il nodo dello schema
+        const schemaId = `schema_${schema.entityType}`;
+        const cypher = `
+            MERGE (s:SchemaEntityType {entityType: $entityType})
+            SET s.schemaId = $schemaId,
+                s.version = $version,
+                s.mode = $mode,
+                s.created = $created,
+                s.modified = $modified,
+                s.constraints = $constraints
+            RETURN s
+        `;
+        
+        const parameters = {
+            entityType: schema.entityType,
+            schemaId: schemaId,
+            version: schema.version,
+            mode: schema.mode,
+            created: schema.created || now,
+            modified: now,
+            constraints: JSON.stringify(schema.constraints || [])
+        };
+        
+        try {
+            const result = await this.connector.executeQuery(cypher, parameters);
+            
+            if (result.records.length === 0) {
+                throw new Error('Errore durante la creazione dello schema');
+            }
+            
+            const savedSchema = result.records[0].get('s').properties;
+            
+            // Ora salviamo gli attributi
+            for (const [attrName, attrDef] of schema.attributes || new Map()) {
+                await this.saveAttributeDefinition(schemaId, attrName, attrDef);
+            }
+            
+            console.log('✅ Schema entità salvato:', savedSchema);
+            return savedSchema;
+            
+        } catch (error) {
+            console.error('❌ Errore saveEntitySchema:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Carica uno schema di tipo entità da Neo4j
+     * @param {string} entityType - Il tipo di entità
+     * @returns {Promise<object|null>} Lo schema caricato o null
+     */
+    async loadEntitySchema(entityType) {
+        const cypher = `
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        `;
+        
+        try {
+            const result = await this.connector.executeQuery(cypher, { entityType });
+            
+            if (result.records.length === 0) {
+                console.log(`ℹ️ Schema non trovato per il tipo ${entityType}`);
+                return null;
+            }
+            
+            const record = result.records[0];
+            const schemaNode = record.get('s').properties;
+            const attributesData = record.get('attributes').filter(a => a !== null);
+            
+            const schema = {
+                entityType: schemaNode.entityType,
+                version: schemaNode.version,
+                mode: schemaNode.mode,
+                created: schemaNode.created,
+                modified: schemaNode.modified,
+                constraints: JSON.parse(schemaNode.constraints || '[]'),
+                attributes: attributesData
+            };
+            
+            console.log('✅ Schema entità caricato:', schema);
+            return schema;
+            
+        } catch (error) {
+            console.error('❌ Errore loadEntitySchema:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Aggiorna uno schema di tipo entità (sostituito con approccio più sicuro)
+     * @param {object} schema - Lo schema aggiornato
+     * @returns {Promise<object>} Lo schema aggiornato
+     */
+    async updateEntitySchema(schema) {
+        // Per evitare problemi di cancellazione, usiamo l'approccio incrementale
+        const now = new Date().toISOString();
+        
+        try {
+            // Aggiorna solo i metadati del nodo schema principale
+            const cypher = `
+                MATCH (s:SchemaEntityType {entityType: $entityType})
+                SET s.version = $version,
+                    s.modified = $modified
+                RETURN s
+            `;
+            
+            const result = await this.connector.executeQuery(cypher, {
+                entityType: schema.entityType,
+                version: schema.version,
+                modified: now
+            });
+            
+            console.log('✅ Schema entità aggiornato (metadati):', schema.entityType);
+            return schema;
+            
+        } catch (error) {
+            console.error('❌ Errore updateEntitySchema:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Aggiunge un singolo attributo a uno schema esistente (approccio puramente additivo)
+     * @param {string} entityType - Il tipo di entità
+     * @param {string} attributeName - Nome dell'attributo
+     * @param {object} attributeDefinition - Definizione dell'attributo
+     * @returns {Promise<object>} L'attributo aggiunto
+     */
+    async addAttributeToSchema(entityType, attributeName, attributeDefinition) {
+        try {
+            console.log(`🔧 Aggiunta attributo ${attributeName} a schema ${entityType}`);
+            
+            // Strategia semplice: se esiste già, non fare nulla; altrimenti crea
+            const schemaId = `schema_${entityType}`;
+            
+            // Usa MERGE che è idempotente - se esiste già non fa nulla, altrimenti crea
+            const cypher = `
+                MATCH (s:SchemaEntityType {entityType: $entityType})
+                MERGE (a:AttributeDefinition {name: $attributeName, schemaId: $schemaId})
+                ON CREATE SET 
+                    a.type = $type,
+                    a.required = $required,
+                    a.defaultValue = $defaultValue,
+                    a.validationRules = $validationRules,
+                    a.description = $description,
+                    a.referencesEntityType = $referencesEntityType,
+                    a.relationTypeForReference = $relationTypeForReference,
+                    a.displayAttributeFromReferencedEntity = $displayAttributeFromReferencedEntity,
+                    a.cardinalityForReference = $cardinalityForReference
+                MERGE (s)-[:HAS_ATTRIBUTE]->(a)
+                RETURN a, 
+                       CASE WHEN a.type IS NULL THEN 'created' ELSE 'existed' END as status
+            `;
+            
+            const parameters = {
+                entityType: entityType,
+                schemaId: schemaId,
+                attributeName: attributeName,
+                type: attributeDefinition.type || 'string',
+                required: attributeDefinition.required || false,
+                defaultValue: attributeDefinition.defaultValue || null,
+                validationRules: JSON.stringify(attributeDefinition.validationRules || []),
+                description: attributeDefinition.description || '',
+                referencesEntityType: attributeDefinition.referencesEntityType || null,
+                relationTypeForReference: attributeDefinition.relationTypeForReference || null,
+                displayAttributeFromReferencedEntity: attributeDefinition.displayAttributeFromReferencedEntity || null,
+                cardinalityForReference: attributeDefinition.cardinalityForReference || null
+            };
+            
+            const result = await this.connector.executeQuery(cypher, parameters);
+            
+            if (result.records.length > 0) {
+                const record = result.records[0];
+                const saved = record.get('a').properties;
+                const status = record.get('status');
+                
+                if (status === 'created') {
+                    console.log(`✅ Nuovo attributo ${attributeName} aggiunto a schema ${entityType}`);
+                } else {
+                    console.log(`ℹ️ Attributo ${attributeName} già esistente in schema ${entityType}`);
+                }
+                
+                return saved;
+            }
+            
+            throw new Error('Errore durante l\'aggiunta dell\'attributo');
+            
+        } catch (error) {
+            console.error('❌ Errore addAttributeToSchema:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Elimina uno schema di tipo entità
+     * @param {string} entityType - Il tipo di entità
+     * @returns {Promise<boolean>} True se eliminato con successo
+     */
+    async deleteEntitySchema(entityType) {
+        const cypher = `
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            DETACH DELETE s, a
+            RETURN count(s) as deletedSchemas
+        `;
+        
+        try {
+            const result = await this.connector.executeQuery(cypher, { entityType });
+            const deletedCount = result.records[0]?.get('deletedSchemas')?.low || 0;
+            console.log(`✅ Schema eliminato per ${entityType}`);
+            return deletedCount > 0;
+        } catch (error) {
+            console.error('❌ Errore deleteEntitySchema:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Recupera tutti gli schemi di entità
+     * @returns {Promise<Array>} Array degli schemi
+     */
+    async getAllEntitySchemas() {
+        const cypher = `
+            MATCH (s:SchemaEntityType)
+            RETURN s.entityType as entityType
+            ORDER BY s.entityType
+        `;
+        
+        try {
+            const result = await this.connector.executeQuery(cypher);
+            const entityTypes = result.records.map(record => record.get('entityType'));
+            
+            // Carica i dettagli per ogni schema
+            const schemas = [];
+            for (const entityType of entityTypes) {
+                const schema = await this.loadEntitySchema(entityType);
+                if (schema) schemas.push(schema);
+            }
+            
+            console.log(`✅ Trovati ${schemas.length} schemi entità`);
+            return schemas;
+        } catch (error) {
+            console.error('❌ Errore getAllEntitySchemas:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Salva uno schema di tipo relazione su Neo4j
+     * @param {object} schema - Lo schema relazione da salvare
+     * @returns {Promise<object>} Lo schema salvato
+     */
+    async saveRelationSchema(schema) {
+        const now = new Date().toISOString();
+        const schemaId = `schema_rel_${schema.relationType}`;
+        
+        const cypher = `
+            MERGE (s:SchemaRelationType {relationType: $relationType})
+            SET s.schemaId = $schemaId,
+                s.version = $version,
+                s.cardinality = $cardinality,
+                s.sourceTypes = $sourceTypes,
+                s.targetTypes = $targetTypes,
+                s.created = $created,
+                s.modified = $modified,
+                s.constraints = $constraints
+            RETURN s
+        `;
+        
+        const parameters = {
+            relationType: schema.relationType,
+            schemaId: schemaId,
+            version: schema.version || 1,
+            cardinality: schema.cardinality || 'N:M',
+            sourceTypes: JSON.stringify(schema.sourceTypes || []),
+            targetTypes: JSON.stringify(schema.targetTypes || []),
+            created: schema.created || now,
+            modified: now,
+            constraints: JSON.stringify(schema.constraints || [])
+        };
+        
+        try {
+            const result = await this.connector.executeQuery(cypher, parameters);
+            
+            if (result.records.length === 0) {
+                throw new Error('Errore durante la creazione dello schema relazione');
+            }
+            
+            const savedSchema = result.records[0].get('s').properties;
+            
+            // Salva gli attributi della relazione
+            for (const [attrName, attrDef] of schema.attributes || new Map()) {
+                await this.saveAttributeDefinition(schemaId, attrName, attrDef);
+            }
+            
+            console.log('✅ Schema relazione salvato:', savedSchema);
+            return savedSchema;
+            
+        } catch (error) {
+            console.error('❌ Errore saveRelationSchema:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Carica uno schema di tipo relazione da Neo4j
+     * @param {string} relationType - Il tipo di relazione
+     * @returns {Promise<object|null>} Lo schema caricato o null
+     */
+    async loadRelationSchema(relationType) {
+        const cypher = `
+            MATCH (s:SchemaRelationType {relationType: $relationType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s,
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description
+                   } END) as attributes
+        `;
+        
+        try {
+            const result = await this.connector.executeQuery(cypher, { relationType });
+            
+            if (result.records.length === 0) {
+                console.log(`ℹ️ Schema relazione non trovato per il tipo ${relationType}`);
+                return null;
+            }
+            
+            const record = result.records[0];
+            const schemaNode = record.get('s').properties;
+            const attributesData = record.get('attributes').filter(a => a !== null);
+            
+            const schema = {
+                relationType: schemaNode.relationType,
+                version: schemaNode.version,
+                cardinality: schemaNode.cardinality,
+                sourceTypes: JSON.parse(schemaNode.sourceTypes || '[]'),
+                targetTypes: JSON.parse(schemaNode.targetTypes || '[]'),
+                created: schemaNode.created,
+                modified: schemaNode.modified,
+                constraints: JSON.parse(schemaNode.constraints || '[]'),
+                attributes: attributesData
+            };
+            
+            console.log('✅ Schema relazione caricato:', schema);
+            return schema;
+            
+        } catch (error) {
+            console.error('❌ Errore loadRelationSchema:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Aggiorna uno schema di tipo relazione
+     * @param {object} schema - Lo schema aggiornato
+     * @returns {Promise<object>} Lo schema aggiornato
+     */
+    async updateRelationSchema(schema) {
+        await this.deleteRelationSchema(schema.relationType);
+        return await this.saveRelationSchema(schema);
+    }
+
+    /**
+     * Elimina uno schema di tipo relazione
+     * @param {string} relationType - Il tipo di relazione
+     * @returns {Promise<boolean>} True se eliminato con successo
+     */
+    async deleteRelationSchema(relationType) {
+        const cypher = `
+            MATCH (s:SchemaRelationType {relationType: $relationType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            DETACH DELETE s, a
+            RETURN count(s) as deletedSchemas
+        `;
+        
+        try {
+            const result = await this.connector.executeQuery(cypher, { relationType });
+            const deletedCount = result.records[0]?.get('deletedSchemas')?.low || 0;
+            console.log(`✅ Schema relazione eliminato per ${relationType}`);
+            return deletedCount > 0;
+        } catch (error) {
+            console.error('❌ Errore deleteRelationSchema:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Recupera tutti gli schemi di relazione
+     * @returns {Promise<Array>} Array degli schemi relazione
+     */
+    async getAllRelationSchemas() {
+        const cypher = `
+            MATCH (s:SchemaRelationType)
+            RETURN s.relationType as relationType
+            ORDER BY s.relationType
+        `;
+        
+        try {
+            const result = await this.connector.executeQuery(cypher);
+            const relationTypes = result.records.map(record => record.get('relationType'));
+            
+            const schemas = [];
+            for (const relationType of relationTypes) {
+                const schema = await this.loadRelationSchema(relationType);
+                if (schema) schemas.push(schema);
+            }
+            
+            console.log(`✅ Trovati ${schemas.length} schemi relazione`);
+            return schemas;
+        } catch (error) {
+            console.error('❌ Errore getAllRelationSchemas:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Salva una definizione di attributo collegata a uno schema
+     * @param {string} schemaId - ID dello schema (entity o relation)
+     * @param {string} attributeName - Nome dell'attributo
+     * @param {object} attributeDefinition - Definizione dell'attributo
+     * @param {boolean} forceCreate - Se true, usa CREATE invece di MERGE
+     * @returns {Promise<object>} La definizione salvata
+     */
+    async saveAttributeDefinition(schemaId, attributeName, attributeDefinition, forceCreate = false) {
+        const operation = forceCreate ? 'CREATE' : 'MERGE';
+        const cypher = `
+            MATCH (s) WHERE s.schemaId = $schemaId
+            ${operation} (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition {name: $name, schemaId: $schemaId})
+            SET a.type = $type,
+                a.required = $required,
+                a.defaultValue = $defaultValue,
+                a.validationRules = $validationRules,
+                a.description = $description,
+                a.referencesEntityType = $referencesEntityType,
+                a.relationTypeForReference = $relationTypeForReference,
+                a.displayAttributeFromReferencedEntity = $displayAttributeFromReferencedEntity,
+                a.cardinalityForReference = $cardinalityForReference
+            RETURN a
+        `;
+        
+        const parameters = {
+            schemaId: schemaId,
+            name: attributeName,
+            type: attributeDefinition.type,
+            required: attributeDefinition.required || false,
+            defaultValue: attributeDefinition.defaultValue || null,
+            validationRules: JSON.stringify(attributeDefinition.validationRules || []),
+            description: attributeDefinition.description || '',
+            referencesEntityType: attributeDefinition.referencesEntityType || null,
+            relationTypeForReference: attributeDefinition.relationTypeForReference || null,
+            displayAttributeFromReferencedEntity: attributeDefinition.displayAttributeFromReferencedEntity || null,
+            cardinalityForReference: attributeDefinition.cardinalityForReference || null
+        };
+        
+        try {
+            const result = await this.connector.executeQuery(cypher, parameters);
+            if (result.records.length > 0) {
+                const saved = result.records[0].get('a').properties;
+                console.log(`✅ Attributo ${attributeName} salvato per schema ${schemaId}`);
+                return saved;
+            }
+            throw new Error('Errore durante il salvataggio dell\'attributo');
+        } catch (error) {
+            console.error('❌ Errore saveAttributeDefinition:', error.message);
+            throw error;
+        }
+    }
 }
 
 module.exports = new Neo4jDAO(); 

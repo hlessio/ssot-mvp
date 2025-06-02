@@ -68,6 +68,13 @@ class ModuleWindowManager {
             if (this.currentModule.handleExternalUpdate) {
                 this.currentModule.handleExternalUpdate(data.entityId, data.attributeName, data.newValue);
             }
+        } else if (data.type === 'schema-update' && this.currentModule) {
+            this.debugLog(`Ricevuto aggiornamento schema cross-window: ${data.entityType} + ${data.newAttribute}`);
+            
+            // Propaga l'aggiornamento di schema al modulo locale
+            if (this.currentModule.handleSchemaUpdate) {
+                this.currentModule.handleSchemaUpdate(data);
+            }
         }
     }
 

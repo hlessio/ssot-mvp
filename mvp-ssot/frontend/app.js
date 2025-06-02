@@ -287,8 +287,15 @@ class MVPApp {
     openModuleInNewWindow(moduleType) {
         this.debugLog(`Apertura modulo ${moduleType} in nuova finestra`, 'info');
         
+        // Costruisci URL con parametri per il tipo di entità
+        let windowUrl = `module_loader.html?module=${moduleType}`;
+        
+        // Se stiamo aprendo il modulo tabellare, passa il tipo di entità corrente
+        if (moduleType === 'tabular' && window.tabularModule && window.tabularModule.entityType) {
+            windowUrl += `&entityType=${encodeURIComponent(window.tabularModule.entityType)}`;
+        }
+        
         const windowFeatures = 'width=1000,height=700,resizable=yes,scrollbars=yes,status=yes';
-        const windowUrl = `module_loader.html?module=${moduleType}`;
         
         try {
             const newWindow = window.open(windowUrl, `ssot-${moduleType}-${Date.now()}`, windowFeatures);
@@ -311,7 +318,7 @@ class MVPApp {
                     }
                 }, 1000);
                 
-                this.debugLog(`Finestra modulo ${moduleType} aperta con ID: ${windowId}`, 'success');
+                this.debugLog(`Finestra modulo ${moduleType} aperta con ID: ${windowId} (entityType: ${window.tabularModule?.entityType || 'default'})`, 'success');
             } else {
                 throw new Error('Impossibile aprire la finestra. Verifica le impostazioni del browser per i popup.');
             }
@@ -355,6 +362,13 @@ class MVPApp {
             
             if (window.contactCardModule && window.contactCardModule.handleExternalUpdate) {
                 window.contactCardModule.handleExternalUpdate(data.entityId, data.attributeName, data.newValue);
+            }
+        } else if (data.type === 'schema-update') {
+            this.debugLog(`Ricevuto aggiornamento schema cross-window: ${data.entityType} + ${data.newAttribute}`, 'info');
+            
+            // Propaga l'aggiornamento di schema ai moduli locali
+            if (window.tabularModule && window.tabularModule.handleSchemaUpdate) {
+                window.tabularModule.handleSchemaUpdate(data);
             }
         }
     }
