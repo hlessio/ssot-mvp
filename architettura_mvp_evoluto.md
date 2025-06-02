@@ -86,6 +86,15 @@ PUT    /api/schema/relation/:relationType    // Evolve schema relazione
 DELETE /api/schema/relation/:relationType    // Elimina schema relazione
 GET    /api/schema/relations                 // Lista tutti gli schemi relazione
 
+// ✨ NUOVI ENDPOINT RELATION ENGINE (Implementati e Testati)
+POST   /api/relations                       // Crea una nuova relazione tipizzata
+GET    /api/relations                       // Trova relazioni basate su pattern (sourceEntityId, targetEntityId, relationType, ecc.)
+GET    /api/relations/stats                 // Recupera statistiche sulle relazioni
+GET    /api/relations/:relationId           // Recupera una relazione specifica per ID
+PUT    /api/relations/:relationId           // Aggiorna gli attributi di una relazione specifica
+DELETE /api/relations/:relationId           // Elimina una relazione specifica
+GET    /api/entities/:entityId/relations    // Recupera le entità correlate a un'entità specifica (con filtri opzionali)
+
 // 🔄 ENDPOINT MVP MANTENUTI (Backward Compatibility)
 GET    /api/entities/:entityType         // Recupera entità (compatibile)
 POST   /api/entities                     // Crea entità (compatibile)
@@ -97,6 +106,7 @@ GET    /api/schema/:entityType/attributes // Recupera attributi MVP style
 **WebSocket Server Evoluto:**
 - Gestione connessioni multiple con propagazione schema changes
 - Eventi per modifiche entità (`attributeChange`) e schema (`schemaEvolution`)
+- ✨ Eventi per modifiche relazioni (`relation-created`, `relation-updated`, `relation-deleted`)
 - Sincronizzazione real-time tra finestre e sessioni
 
 ### 4.2. SchemaManager Evoluto (`core/schemaManager_evolved.js`)
