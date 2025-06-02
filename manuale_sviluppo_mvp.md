@@ -2,6 +2,18 @@
 
 ## Introduzione Concettuale all'MVP del SSOT Dinamico
 
+**Nota Importante sul Contesto Evolutivo del Progetto:**
+Questo manuale è stato creato per guidare lo sviluppo del *Minimum Viable Product (MVP)* iniziale del sistema SSOT Dinamico. L'MVP si è focalizzato sulla dimostrazione dei meccanismi fondamentali di coerenza e propagazione dei dati in tempo reale, con una gestione degli schemi basata principalmente sull'auto-discovery degli attributi.
+
+Successivamente alla realizzazione dell'MVP qui descritto, il progetto ha intrapreso una significativa evoluzione architetturale, dettagliata nel documento `doc_tecnico_evoluzione_core_v1.md`. Questa evoluzione introduce concetti più avanzati per una gestione della conoscenza più organica e semanticamente ricca, tra cui:
+
+*   **Granularità Semantica Profonda**: La capacità di modellare attributi che rappresentano concetti complessi come entità referenziate a sé stanti ("value-entities").
+*   **SchemaManager Evoluto**: Un gestore degli schemi potenziato che supporta la definizione esplicita di tipi di entità e relazione (inclusi attributi di tipo "reference"), modalità flessibili per la scoperta, e processi di evoluzione dello schema (come la "promozione" di attributi da semplici stringhe a riferimenti strutturati).
+*   **RelationEngine e EntityEngine Potenziati**: Per gestire la complessità aggiuntiva di queste relazioni e la validazione rispetto a schemi più ricchi.
+*   **Moduli UI Dinamici e Schema-Aware**: Interfacce utente capaci di adattarsi e renderizzare i dati in base agli schemi definiti centralmente.
+
+Di conseguenza, mentre questo manuale rimane una testimonianza valida del processo di costruzione e delle funzionalità dell'MVP iniziale, per comprendere l'architettura corrente, le capacità complete e le future direzioni di sviluppo del sistema SSOT Dinamico, si deve fare riferimento a `doc_tecnico_evoluzione_core_v1.md` e a `full-ssot.md`.
+
 Questo documento guida la realizzazione di un *Minimum Viable Product (MVP)* per il progetto "Verso un'Unica Fonte di Verità Dinamica e Contestuale" (SSOT Dinamico). L'obiettivo di questo MVP non è implementare l'intera, ambiziosa visione del sistema, ma di costruire un *Proof of Concept (PoC)* focalizzato sulla dimostrazione della sua meccanica fondamentale: la capacità di mantenere e propagare la coerenza informativa in tempo reale attraverso interfacce utente eterogenee.
 
 ### Idee Chiave del Progetto SSOT Dinamico da Dimostrare nell'MVP:

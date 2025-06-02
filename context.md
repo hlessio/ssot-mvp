@@ -50,10 +50,14 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 *   [x] Fase 8.4: Implementazione meccanismo di comunicazione cross-window (BroadcastChannel/localStorage) in moduli esistenti.
 *   [x] **Fase 8 COMPLETATA**: Implementazione Sincronizzazione Moduli in Finestre Separate.
 *   [x] Implementazione stile grafico "Web 1.0 primitivo" per finestre figlie.
+*   [x] **Decisione Architetturale Chiave**: Adozione della "Nota Evolutiva del Progetto SSOT Dinamico" per guidare l'evoluzione del backend verso una gestione della conoscenza più intelligente, organica e semanticamente ricca. Questo include granularità semantica profonda (value-entities), SchemaManager evoluto (con supporto per attributi di tipo "reference" e crescita organica), RelationEngine potenziato, e moduli UI dinamici e schema-aware.
+*   [x] Aggiornamento di `doc_tecnico_evoluzione_core_v1.md` per riflettere la nuova direzione architetturale, dettagliando le modifiche a SchemaManager, EntityEngine, RelationEngine, DAO, e API, inclusa l'integrazione con il frontend per moduli schema-aware.
+*   [x] Aggiornamento di `full-ssot.md` per integrare la filosofia della "Nota Evolutiva" (granularità semantica, crescita organica della conoscenza, moduli UI come interfacce di modellazione contestuale).
+*   [x] Aggiornamento di `architettura_mvp.md` e `manuale_sviluppo_mvp.md` per contestualizzarli come documenti storici dell'MVP iniziale e indirizzare alla documentazione evoluta.
 
 ### Task in Corso:
 
-*   [ ] **Fase 9: Potenziamento Core Engine e Gestione Schemi (vedi doc_tecnico_evoluzione_core_v1.md)**
+*   [ ] **Fase 9: Potenziamento Core Engine e Gestione Schemi (secondo `doc_tecnico_evoluzione_core_v1.md` aggiornato)**: Inizio implementazione delle specifiche evolute.
 
 ### Decisioni Prese:
 
@@ -78,6 +82,7 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
     *   Meccanismo di sovrascrittura dinamica dei metodi di notifica per propagazione cross-window
     *   Script `start` aggiunto al `package.json` per avvio semplificato del server
 *   **Avvio Fase di Evoluzione Backend**: Creato il documento tecnico `doc_tecnico_evoluzione_core_v1.md` per dettagliare il potenziamento del core engine e del sistema di gestione degli schemi, come prossimo macro passo evolutivo.
+*   **Adozione "Nota Evolutiva"**: La "Nota Evolutiva del Progetto SSOT Dinamico" è stata integrata nei documenti `doc_tecnico_evoluzione_core_v1.md` e `full-ssot.md` per guidare lo sviluppo futuro verso una gestione della conoscenza più semantica e organica. I documenti `architettura_mvp.md` e `manuale_sviluppo_mvp.md` sono stati aggiornati per riflettere il loro status di documentazione della fase MVP iniziale.
 
 ### Problemi Riscontrati (e Risolti):
 
@@ -122,7 +127,8 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 **Status MVP (Post Completamento Iniziale)**: ✅🚀 **MVP COMPLETATO E DIMOSTRATO CON SUCCESSO!** 🚀✅
 **Status Estensione MVP (Fase 8)**: ✅🎯 **ESTENSIONE CROSS-WINDOW COMPLETATA!** 🎯✅ 
 **Status Stile Finestre Figlie**: ✅🎨 **STILE WEB 1.0 PRIMITIVO IMPLEMENTATO!** 🎨✅
-**Status Complessivo**: 🚀 **FASE DI EVOLUZIONE CORE ENGINE AVVIATA** 🚀
+**Status Definizione Architetturale Evoluta**: ✅🏛️ **ARCHITETTURA EVOLUTA DEFINITA E DOCUMENTI AGGIORNATI!** 🏛️✅
+**Status Complessivo**: 🚀 **FASE DI EVOLUZIONE CORE ENGINE (SECONDO NUOVA ARCHITETTURA) PRONTA PER L'AVVIO** 🚀
 
 ### 🌟 Funzionalità Chiave Implementate nell'Estensione (Fase 8):
 

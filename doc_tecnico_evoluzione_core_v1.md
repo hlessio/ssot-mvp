@@ -13,18 +13,19 @@ L'obiettivo è trasformare i componenti `_MVP` attuali in un'architettura più s
 ### 1.2. Obiettivi Primari del Macro Passo
 
 1. **Evoluzione dell'Entity Engine**: Da `EntityEngine_MVP` a un `EntityEngine` completo con lazy loading, integrazione schema avanzata e gestione del ciclo di vita estesa
-2. **Introduzione del Relation Engine**: Implementazione di un nuovo componente che gestisce le relazioni come entità di prima classe
+2. **Introduzione del Relation Engine**: Implementazione di un nuovo componente che gestisce le relazioni come entità di prima classe, inclusa la capacità di modellare attributi complessi come relazioni a "value-entities".
 3. **Potenziamento dell'AttributeSpace**: Miglioramenti nella gestione delle sottoscrizioni e propagazione dei cambiamenti
-4. **Evoluzione dello Schema Manager**: Da gestione in-memory a persistenza completa, gestione dinamica e versionamento degli schemi
+4. **Evoluzione dello Schema Manager**: Da gestione in-memory a persistenza completa, gestione dinamica (inclusa la "promozione" di attributi e la trasformazione in riferimenti), e versionamento degli schemi, per supportare una crescita organica della conoscenza.
 
 ### 1.3. Allineamento con la Visione Strategica SSOT (Rif. `full-ssot.md`)
 
 Questo macro passo implementa direttamente i seguenti principi chiave della visione SSOT:
 
-- **Entità e Relazioni come Fondamenta**: Realizzazione completa del concetto di relazioni come entità di prima classe (Sezione 2 di `full-ssot.md`)
+- **Entità e Relazioni come Fondamenta**: Realizzazione completa del concetto di relazioni come entità di prima classe, e introduzione di una granularità semantica più profonda dove attributi significativi possono essere modellati come entità referenziate (Sezione 2 di `full-ssot.md`)
 - **Reattività Pervasiva**: Miglioramento del sistema nervoso informativo per propagazione intelligente (Sezione 8.4 di `full-ssot.md`)
-- **Schema Evolution**: Implementazione della capacità degli schemi di evolversi dinamicamente (Sezione 5.1 di `full-ssot.md`)
+- **Schema Evolution**: Implementazione della capacità degli schemi di evolversi dinamicamente, inclusa la formalizzazione di attributi scoperti e la loro potenziale trasformazione in strutture relazionali più ricche (Sezione 5.1 di `full-ssot.md`)
 - **Persistenza Intelligente**: Fondamenta per la memorizzazione ottimizzata descritta nella Sezione 8.5
+- **Crescita Organica della Conoscenza**: Abilitare il sistema a partire da un nucleo definito e ad evolvere attraverso l'uso, formalizzando nuovi pattern informativi.
 
 ### 1.4. Principi di Progettazione Guida per l'Evoluzione
 
@@ -146,13 +147,132 @@ class EntityEngine {
     }
 
     // Lazy loading con auto-discovery
-    async getEntity(id, type = null) { /* implementazione */ }
+    async getEntity(id, type = null, options = { resolveReferences: false }) {
+        let entity = this.entities.get(id);
+        if (!entity) {
+            entity = await this.persistence.loadEntityById(id, type);
+            if (!entity) return null;
+            this.registerEntity(entity);
+        }
+
+        if (options.resolveReferences) {
+            await this.resolveEntityReferences(entity);
+        }
+        return entity;
+    }
     
     // Creazione con validazione schema
-    async createEntity(type, initialData) { /* implementazione */ }
+    async createEntity(type, initialData) {
+        const schema = this.schemaManager.getEntitySchema(type);
+        if (!schema && (this.schemaManager.getModeForEntityType(type) === 'strict')) { // Assumendo una funzione per ottenere la mode
+            throw new Error(`Entity type ${type} not defined in schema (strict mode).`);
+        }
+
+        const entity = new Entity(type, generateUniqueId());
+        if (schema) {
+            this.applySchemaDefaults(entity, schema);
+        }
+
+        for (const [key, value] of Object.entries(initialData)) {
+            await this.setEntityAttribute(entity.id, key, value, { isNewEntity: true, entityInstance: entity, schemaInstance: schema });
+        }
+        
+        await this.persistence.saveEntity(entity); // Salva dopo aver impostato tutti gli attributi iniziali
+        this.registerEntity(entity);
+        this.events.emit('entity.created', { entity });
+        return entity;
+    }
     
     // Aggiornamento con propagazione
-    async setEntityAttribute(entityId, attributeName, value) { /* implementazione */ }
+    async setEntityAttribute(entityId, attributeName, value, options = {}) {
+        const entity = options.entityInstance || await this.getEntity(entityId);
+        if (!entity) {
+            throw new Error(`Entity ${entityId} not found.`);
+        }
+
+        const schema = options.schemaInstance || this.schemaManager.getEntitySchema(entity.type);
+        const attributeSchema = schema ? schema.attributes.get(attributeName) : null;
+
+        if (!attributeSchema && schema && schema.mode === 'strict') {
+            throw new Error(`Attribute ${attributeName} not defined in schema for ${entity.type} (strict mode).`);
+        }
+
+        if (attributeSchema) {
+            const validation = attributeSchema.validate(value);
+            if (!validation.valid) {
+                throw new Error(`Validation failed for ${attributeName}: ${validation.error}`);
+            }
+
+            if (attributeSchema.type === 'reference') {
+                // Delega al RelationEngine la gestione del link
+                // 'value' qui dovrebbe essere l'ID dell'entità referenziata, o null per rimuovere il riferimento.
+                await this.relationEngine.manageReferenceAttributeLink(entityId, attributeSchema, value);
+                // L'entità sorgente è cambiata concettualmente, quindi emettiamo un evento.
+                // Potremmo voler memorizzare l'ID referenziato direttamente sull'entità per query semplici,
+                // ma la "verità" è nella relazione.
+                // Per ora, assumiamo che la lettura di questo attributo risolverà la relazione.
+            } else {
+                // Attributo letterale
+                entity.setAttribute(attributeName, value);
+                if (!options.isNewEntity) { // Non persistere ogni attributo singolarmente durante la creazione
+                    await this.persistence.updateEntityAttribute(entityId, attributeName, value);
+                }
+            }
+        } else { // Attributo ad-hoc in modalità flessibile
+            entity.setAttribute(attributeName, value);
+            if (!options.isNewEntity) {
+                await this.persistence.updateEntityAttribute(entityId, attributeName, value); // o una saveEntity completa
+            }
+            // Se in modalità flessibile e lo schemaManager "scopre" attributi, notificarlo qui.
+            if (schema && schema.mode === 'flexible') {
+                this.schemaManager.notifyAttributeDiscovery(entity.type, attributeName, this.determineAttributeType(value));
+            }
+        }
+
+        if (!options.isNewEntity) {
+            this.markEntityDirty(entityId);
+            this.attributeSpace.propagateChange(entityId, attributeName, value, entity.getAttribute(attributeName) /*old value potentially needed*/);
+            this.events.emit('entity.attribute.changed', { entityId, attributeName, newValue: value });
+        }
+    }
+
+    async resolveEntityReferences(entity) {
+        const schema = this.schemaManager.getEntitySchema(entity.type);
+        if (!schema) return;
+
+        entity.resolvedReferences = {}; // Contenitore per i dati referenziati
+
+        for (const [attrName, attrDef] of schema.attributes) {
+            if (attrDef.type === 'reference') {
+                const relatedEntities = await this.relationEngine.findRelations({
+                    source: entity.id,
+                    type: attrDef.relationTypeForReference,
+                    // limit: attrDef.cardinalityForReference.endsWith(':1') ? 1 : undefined
+                });
+                
+                if (relatedEntities && relatedEntities.length > 0) {
+                    if (attrDef.cardinalityForReference.endsWith(':1')) {
+                        const targetEntity = await this.getEntity(relatedEntities[0].targetEntityId, attrDef.referencesEntityType, { resolveReferences: false }); // Evita ricorsione infinita
+                        entity.resolvedReferences[attrName] = targetEntity ? targetEntity.attributes.get(attrDef.displayAttributeFromReferencedEntity) : null;
+                        // Opzionalmente, si potrebbe mettere l'ID direttamente in entity.attributes[attrName] per coerenza
+                        entity.attributes.set(attrName, relatedEntities[0].targetEntityId); 
+                    } else { // 1:N or N:M
+                        const targets = [];
+                        for (const rel of relatedEntities) {
+                            const targetEntity = await this.getEntity(rel.targetEntityId, attrDef.referencesEntityType, { resolveReferences: false });
+                            if (targetEntity) {
+                                targets.push({ id: targetEntity.id, displayValue: targetEntity.attributes.get(attrDef.displayAttributeFromReferencedEntity) });
+                            }
+                        }
+                        entity.resolvedReferences[attrName] = targets;
+                        entity.attributes.set(attrName, targets.map(t => t.id));
+                    }
+                } else {
+                    entity.attributes.set(attrName, null);
+                }
+            }
+        }
+    }
     
     // Gestione ciclo di vita
     markEntityDirty(entityId) { /* implementazione */ }
@@ -221,6 +341,9 @@ class RelationEngine {
     // Creazione relazione tipizzata
     async createRelation(type, sourceEntityId, targetEntityId, attributes = {}) {
         const schema = this.schemaManager.getRelationSchema(type);
+        if (!schema) {
+            throw new Error(`Relation type ${type} not defined in schema.`);
+        }
         this.validateRelationCreation(schema, sourceEntityId, targetEntityId, attributes);
         
         const relation = new Relation(type, sourceEntityId, targetEntityId);
@@ -235,6 +358,7 @@ class RelationEngine {
     // Query relazioni con pattern
     findRelations(pattern) {
         // pattern: { source: "Cliente.*", type: "HaOrdinato", target: "Prodotto.*" }
+        // Questa implementazione base può essere potenziata per query più complesse.
         return Array.from(this.relations.values())
             .filter(rel => this.matchesRelationPattern(rel, pattern));
     }
@@ -242,6 +366,35 @@ class RelationEngine {
     // Navigazione bidirezionale
     getRelatedEntities(entityId, relationType = null, direction = 'both') {
         // Implementazione navigazione efficiente
+    }
+
+    // Gestisce la creazione/aggiornamento/rimozione di una relazione che rappresenta un attributo di tipo "reference"
+    async manageReferenceAttributeLink(sourceEntityId, attributeSchema, targetValueEntityIdOrNull) {
+        const { relationTypeForReference, cardinalityForReference, referencesEntityType } = attributeSchema;
+
+        // Trova e rimuovi relazioni esistenti in base alla cardinalità
+        const existingRelations = await this.findRelations({
+            source: sourceEntityId,
+            type: relationTypeForReference,
+            // target: se targetValueEntityIdOrNull è specificato e vogliamo solo aggiornare quella specifica, altrimenti tutte le relazioni di quel tipo
+        });
+
+        for (const rel of existingRelations) {
+            // Per cardinalità N:1 o 1:1, rimuoviamo la vecchia relazione prima di crearne una nuova.
+            // Per N:M, questo passo potrebbe essere diverso (es. aggiungere e non sostituire, a meno che targetValueEntityIdOrNull indichi una rimozione specifica)
+            if (cardinalityForReference === 'N:1' || cardinalityForReference === '1:1') {
+                await this.deleteRelation(rel.id); 
+            }
+            // TODO: Gestire N:M e 1:N più specificamente se necessario qui.
+        }
+
+        if (targetValueEntityIdOrNull) {
+            // Verifica che targetValueEntityIdOrNull sia un ID valido per referencesEntityType (potrebbe essere fatto a monte o qui)
+            // await this.entityEngine.getEntity(targetValueEntityIdOrNull, referencesEntityType); // Throws se non esiste o tipo errato
+            
+            return this.createRelation(relationTypeForReference, sourceEntityId, targetValueEntityIdOrNull, {});
+        }
+        return null; // Nessuna nuova relazione creata se targetValueEntityIdOrNull è null (significa "rimuovi riferimento")
     }
 }
 
@@ -383,7 +536,8 @@ class AttributeSpace {
 **Gestione Dinamica**:
 - API per modificare schemi a runtime
 - Validazione di modifiche schema per compatibilità
-- Migrazione automatica di dati esistenti
+- Migrazione automatica di dati esistenti (ove possibile)
+- Supporto per la "promozione" di attributi ad-hoc a attributi formali, inclusa la trasformazione in riferimenti a "value-entities" con migrazione dati associata.
 
 **Versionamento Iniziale**:
 - Tracking delle modifiche agli schemi
@@ -440,9 +594,9 @@ class SchemaManager {
         const currentSchema = this.entitySchemas.get(entityType);
         const newSchema = await this.applyEvolution(currentSchema, evolution);
         
-        // Migrazione dati se necessaria
-        if (this.requiresDataMigration(evolution)) {
-            await this.migrateExistingEntities(entityType, currentSchema, newSchema);
+        // Migrazione dati se necessaria (es. promozione attributo a reference)
+        if (this.requiresDataMigration(evolution, currentSchema, newSchema)) {
+            await this.migrateExistingEntities(entityType, currentSchema, newSchema, evolution);
         }
         
         await this.persistence.updateEntitySchema(newSchema);
@@ -467,6 +621,7 @@ class EntitySchema {
         this.entityType = entityType;
         this.attributes = new Map(); // attributeName -> AttributeDefinition
         this.constraints = definition.constraints || [];
+        this.mode = definition.mode || "strict"; // "strict" or "flexible"
         this.version = definition.version || 1;
         this.created = Date.now();
         
@@ -479,7 +634,10 @@ class EntitySchema {
     validateAttribute(attributeName, value) {
         const attrDef = this.attributes.get(attributeName);
         if (!attrDef) {
-            return { valid: true, warning: "Attribute not in schema" };
+            if (this.mode === "flexible") {
+                return { valid: true, warning: "Attribute not in schema (flexible mode)" };
+            }
+            return { valid: false, error: `Attribute ${attributeName} not defined in schema for ${this.entityType}` };
         }
         
         return attrDef.validate(value);
@@ -565,12 +723,17 @@ async findRelationsByType(relationType)
 async findRelationsByEntity(entityId, relationType = null)
 async findRelationsByPattern(pattern)
 async getRelatedEntities(entityId, relationType, direction)
+
+// Nuove funzioni per supportare la risoluzione di riferimenti e popolamento UI
+async getReferencedEntityValue(entityId, attributeName) // Interna o per EntityEngine
+async getValueEntities(entityTypeForValues, displayAttribute) // Per popolare dropdowns
 ```
 
 **Modifiche alle Funzioni Esistenti**:
-- `createEntity()`: Integrazione con validazione schema
-- `updateEntityAttribute()`: Validazione tramite SchemaManager
-- Query functions: Supporto per lazy loading
+- `createEntity()`: Integrazione con validazione schema e gestione attributi di riferimento tramite EntityEngine/RelationEngine.
+- `updateEntityAttribute()`: Validazione tramite SchemaManager e gestione attributi di riferimento.
+- `loadEntityById()` (nuova, o evoluzione di `getEntityById` nel DAO): Deve poter caricare l'entità base. La risoluzione dei riferimenti avviene a un livello superiore (EntityEngine).
+- Query functions: Supporto per lazy loading.
 
 ### 4.2. Server API (`server.js`): Evoluzione degli Endpoint Esistenti e Nuovi Endpoint
 
@@ -609,10 +772,15 @@ GET    /api/relations/type/:relationType        // Relazioni per tipo
 GET    /api/entity/:entityId/relations          // Relazioni di un'entità
 POST   /api/relations/search                    // Query relazioni con pattern
 GET    /api/entity/:entityId/related            // Entità correlate
+
+// Endpoint per value-entities (per UI dropdowns, etc.)
+GET    /api/values/:entityTypeForValues         // Recupera tutte le istanze di un entityType usato come valore (es. stati, ruoli predefiniti)
 ```
 
 **Modifiche agli Endpoint Esistenti**:
-- Tutti gli endpoint di entità ora supportano validazione schema
+- Tutti gli endpoint di entità ora supportano validazione schema.
+- `PUT /api/entity/:entityId/attribute`: il payload `value` per un attributo di riferimento sarà l'ID dell'entità referenziata.
+- `GET /api/entity/:entityId`: potrebbe accettare un parametro `?resolveReferences=true` (o `?expand=attributeName`) per includere i dati delle "value-entities" referenziate.
 - WebSocket messages estesi per includere eventi di relazioni
 - Endpoint di ricerca potenziati con query relazionali
 
@@ -781,44 +949,59 @@ GET    /api/entity/:entityId/related            // Entità correlate
 **Task 3.1: EntityEngine Evolution**
 - Refactoring `EntityEngine_MVP` verso `EntityEngine`
 - Implementare lazy loading e schema integration
-- Integrazione con RelationEngine
+- Integrazione con RelationEngine per gestione attributi di tipo 'reference'
+- Implementare `resolveEntityReferences()` per popolare i dati degli attributi referenziati
 
 **Task 3.2: AttributeSpace Enhancement**
 - Evoluzione `AttributeSpace_MVP` verso `AttributeSpace`
 - Implementare pattern matching avanzato
 - Aggiungere batching e ottimizzazioni
-
-**Task 3.3: Integration Testing**
-- Test integrazione tra tutti i componenti core
-- Validazione propagazione end-to-end
-- Performance testing base
-
-**Task 3.4: Migration da MVP**
-- Script di migrazione dati MVP esistenti
-- Backward compatibility testing
 - Documentazione breaking changes
 
-### 6.4. Fase 4: API Complete e Testing End-to-End (Settimana 7)
+### 6.4. Fase 4: API Complete, Frontend Adaptation e Testing End-to-End (Settimane 7-8)
 
 **Task 4.1: API Finalization**
-- Completamento tutti gli endpoint nuovi/modificati
+- Completamento tutti gli endpoint nuovi/modificati, inclusi quelli per `resolveReferences` e `getValueEntities`
 - Documentazione API completa
 - Versioning API implementato
 
-**Task 4.2: Frontend Compatibility**
-- Test compatibilità con frontend MVP esistente
-- Aggiustamenti minimi per retrocompatibilità
-- Validazione scenari cross-window
+**Task 4.2: Frontend Adaptation (Moduli UI Dinamici - Primo Passo)**
+- Aggiornare `TabularModule.js` e `ContactCardModule.js` per:
+    - Richiedere e utilizzare le definizioni di schema (EntityTypeSchema) dal backend.
+    - Renderizzare dinamicamente i campi basati sullo schema ricevuto.
+    - Gestire input specifici per attributi di tipo 'reference' (es. dropdown popolati da `/api/values/:entityTypeForValues`).
+    - Inviare l'ID dell'entità referenziata quando si aggiorna un attributo di tipo 'reference'.
+    - Visualizzare l'attributo `displayAttributeFromReferencedEntity` per i riferimenti.
+- Adattare `app.js` e `app_module.js` per passare gli schemi ai moduli e gestire le chiamate API aggiuntive.
+- Test di compatibilità con frontend MVP esistente e validazione delle nuove funzionalità UI schema-driven.
 
-**Task 4.3: Sistema Testing**
-- Test completi degli scenari MVP originali
-- Validazione nuove funzionalità core
-- Performance benchmarking
+**Task 4.3: Sistema Testing (Backend e Frontend Integrati)**
+- Test completi degli scenari MVP originali con il frontend adattato.
+- Validazione nuove funzionalità core (gestione riferimenti, schema evolution base) end-to-end.
+- Performance benchmarking con UI.
 
 **Task 4.4: Documentation Update**
-- Aggiornamento `architettura_mvp.md`
-- Creazione documentazione nuove API
-- Guide di migrazione per sviluppatori
+- Aggiornamento `architettura_mvp.md` per riflettere il backend evoluto e le modifiche frontend.
+- Creazione documentazione nuove API (inclusi esempi di payload per attributi reference).
+- Guide di migrazione per sviluppatori (se applicabile).
+
+### 6.5. Fase 5: Schema Evolution - Gestione Avanzata e UI Admin (Settimane 9-10) (Opzionale per primo rilascio, ma importante per visione a lungo termine)
+
+**Task 5.1: SchemaManager - Funzionalità di Evoluzione Avanzata**
+- Implementare API per "proporre" e "approvare" modifiche di schema (aggiunta attributi, promozione a reference).
+- Sviluppare la logica di `migrateExistingEntities()` per la trasformazione di attributi stringa in riferimenti.
+- Implementare il versioning di base degli schemi.
+
+**Task 5.2: UI Admin per la Gestione degli Schemi (Prototipo)**
+- Creare un modulo frontend basilare per visualizzare gli schemi esistenti.
+- Permettere la definizione di nuovi EntityTypes e RelationTypes.
+- Interfaccia per aggiungere/modificare attributi, inclusa la specificazione di tipo "reference" e i metadati associati.
+- Bottone per avviare la "promozione" di un attributo (conferma manuale prima della migrazione).
+
+**Task 5.3: Test Migrazione Dati**
+- Creare scenari di test specifici per la migrazione di attributi da letterali a riferimenti.
+- Validare la correttezza dei dati post-migrazione.
+- Testare il rollback (se implementato).
 
 ## 7. Strategie di Test e Validazione
 
@@ -874,7 +1057,12 @@ describe('AttributeSpace', () => {
 **API Integration**:
 - Test end-to-end delle API REST complete
 - Test di propagazione WebSocket per entità e relazioni
-- Test di compatibilità frontend
+
+**Frontend Integration (Nuovo)**:
+- Test dei moduli UI dinamici con schemi variabili.
+- Test della corretta visualizzazione e gestione degli attributi di tipo "reference" (dropdown, autocomplete).
+- Test dell'aggiornamento degli attributi di riferimento e della corretta chiamata API al backend.
+- Test della reattività della UI ai cambiamenti di schema (se implementata la notifica live).
 
 ### 7.3. Scenari di Test Chiave
 
@@ -889,192 +1077,11 @@ describe('AttributeSpace', () => {
 1. Definire schema relazione "HaComeAgente"
 2. Creare entità Persona (cliente e agente)
 3. Creare relazione tipizzata con attributi
-4. Query navigazione relazioni
-5. Modificare attributi relazione e validare propagazione
+4. **Validazione Frontend**: Un modulo UI permette di visualizzare e creare/modificare queste relazioni e i loro attributi.
+5. Query navigazione relazioni, i risultati sono visibili e navigabili nella UI.
+6. Modificare attributi relazione e validare propagazione (sia al backend che ad altre viste UI).
 
-**Scenario 3: Compatibility**
+**Scenario 3: Compatibility (MVP Frontend con Nuovo Backend)**
 1. Test completo di scenari MVP originali
 2. Validazione che frontend MVP continua a funzionare
 3. Performance comparison con MVP baseline
-
-## 8. Rischi Potenziali Identificati e Relative Strategie di Mitigazione
-
-### 8.1. Complessità Architetturale e di Implementazione
-
-**Rischio**: L'architettura evoluta è significativamente più complessa dell'MVP
-
-**Mitigazioni**:
-- Implementazione iterativa con testing continuo ad ogni fase
-- Mantenimento di API semplici nonostante complessità interna
-- Documentazione dettagliata per ogni componente
-- Code review rigorosi per ogni fase
-
-### 8.2. Performance del Nuovo Core Engine
-
-**Rischio**: Overhead di performance dovuto a funzionalità avanzate
-
-**Mitigazioni**:
-- Benchmarking continuo vs MVP baseline
-- Implementazione lazy loading per ridurre memory footprint
-- Ottimizzazioni di query Neo4j specifiche
-- Profiling regolare e identificazione bottleneck
-
-### 8.3. Gestione della Transizione e Potenziale Impatto sull'MVP
-
-**Rischio**: Breaking changes che compromettono il funzionamento dell'MVP esistente
-
-**Mitigazioni**:
-- Strategia di retrocompatibilità definita e testata
-- Possibilità di rollback a versione MVP in caso di problemi critici
-- Feature flags per abilitare gradualmente nuove funzionalità
-- Testing estensivo di compatibility
-
-### 8.4. Complessità della Gestione degli Schemi
-
-**Rischio**: Schema evolution e migrazione dati possono introdurre inconsistenze
-
-**Mitigazioni**:
-- Validazione rigorosa delle evoluzioni schema prima dell'applicazione
-- Backup automatici prima di ogni migrazione
-- Rollback mechanisms per schema versions
-- Test estensivi su dataset di example prima di production
-
-## 9. Funzionalità Abilitate e Visione sui Prossimi Passi
-
-### 9.1. Casi d'Uso Chiave da `full-ssot.md` Direttamente Abilitati
-
-**Documenti Viventi che si "Drenano" (Sezione 6.3)**:
-Con RelationEngine e SchemaManager evoluti, sarà possibile:
-- Definire relazioni semantiche tra documenti ed entità
-- Creare binding automatici per aggiornamento contenuti
-- Implementare workflow che orchestrano la creazione di documenti auto-aggiornanti
-
-**Sistemi di Workflow Avanzati (Sezione 5.3)**:
-Le relazioni come entità di prima classe abilitano:
-- Workflow come grafi di relazioni tra task e risorse
-- Stati di workflow persistiti e tracciabili
-- Trigger automatici basati su cambiamenti di relazioni
-
-**Moduli Dinamici da JSON (Sezione 4)**:
-Lo SchemaManager evoluto prepara:
-- Validazione automatica di definizioni moduli contro schemi
-- Binding intelligente di moduli a tipi di entità
-- Generazione automatica di interfacce da schemi
-
-### 9.2. Funzionalità Immediatamente Realizzabili Post-Implementazione
-
-**Rich Relationship Management**:
-```javascript
-// Esempi realizzabili subito dopo implementazione
-const cliente = await entityEngine.getEntity('cliente_001');
-const agente = await entityEngine.getEntity('agente_mario');
-
-// Relazione ricca con attributi propri
-const contratto = await relationEngine.createRelation(
-    'HaComeAgente', 
-    cliente.id, 
-    agente.id, 
-    {
-        dataInizio: '2025-01-01',
-        tipoContratto: 'Esclusivo',
-        commissione: 15,
-        durataContratto: '12 mesi'
-    }
-);
-
-// Query navigazione
-const clientiDiMario = await relationEngine.getRelatedEntities(
-    agente.id, 
-    'HaComeAgente', 
-    'incoming'
-);
-
-// Modifica attributi relazione con propagazione
-await contratto.setAttribute('commissione', 17);
-// → Trigger automatico di notifiche, ricalcoli, etc.
-```
-
-**Schema-Driven Development**:
-```javascript
-// Definizione schema a runtime
-await schemaManager.defineEntitySchema('Progetto', {
-    attributes: {
-        titolo: { type: 'text', required: true },
-        budget: { type: 'currency', min: 0 },
-        stato: { 
-            type: 'select', 
-            options: ['draft', 'active', 'completed', 'cancelled'],
-            default: 'draft'
-        },
-        dataInizio: { type: 'date' },
-        dataFine: { type: 'date' }
-    },
-    constraints: ['dataFine > dataInizio']
-});
-
-// Il sistema ora valida automaticamente tutte le entità Progetto
-```
-
-### 9.3. Preparazione del Terreno per Future Estensioni Critiche
-
-**Integrazione LLM (Sezione 4)**:
-Il SchemaManager e RelationEngine preparano:
-- Context-aware LLM integration con schemi come prompt context
-- Generazione automatica di moduli via LLM basata su schemi esistenti
-- Query in linguaggio naturale convertite in navigazione relazioni
-
-**Blockchain Integration (Sezione 7)**:
-Le relazioni ricche abilitano:
-- Hashing e signing di relazioni critiche per immutabilità
-- Smart contracts che operano su relazioni SSOT
-- Audit trail blockchain-verified per evoluzioni schema
-
-**Web Components Avanzati**:
-Schema e relazioni preparano:
-- Generazione automatica di componenti da definizioni schema
-- Binding dichiarativo: `<entity-card schema="Cliente" entity-id="123">`
-- Componenti relazionali: `<relation-navigator from="cliente_001" relation-type="HaComeAgente">`
-
-### 9.4. Roadmap Strategica Post-Core Engine
-
-**Prossimo Macro Passo Suggerito**: Module System e Dynamic UI Generation
-- Implementazione del ModuleCompiler da `full-ssot.md` Sezione 4
-- Sistema di generazione automatica Web Components da JSON
-- Integration con SchemaManager per UI schema-driven
-
-**Macro Passi Successivi**:
-1. **Workflow Engine**: Sistema di orchestrazione basato su relazioni
-2. **LLM Integration**: Assistant per creazione schemi e query in linguaggio naturale  
-3. **Advanced UI**: Dashboard dinamici e embedding cross-window avanzato
-4. **Multi-tenant & Scale**: Preparazione per deployment distribuito
-
-## 10. Conclusioni e Prossimi Passi Immediati
-
-### 10.1. Sintesi dell'Evoluzione Proposta
-
-Questo macro passo rappresenta un'evoluzione significativa ma metodica dal MVP attuale verso un sistema SSOT più maturo e allineato con la visione di `full-ssot.md`. L'approccio iterativo e la focus sulla retrocompatibilità minimizzano i rischi mentre massimizzano il valore aggiunto.
-
-### 10.2. Benefici Attesi
-
-- **Foundation Solida**: Backend robusto per supportare funzionalità avanzate future
-- **API Ricche**: Capacità di modellazione e query significativamente potenziate  
-- **Performance**: Ottimizzazioni per gestire carichi maggiori
-- **Estensibilità**: Architettura preparata per integrazioni complesse
-
-### 10.3. Decisioni Immediate Richieste
-
-1. **Approvazione dell'Approccio**: Conferma che la direzione proposta è allineata con la visione
-2. **Prioritizzazione delle Fasi**: Eventuale riordinamento delle fasi di implementazione
-3. **Resource Allocation**: Definizione time commitment per le 7 settimane stimate
-4. **Decision Points**: Identificazione di punti di controllo per validare progress
-
-### 10.4. Setup per Fase 1
-
-Una volta approvato l'approccio, i primi passi operativi saranno:
-
-1. **Branch Strategy**: Creazione branch `core-engine-evolution` per sviluppo isolato
-2. **Test Data Setup**: Preparazione dataset di test per validare implementazione
-3. **Development Environment**: Setup ambiente per testing Neo4j schema evolution
-4. **Documentation Update**: Iniziare tracking progress in `context.md`
-
-Il successo di questo macro passo stabilirà le fondamenta per realizzare progressivamente la visione completa del SSOT Dinamico descritta in `full-ssot.md`, trasformando il PoC dell'MVP in un sistema di produzione realmente utile e scalabile.

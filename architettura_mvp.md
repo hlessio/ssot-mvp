@@ -4,6 +4,17 @@
 
 [Nota per l'LLM: Questo documento è un documento vivente che descrive l'architettura tecnica del MVP SSOT Dinamico. Aggiornalo man mano che vengono implementate nuove funzionalità, mantenendo traccia delle modifiche e delle evoluzioni del sistema.]
 
+**Importante Contesto Evolutivo:** Questo documento descrive l'architettura tecnica del *Minimum Viable Product (MVP)* iniziale per il progetto SSOT Dinamico. L'MVP si è concentrato sulla dimostrazione della propagazione bidirezionale e in tempo reale delle modifiche agli attributi tra moduli eterogenei, inclusa la sincronizzazione tra finestre del browser separate, con un focus sulla scoperta automatica degli attributi.
+
+Successivamente alla fase MVP, il sistema ha intrapreso un'importante evoluzione del suo Core Engine Backend e del Sistema di Gestione degli Schemi, come dettagliato nel documento tecnico: **`doc_tecnico_evoluzione_core_v1.md`**. Tale evoluzione introduce una gestione della conoscenza più organica e semanticamente ricca, con concetti quali:
+
+*   **Granularità Semantica Profonda**: Modellare attributi complessi come riferimenti a entità separate ("value-entities").
+*   **SchemaManager Evoluto**: Custode della semantica strutturale e organica, con supporto per la definizione esplicita di schemi (inclusi attributi di tipo "reference"), modalità flessibili, e processi di evoluzione dello schema (come la promozione di attributi).
+*   **RelationEngine Potenziato**: Per gestire relazioni tipizzate e i link derivanti da attributi di tipo "reference".
+*   **Moduli UI Schema-Aware**: Moduli frontend che si adattano dinamicamente agli schemi definiti.
+
+**Pertanto, per una comprensione dell'architettura attuale e delle funzionalità più avanzate del sistema SSOT Dinamico, si prega di fare riferimento primario a `doc_tecnico_evoluzione_core_v1.md`. Questo documento (`architettura_mvp.md`) rimane un riferimento storico per la fase MVP.**
+
 Questo documento descrive l'architettura tecnica e il funzionamento interno del *Minimum Viable Product (MVP)* per il progetto "Verso un'Unica Fonte di Verità Dinamica e Contestuale" (SSOT Dinamico). L'MVP si concentra sulla dimostrazione della propagazione bidirezionale e in tempo reale delle modifiche agli attributi tra moduli eterogenei, inclusa la sincronizzazione tra finestre del browser separate.
 
 [Istruzioni per l'LLM:
