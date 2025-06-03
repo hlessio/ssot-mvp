@@ -14,6 +14,7 @@ const AttributeSpace_MVP = require('./core/attributeSpace');
 // Import dei nuovi moduli evoluti
 const SchemaManager = require('./core/schemaManager_evolved');
 const RelationEngine = require('./core/relationEngine');
+const EntityEngine = require('./core/entityEngine_evolved');
 
 class EvolvedServer {
     constructor() {
@@ -23,19 +24,46 @@ class EvolvedServer {
         this.clients = new Set(); // Set di client WebSocket connessi
         
         // Inizializzazione dei moduli core
-        // Per ora manteniamo i moduli MVP esistenti per compatibilità
+        // Manteniamo i moduli MVP esistenti per compatibilità
         this.schemaManager_MVP = new SchemaManager_MVP();
         this.attributeSpace = new AttributeSpace_MVP();
-        this.entityEngine = new EntityEngine_MVP(neo4jDAO, this.schemaManager_MVP, this.attributeSpace);
+        this.entityEngine_MVP = new EntityEngine_MVP(neo4jDAO, this.schemaManager_MVP, this.attributeSpace);
         
-        // Inizializzazione del nuovo SchemaManager evoluto
+        // ✨ Inizializzazione dei moduli evoluti (Fase 3)
         this.schemaManager = new SchemaManager(neo4jDAO);
-        this.relationEngine = new RelationEngine(this.entityEngine, this.schemaManager, neo4jDAO);
+        this.relationEngine = new RelationEngine(this.entityEngine_MVP, this.schemaManager, neo4jDAO);
+        this.entityEngine = new EntityEngine(neo4jDAO, this.schemaManager, this.relationEngine, this.attributeSpace);
+        
+        // Flag per modalità evoluta (gradualmente attiveremo le nuove funzionalità)
+        this.enableEvolvedFeatures = true;
         
         this.setupMiddleware();
         this.setupWebSocket();
         this.setupRoutes();
         this.setupAttributeSpaceNotifications();
+    }
+
+    /**
+     * Inizializza i componenti evoluti
+     */
+    async initializeEvolvedComponents() {
+        try {
+            console.log('🚀 Inizializzazione componenti evoluti...');
+            
+            // Inizializza SchemaManager evoluto
+            await this.schemaManager.initialize();
+            console.log('✅ SchemaManager evoluto inizializzato');
+            
+            // Carica relazioni esistenti nel RelationEngine
+            await this.relationEngine.loadAllRelations();
+            console.log('✅ RelationEngine caricato con relazioni esistenti');
+            
+            console.log('🎯 Tutti i componenti evoluti inizializzati con successo');
+            
+        } catch (error) {
+            console.error('❌ Errore inizializzazione componenti evoluti:', error);
+            throw error;
+        }
     }
 
     setupMiddleware() {
@@ -63,7 +91,7 @@ class EvolvedServer {
             // Messaggio di benvenuto
             ws.send(JSON.stringify({
                 type: 'connection',
-                message: 'Connesso al server SSOT Dinamico Evoluto',
+                message: 'Connesso al server SSOT Dinamico Evoluto (Fase 3 - EntityEngine)',
                 timestamp: new Date().toISOString()
             }));
             
@@ -108,6 +136,197 @@ class EvolvedServer {
         });
 
         // ============================================
+        // ✨ ENDPOINT ENTITYENGINE EVOLUTO (Fase 3)
+        // ============================================
+
+        // GET /api/evolved/entities/:entityType - Recupera entità con features evolute
+        this.app.get('/api/evolved/entities/:entityType', async (req, res) => {
+            try {
+                const { entityType } = req.params;
+                const { includeReferences, referenceAttributes } = req.query;
+                
+                const options = {
+                    includeReferences: includeReferences === 'true',
+                    referenceAttributes: referenceAttributes ? referenceAttributes.split(',') : []
+                };
+                
+                const entities = await this.entityEngine.getAllEntities(entityType, options);
+                
+                res.json({
+                    success: true,
+                    data: entities,
+                    count: entities.length,
+                    engine: 'evolved'
+                });
+            } catch (error) {
+                console.error('❌ Errore recupero entità evoluto:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/evolved/entity/:entityId - Recupera entità singola con lazy loading
+        this.app.get('/api/evolved/entity/:entityId', async (req, res) => {
+            try {
+                const { entityId } = req.params;
+                const { includeReferences, referenceAttributes } = req.query;
+                
+                const options = {
+                    includeReferences: includeReferences === 'true',
+                    referenceAttributes: referenceAttributes ? referenceAttributes.split(',') : []
+                };
+                
+                const entity = await this.entityEngine.getEntity(entityId, options);
+                
+                if (!entity) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Entità non trovata'
+                    });
+                }
+                
+                res.json({
+                    success: true,
+                    data: entity,
+                    engine: 'evolved'
+                });
+            } catch (error) {
+                console.error('❌ Errore recupero entità singola evoluto:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // POST /api/evolved/entities - Crea entità con validazione schema avanzata
+        this.app.post('/api/evolved/entities', async (req, res) => {
+            try {
+                const { entityType, initialData = {}, options = {} } = req.body;
+                
+                if (!entityType) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'entityType è richiesto'
+                    });
+                }
+                
+                const newEntity = await this.entityEngine.createEntity(entityType, initialData, options);
+                
+                // Notifica via WebSocket per sincronizzazione real-time
+                this.broadcastMessage({
+                    type: 'entity-created',
+                    data: {
+                        entity: newEntity,
+                        entityType: entityType
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.status(201).json({
+                    success: true,
+                    data: newEntity,
+                    engine: 'evolved'
+                });
+            } catch (error) {
+                console.error('❌ Errore creazione entità evoluto:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // PUT /api/evolved/entity/:entityId/attribute - Aggiorna attributo con validazione avanzata
+        this.app.put('/api/evolved/entity/:entityId/attribute', async (req, res) => {
+            try {
+                const { entityId } = req.params;
+                const { attributeName, value, options = {} } = req.body;
+                
+                if (!attributeName) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'attributeName è richiesto'
+                    });
+                }
+                
+                await this.entityEngine.setEntityAttribute(entityId, attributeName, value, options);
+                
+                // Notifica via WebSocket
+                this.broadcastMessage({
+                    type: 'attribute-updated',
+                    data: {
+                        entityId,
+                        attributeName,
+                        newValue: value
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.json({
+                    success: true,
+                    message: `Attributo ${attributeName} aggiornato`,
+                    engine: 'evolved'
+                });
+            } catch (error) {
+                console.error('❌ Errore aggiornamento attributo evoluto:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/evolved/entity/:entityId/references - Risolve reference attributes
+        this.app.get('/api/evolved/entity/:entityId/references', async (req, res) => {
+            try {
+                const { entityId } = req.params;
+                const { attributes } = req.query;
+                
+                const attributeNames = attributes ? attributes.split(',') : [];
+                const resolvedReferences = await this.entityEngine.resolveEntityReferences(entityId, attributeNames);
+                
+                res.json({
+                    success: true,
+                    data: resolvedReferences,
+                    entityId: entityId,
+                    engine: 'evolved'
+                });
+            } catch (error) {
+                console.error('❌ Errore risoluzione reference:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/evolved/stats - Statistiche EntityEngine evoluto
+        this.app.get('/api/evolved/stats', async (req, res) => {
+            try {
+                const stats = {
+                    entityEngine: this.entityEngine.getStats(),
+                    relationEngine: this.relationEngine.getRelationStats(),
+                    schemaManager: this.schemaManager.getSchemaStats()
+                };
+                
+                res.json({
+                    success: true,
+                    data: stats,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                console.error('❌ Errore recupero statistiche:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // ============================================
         // ENDPOINT ESISTENTI MVP (per compatibilità)
         // ============================================
 
@@ -115,11 +334,20 @@ class EvolvedServer {
         this.app.get('/api/entities/:entityType', async (req, res) => {
             try {
                 const { entityType } = req.params;
-                const entities = await this.entityEngine.getAllEntities(entityType);
+                
+                // Usa EntityEngine evoluto se abilitato, altrimenti MVP
+                let entities;
+                if (this.enableEvolvedFeatures) {
+                    entities = await this.entityEngine.getAllEntities(entityType);
+                } else {
+                    entities = await this.entityEngine_MVP.getAllEntities(entityType);
+                }
+                
                 res.json({
                     success: true,
                     data: entities,
-                    count: entities.length
+                    count: entities.length,
+                    engine: this.enableEvolvedFeatures ? 'evolved' : 'mvp'
                 });
             } catch (error) {
                 console.error('Errore nel recupero entità:', error);
@@ -134,7 +362,14 @@ class EvolvedServer {
         this.app.get('/api/entity/:entityId', async (req, res) => {
             try {
                 const { entityId } = req.params;
-                const entity = await this.entityEngine.getEntity(entityId);
+                
+                // Usa EntityEngine evoluto se abilitato
+                let entity;
+                if (this.enableEvolvedFeatures) {
+                    entity = await this.entityEngine.getEntity(entityId);
+                } else {
+                    entity = await this.entityEngine_MVP.getEntity(entityId);
+                }
                 
                 if (!entity) {
                     return res.status(404).json({
@@ -145,7 +380,8 @@ class EvolvedServer {
                 
                 res.json({
                     success: true,
-                    data: entity
+                    data: entity,
+                    engine: this.enableEvolvedFeatures ? 'evolved' : 'mvp'
                 });
             } catch (error) {
                 console.error('Errore nel recupero entità:', error);
@@ -168,11 +404,18 @@ class EvolvedServer {
                     });
                 }
                 
-                const newEntity = await this.entityEngine.createEntity(entityType, initialData);
+                // Usa EntityEngine evoluto se abilitato
+                let newEntity;
+                if (this.enableEvolvedFeatures) {
+                    newEntity = await this.entityEngine.createEntity(entityType, initialData);
+                } else {
+                    newEntity = await this.entityEngine_MVP.createEntity(entityType, initialData);
+                }
                 
                 res.status(201).json({
                     success: true,
-                    data: newEntity
+                    data: newEntity,
+                    engine: this.enableEvolvedFeatures ? 'evolved' : 'mvp'
                 });
             } catch (error) {
                 console.error('Errore nella creazione entità:', error);
@@ -196,11 +439,17 @@ class EvolvedServer {
                     });
                 }
                 
-                await this.entityEngine.setEntityAttribute(entityId, attributeName, value);
+                // Usa EntityEngine evoluto se abilitato
+                if (this.enableEvolvedFeatures) {
+                    await this.entityEngine.setEntityAttribute(entityId, attributeName, value);
+                } else {
+                    await this.entityEngine_MVP.setEntityAttribute(entityId, attributeName, value);
+                }
                 
                 res.json({
                     success: true,
-                    message: 'Attributo aggiornato con successo'
+                    message: `Attributo ${attributeName} aggiornato`,
+                    engine: this.enableEvolvedFeatures ? 'evolved' : 'mvp'
                 });
             } catch (error) {
                 console.error('Errore nell\'aggiornamento attributo:', error);
@@ -211,15 +460,16 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/schema/:entityType/attributes - Ottiene tutti gli attributi di un tipo di entità (MVP)
+        // GET /api/schema/:entityType/attributes - Recupera attributi di un tipo (MVP)
         this.app.get('/api/schema/:entityType/attributes', async (req, res) => {
             try {
                 const { entityType } = req.params;
-                const attributes = this.schemaManager_MVP.getAttributesForType(entityType) || [];
+                const attributes = this.schemaManager_MVP.getAttributesForType(entityType);
                 
                 res.json({
                     success: true,
-                    data: attributes
+                    data: attributes,
+                    engine: 'mvp'
                 });
             } catch (error) {
                 console.error('Errore nel recupero attributi schema:', error);
@@ -231,25 +481,33 @@ class EvolvedServer {
         });
 
         // ============================================
-        // NUOVI ENDPOINT SCHEMI EVOLUTI
+        // ENDPOINT SCHEMA EVOLUTI (Fase 1)
         // ============================================
 
-        // Entity Schemas
-        // POST /api/schema/entity/:entityType - Definisce nuovo schema entità
+        // POST /api/schema/entity/:entityType - Crea nuovo schema entità
         this.app.post('/api/schema/entity/:entityType', async (req, res) => {
             try {
                 const { entityType } = req.params;
-                const schemaDefinition = req.body;
+                const { schemaDefinition } = req.body;
                 
                 const schema = await this.schemaManager.defineEntitySchema(entityType, schemaDefinition);
                 
+                // Notifica evoluzione schema via WebSocket
+                this.broadcastMessage({
+                    type: 'schema-created',
+                    data: {
+                        entityType: entityType,
+                        schema: schema
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
                 res.status(201).json({
                     success: true,
-                    data: schema.toJSON(),
-                    message: `Schema entità ${entityType} definito con successo`
+                    data: schema
                 });
             } catch (error) {
-                console.error(`Errore definizione schema entità ${req.params.entityType}:`, error);
+                console.error('❌ Errore creazione schema entità:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -272,10 +530,10 @@ class EvolvedServer {
                 
                 res.json({
                     success: true,
-                    data: schema.toJSON()
+                    data: schema
                 });
             } catch (error) {
-                console.error(`Errore recupero schema entità ${req.params.entityType}:`, error);
+                console.error('❌ Errore recupero schema entità:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -283,21 +541,31 @@ class EvolvedServer {
             }
         });
 
-        // PUT /api/schema/entity/:entityType - Aggiorna schema entità
+        // PUT /api/schema/entity/:entityType - Evolve schema entità (additive-only)
         this.app.put('/api/schema/entity/:entityType', async (req, res) => {
             try {
                 const { entityType } = req.params;
-                const evolution = req.body;
+                const { evolution } = req.body;
                 
                 const updatedSchema = await this.schemaManager.evolveSchema(entityType, evolution);
                 
+                // Notifica evoluzione schema via WebSocket
+                this.broadcastMessage({
+                    type: 'schema-evolved',
+                    data: {
+                        entityType: entityType,
+                        evolution: evolution,
+                        schema: updatedSchema
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
                 res.json({
                     success: true,
-                    data: updatedSchema.toJSON(),
-                    message: `Schema entità ${entityType} aggiornato con successo`
+                    data: updatedSchema
                 });
             } catch (error) {
-                console.error(`Errore aggiornamento schema entità ${req.params.entityType}:`, error);
+                console.error('❌ Errore evoluzione schema:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -309,14 +577,10 @@ class EvolvedServer {
         this.app.get('/api/schema/entities', async (req, res) => {
             try {
                 const entityTypes = this.schemaManager.getAllEntityTypes();
-                const schemas = [];
-                
-                for (const entityType of entityTypes) {
-                    const schema = this.schemaManager.getEntitySchema(entityType);
-                    if (schema) {
-                        schemas.push(schema.toJSON());
-                    }
-                }
+                const schemas = entityTypes.map(entityType => ({
+                    entityType,
+                    schema: this.schemaManager.getEntitySchema(entityType)
+                }));
                 
                 res.json({
                     success: true,
@@ -324,7 +588,7 @@ class EvolvedServer {
                     count: schemas.length
                 });
             } catch (error) {
-                console.error('Errore recupero schemi entità:', error);
+                console.error('❌ Errore lista schemi entità:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -332,84 +596,11 @@ class EvolvedServer {
             }
         });
 
-        // Relation Schemas
-        // POST /api/schema/relation/:relationType - Definisce nuovo schema relazione
-        this.app.post('/api/schema/relation/:relationType', async (req, res) => {
-            try {
-                const { relationType } = req.params;
-                const schemaDefinition = req.body;
-                
-                const schema = await this.schemaManager.defineRelationSchema(relationType, schemaDefinition);
-                
-                res.status(201).json({
-                    success: true,
-                    data: schema.toJSON(),
-                    message: `Schema relazione ${relationType} definito con successo`
-                });
-            } catch (error) {
-                console.error(`Errore definizione schema relazione ${req.params.relationType}:`, error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
+        // ============================================
+        // ENDPOINT RELAZIONI (Fase 2)
+        // ============================================
 
-        // GET /api/schema/relation/:relationType - Recupera schema relazione
-        this.app.get('/api/schema/relation/:relationType', async (req, res) => {
-            try {
-                const { relationType } = req.params;
-                const schema = this.schemaManager.getRelationSchema(relationType);
-                
-                if (!schema) {
-                    return res.status(404).json({
-                        success: false,
-                        error: `Schema non trovato per il tipo di relazione ${relationType}`
-                    });
-                }
-                
-                res.json({
-                    success: true,
-                    data: schema.toJSON()
-                });
-            } catch (error) {
-                console.error(`Errore recupero schema relazione ${req.params.relationType}:`, error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
-
-        // GET /api/schema/relations - Lista tutti gli schemi relazione
-        this.app.get('/api/schema/relations', async (req, res) => {
-            try {
-                const relationTypes = this.schemaManager.getAllRelationTypes();
-                const schemas = [];
-                
-                for (const relationType of relationTypes) {
-                    const schema = this.schemaManager.getRelationSchema(relationType);
-                    if (schema) {
-                        schemas.push(schema.toJSON());
-                    }
-                }
-                
-                res.json({
-                    success: true,
-                    data: schemas,
-                    count: schemas.length
-                });
-            } catch (error) {
-                console.error('Errore recupero schemi relazione:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
-
-        // ✨ NUOVI ENDPOINT RELATION ENGINE
-        // POST /api/relations - Crea una nuova relazione
+        // POST /api/relations - Crea una nuova relazione tipizzata
         this.app.post('/api/relations', async (req, res) => {
             try {
                 const { relationType, sourceEntityId, targetEntityId, attributes = {} } = req.body;
@@ -428,7 +619,7 @@ class EvolvedServer {
                     attributes
                 );
                 
-                // Notifica WebSocket per sincronizzazione real-time
+                // Notifica creazione relazione via WebSocket
                 this.broadcastMessage({
                     type: 'relation-created',
                     data: relation,
@@ -437,11 +628,10 @@ class EvolvedServer {
                 
                 res.status(201).json({
                     success: true,
-                    data: relation,
-                    message: `Relazione ${relationType} creata con successo`
+                    data: relation
                 });
             } catch (error) {
-                console.error('Errore creazione relazione:', error);
+                console.error('❌ Errore creazione relazione:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -452,20 +642,14 @@ class EvolvedServer {
         // GET /api/relations - Trova relazioni basate su pattern
         this.app.get('/api/relations', async (req, res) => {
             try {
-                const {
-                    sourceEntityId,
-                    targetEntityId,
-                    relationType,
-                    sourceEntityType,
-                    targetEntityType
-                } = req.query;
-                
                 const pattern = {};
-                if (sourceEntityId) pattern.sourceEntityId = sourceEntityId;
-                if (targetEntityId) pattern.targetEntityId = targetEntityId;
-                if (relationType) pattern.relationType = relationType;
-                if (sourceEntityType) pattern.sourceEntityType = sourceEntityType;
-                if (targetEntityType) pattern.targetEntityType = targetEntityType;
+                
+                // Costruisci pattern dai query parameters
+                if (req.query.sourceEntityId) pattern.sourceEntityId = req.query.sourceEntityId;
+                if (req.query.targetEntityId) pattern.targetEntityId = req.query.targetEntityId;
+                if (req.query.relationType) pattern.relationType = req.query.relationType;
+                if (req.query.sourceEntityType) pattern.sourceEntityType = req.query.sourceEntityType;
+                if (req.query.targetEntityType) pattern.targetEntityType = req.query.targetEntityType;
                 
                 const relations = await this.relationEngine.findRelations(pattern);
                 
@@ -476,7 +660,7 @@ class EvolvedServer {
                     pattern: pattern
                 });
             } catch (error) {
-                console.error('Errore ricerca relazioni:', error);
+                console.error('❌ Errore ricerca relazioni:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -484,7 +668,25 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/relations/:relationId - Recupera relazione specifica
+        // GET /api/relations/stats - Recupera statistiche sulle relazioni
+        this.app.get('/api/relations/stats', async (req, res) => {
+            try {
+                const stats = this.relationEngine.getRelationStats();
+                
+                res.json({
+                    success: true,
+                    data: stats
+                });
+            } catch (error) {
+                console.error('❌ Errore statistiche relazioni:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/relations/:relationId - Recupera una relazione specifica
         this.app.get('/api/relations/:relationId', async (req, res) => {
             try {
                 const { relationId } = req.params;
@@ -495,7 +697,7 @@ class EvolvedServer {
                 if (!relation) {
                     return res.status(404).json({
                         success: false,
-                        error: `Relazione non trovata: ${relationId}`
+                        error: 'Relazione non trovata'
                     });
                 }
                 
@@ -504,7 +706,7 @@ class EvolvedServer {
                     data: relation
                 });
             } catch (error) {
-                console.error(`Errore recupero relazione ${req.params.relationId}:`, error);
+                console.error('❌ Errore recupero relazione:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -512,35 +714,30 @@ class EvolvedServer {
             }
         });
 
-        // PUT /api/relations/:relationId - Aggiorna attributi relazione
+        // PUT /api/relations/:relationId - Aggiorna attributi di una relazione
         this.app.put('/api/relations/:relationId', async (req, res) => {
             try {
                 const { relationId } = req.params;
                 const { attributes } = req.body;
                 
-                if (!attributes) {
-                    return res.status(400).json({
-                        success: false,
-                        error: 'attributes è richiesto per aggiornamento relazione'
-                    });
-                }
+                await this.relationEngine.updateRelationAttributes(relationId, attributes);
                 
-                const updatedRelation = await this.relationEngine.updateRelationAttributes(relationId, attributes);
-                
-                // Notifica WebSocket per sincronizzazione real-time
+                // Notifica aggiornamento relazione via WebSocket
                 this.broadcastMessage({
                     type: 'relation-updated',
-                    data: updatedRelation,
+                    data: {
+                        relationId: relationId,
+                        attributes: attributes
+                    },
                     timestamp: new Date().toISOString()
                 });
                 
                 res.json({
                     success: true,
-                    data: updatedRelation,
-                    message: `Relazione ${relationId} aggiornata con successo`
+                    message: 'Relazione aggiornata con successo'
                 });
             } catch (error) {
-                console.error(`Errore aggiornamento relazione ${req.params.relationId}:`, error);
+                console.error('❌ Errore aggiornamento relazione:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -548,33 +745,28 @@ class EvolvedServer {
             }
         });
 
-        // DELETE /api/relations/:relationId - Elimina relazione
+        // DELETE /api/relations/:relationId - Elimina una relazione
         this.app.delete('/api/relations/:relationId', async (req, res) => {
             try {
                 const { relationId } = req.params;
                 
-                const success = await this.relationEngine.deleteRelation(relationId);
+                await this.relationEngine.deleteRelation(relationId);
                 
-                if (success) {
-                    // Notifica WebSocket per sincronizzazione real-time
-                    this.broadcastMessage({
-                        type: 'relation-deleted',
-                        data: { relationId },
-                        timestamp: new Date().toISOString()
-                    });
-                    
-                    res.json({
-                        success: true,
-                        message: `Relazione ${relationId} eliminata con successo`
-                    });
-                } else {
-                    res.status(404).json({
-                        success: false,
-                        error: `Relazione non trovata: ${relationId}`
-                    });
-                }
+                // Notifica eliminazione relazione via WebSocket
+                this.broadcastMessage({
+                    type: 'relation-deleted',
+                    data: {
+                        relationId: relationId
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.json({
+                    success: true,
+                    message: 'Relazione eliminata con successo'
+                });
             } catch (error) {
-                console.error(`Errore eliminazione relazione ${req.params.relationId}:`, error);
+                console.error('❌ Errore eliminazione relazione:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -586,72 +778,32 @@ class EvolvedServer {
         this.app.get('/api/entities/:entityId/relations', async (req, res) => {
             try {
                 const { entityId } = req.params;
-                const { relationType, direction = 'both' } = req.query;
+                const { relationType, direction } = req.query;
                 
                 const relatedEntities = await this.relationEngine.getRelatedEntities(
                     entityId, 
-                    relationType, 
-                    direction
+                    relationType || null, 
+                    direction || 'both'
                 );
                 
                 res.json({
                     success: true,
                     data: relatedEntities,
                     count: relatedEntities.length,
-                    entityId: entityId,
-                    filters: { relationType, direction }
+                    entityId: entityId
                 });
             } catch (error) {
-                console.error(`Errore recupero entità correlate per ${req.params.entityId}:`, error);
+                console.error('❌ Errore recupero entità correlate:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
                 });
             }
-        });
-
-        // GET /api/relations/stats - Statistiche relazioni
-        this.app.get('/api/relations/stats', async (req, res) => {
-            try {
-                const stats = this.relationEngine.getRelationStats();
-                
-                res.json({
-                    success: true,
-                    data: stats,
-                    timestamp: new Date().toISOString()
-                });
-            } catch (error) {
-                console.error('Errore recupero statistiche relazioni:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
-
-        // Endpoint di health check
-        this.app.get('/api/health', (req, res) => {
-            res.json({
-                success: true,
-                message: 'Server SSOT Dinamico Evoluto attivo',
-                timestamp: new Date().toISOString(),
-                schemaManager: {
-                    initialized: this.schemaManager.isInitialized,
-                    entityTypes: this.schemaManager.getAllEntityTypes().length,
-                    relationTypes: this.schemaManager.getAllRelationTypes().length
-                },
-                relationEngine: {
-                    totalRelations: this.relationEngine.getRelationStats().totalRelations,
-                    entitiesWithRelations: this.relationEngine.getRelationStats().entitiesWithRelations
-                }
-            });
         });
     }
 
-
     /**
      * Invia un messaggio a tutti i client WebSocket connessi
-     * @param {object} message - Il messaggio da inviare
      */
     broadcastMessage(message) {
         const messageString = JSON.stringify(message);
@@ -660,59 +812,48 @@ class EvolvedServer {
                 client.send(messageString);
             }
         });
-        console.log(`📡 Messaggio broadcast inviato a ${this.clients.size} client:`, message.type);
     }
 
+    /**
+     * Avvia il server
+     */
     async start(port = 3000) {
         try {
-            // Connetti a Neo4j prima di avviare il server
-            await neo4jConnector.connect();
-            console.log('✅ Connessione a Neo4j stabilita');
+            // Prima inizializza i componenti evoluti
+            await this.initializeEvolvedComponents();
             
-            // Inizializza il SchemaManager evoluto
-            await this.schemaManager.initialize();
-            console.log('✅ SchemaManager evoluto inizializzato');
-            
-            // ✨ Inizializza il RelationEngine
-            await this.relationEngine.loadAllRelations();
-            console.log('✅ RelationEngine inizializzato');
-            
-            // Avvia il server
-            this.server.listen(port, () => {
-                console.log(`🚀 Server SSOT Dinamico Evoluto in esecuzione su http://localhost:${port}`);
-                console.log(`📡 WebSocket server attivo`);
-                console.log(`📊 Dashboard disponibile su http://localhost:${port}`);
-                console.log(`🔧 Endpoint schemi disponibili su /api/schema/*`);
-                console.log(`🔗 Endpoint relazioni disponibili su /api/relations/*`);
+            // Poi avvia il server
+            return new Promise((resolve, reject) => {
+                this.server.listen(port, (err) => {
+                    if (err) {
+                        console.error('❌ Errore avvio server:', err);
+                        reject(err);
+                    } else {
+                        console.log(`🚀 Server SSOT Dinamico Evoluto (Fase 3) avviato su porta ${port}`);
+                        console.log(`📱 Dashboard: http://localhost:${port}/`);
+                        console.log(`🔌 WebSocket: ws://localhost:${port}/`);
+                        console.log(`🧠 Componenti attivi: EntityEngine Evoluto, RelationEngine, SchemaManager Evoluto`);
+                        resolve();
+                    }
+                });
             });
         } catch (error) {
-            console.error('❌ Errore nell\'avvio del server:', error);
-            process.exit(1);
+            console.error('❌ Errore durante avvio server:', error);
+            throw error;
         }
     }
 
+    /**
+     * Ferma il server
+     */
     async stop() {
-        try {
-            await neo4jConnector.close();
-            this.server.close();
-            console.log('Server fermato');
-        } catch (error) {
-            console.error('Errore nella chiusura del server:', error);
-        }
+        return new Promise((resolve) => {
+            this.server.close(() => {
+                console.log('🛑 Server arrestato');
+                resolve();
+            });
+        });
     }
-}
-
-// Se questo file viene eseguito direttamente, avvia il server
-if (require.main === module) {
-    const server = new EvolvedServer();
-    server.start(3000);
-    
-    // Gestione graceful shutdown
-    process.on('SIGINT', async () => {
-        console.log('\nRicevuto SIGINT, chiusura del server...');
-        await server.stop();
-        process.exit(0);
-    });
 }
 
 module.exports = EvolvedServer; 

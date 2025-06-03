@@ -212,7 +212,7 @@ class Neo4jDAO {
     async saveEntitySchema(schema) {
         const now = new Date().toISOString();
         
-        // Prima creiamo il nodo dello schema
+        // Prima creiamo il nodo dello schema in una transazione separata
         const schemaId = `schema_${schema.entityType}`;
         const cypher = `
             MERGE (s:SchemaEntityType {entityType: $entityType})
@@ -244,9 +244,30 @@ class Neo4jDAO {
             
             const savedSchema = result.records[0].get('s').properties;
             
-            // Ora salviamo gli attributi
-            for (const [attrName, attrDef] of schema.attributes || new Map()) {
-                await this.saveAttributeDefinition(schemaId, attrName, attrDef);
+            // Gestisci attributi sia come Object che come Map (correzione bug)
+            let attributesToSave = [];
+            if (schema.attributes) {
+                if (schema.attributes instanceof Map) {
+                    attributesToSave = Array.from(schema.attributes.entries());
+                } else if (typeof schema.attributes === 'object') {
+                    attributesToSave = Object.entries(schema.attributes);
+                }
+            }
+            
+            console.log(`💾 Salvataggio ${attributesToSave.length} attributi per schema ${schema.entityType}`);
+            
+            // SOLUZIONE MEMORIA: Salva attributi in transazioni separate con delay
+            for (const [attrName, attrDef] of attributesToSave) {
+                try {
+                    await this.saveAttributeDefinitionSeparateTransaction(schemaId, attrName, attrDef);
+                    
+                    // Delay più lungo per liberare completamente la memoria
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    
+                } catch (attrError) {
+                    console.warn(`⚠️ Errore salvando attributo ${attrName}:`, attrError.message);
+                    // Continua con gli altri attributi invece di fallire completamente
+                }
             }
             
             console.log('✅ Schema entità salvato:', savedSchema);
@@ -255,6 +276,115 @@ class Neo4jDAO {
         } catch (error) {
             console.error('❌ Errore saveEntitySchema:', error.message);
             throw error;
+        }
+    }
+
+    /**
+     * Salva un singolo attributo in una transazione separata (ottimizzazione memoria)
+     * @param {string} schemaId - ID dello schema
+     * @param {string} attributeName - Nome dell'attributo  
+     * @param {object} attributeDefinition - Definizione dell'attributo
+     * @returns {Promise<object>} L'attributo salvato
+     */
+    async saveAttributeDefinitionSeparateTransaction(schemaId, attributeName, attributeDefinition) {
+        // Query semplificata - solo le proprietà base sempre presenti
+        const cypher = `
+            MATCH (s) WHERE s.schemaId = $schemaId
+            MERGE (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition {name: $name, schemaId: $schemaId})
+            ON CREATE SET 
+                a.type = $type,
+                a.required = $required,
+                a.description = $description
+            RETURN a
+        `;
+        
+        const parameters = {
+            schemaId: schemaId,
+            name: attributeName,
+            type: attributeDefinition.type || 'string',
+            required: attributeDefinition.required || false,
+            description: attributeDefinition.description || ''
+        };
+        
+        try {
+            // Prima transazione: proprietà base
+            const result = await this.connector.executeQuery(cypher, parameters);
+            
+            if (result.records.length === 0) {
+                throw new Error('Errore durante il salvataggio attributo base');
+            }
+            
+            // Seconda transazione: proprietà opzionali (se esistono)
+            await this.updateAttributeOptionalProperties(schemaId, attributeName, attributeDefinition);
+            
+            const saved = result.records[0].get('a').properties;
+            console.log(`✅ Attributo ${attributeName} salvato per schema ${schemaId}`);
+            return saved;
+            
+        } catch (error) {
+            console.error('❌ Errore saveAttributeDefinitionSeparateTransaction:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Aggiorna le proprietà opzionali di un attributo in transazione separata
+     * @param {string} schemaId - ID dello schema
+     * @param {string} attributeName - Nome dell'attributo
+     * @param {object} attributeDefinition - Definizione dell'attributo
+     */
+    async updateAttributeOptionalProperties(schemaId, attributeName, attributeDefinition) {
+        const setClauses = [];
+        const parameters = { schemaId, name: attributeName };
+        
+        // Aggiungi solo proprietà che hanno valori reali
+        if (attributeDefinition.defaultValue !== undefined && attributeDefinition.defaultValue !== null) {
+            setClauses.push('a.defaultValue = $defaultValue');
+            parameters.defaultValue = attributeDefinition.defaultValue;
+        }
+        
+        if (attributeDefinition.validationRules && attributeDefinition.validationRules.length > 0) {
+            setClauses.push('a.validationRules = $validationRules');
+            parameters.validationRules = JSON.stringify(attributeDefinition.validationRules);
+        }
+        
+        if (attributeDefinition.referencesEntityType) {
+            setClauses.push('a.referencesEntityType = $referencesEntityType');
+            parameters.referencesEntityType = attributeDefinition.referencesEntityType;
+        }
+        
+        if (attributeDefinition.relationTypeForReference) {
+            setClauses.push('a.relationTypeForReference = $relationTypeForReference'); 
+            parameters.relationTypeForReference = attributeDefinition.relationTypeForReference;
+        }
+        
+        if (attributeDefinition.displayAttributeFromReferencedEntity) {
+            setClauses.push('a.displayAttributeFromReferencedEntity = $displayAttributeFromReferencedEntity');
+            parameters.displayAttributeFromReferencedEntity = attributeDefinition.displayAttributeFromReferencedEntity;
+        }
+        
+        if (attributeDefinition.cardinalityForReference) {
+            setClauses.push('a.cardinalityForReference = $cardinalityForReference');
+            parameters.cardinalityForReference = attributeDefinition.cardinalityForReference;
+        }
+        
+        // Se non ci sono proprietà opzionali, skip
+        if (setClauses.length === 0) {
+            return;
+        }
+        
+        const cypher = `
+            MATCH (a:AttributeDefinition {name: $name, schemaId: $schemaId})
+            SET ${setClauses.join(', ')}
+            RETURN a
+        `;
+        
+        try {
+            await this.connector.executeQuery(cypher, parameters);
+            console.log(`   📝 Proprietà opzionali aggiornate per ${attributeName}`);
+        } catch (error) {
+            console.warn(`⚠️ Errore aggiornamento proprietà opzionali ${attributeName}:`, error.message);
+            // Non fallire per proprietà opzionali
         }
     }
 
@@ -654,41 +784,41 @@ class Neo4jDAO {
      * @returns {Promise<object>} La definizione salvata
      */
     async saveAttributeDefinition(schemaId, attributeName, attributeDefinition, forceCreate = false) {
-        const operation = forceCreate ? 'CREATE' : 'MERGE';
+        // Usa il nuovo metodo ottimizzato per memoria
+        if (!forceCreate) {
+            return await this.saveAttributeDefinitionSeparateTransaction(schemaId, attributeName, attributeDefinition);
+        }
+        
+        // Solo per forceCreate=true, usa il metodo diretto (più rischioso per memoria)
         const cypher = `
             MATCH (s) WHERE s.schemaId = $schemaId
-            ${operation} (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition {name: $name, schemaId: $schemaId})
-            SET a.type = $type,
-                a.required = $required,
-                a.defaultValue = $defaultValue,
-                a.validationRules = $validationRules,
-                a.description = $description,
-                a.referencesEntityType = $referencesEntityType,
-                a.relationTypeForReference = $relationTypeForReference,
-                a.displayAttributeFromReferencedEntity = $displayAttributeFromReferencedEntity,
-                a.cardinalityForReference = $cardinalityForReference
+            CREATE (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition {
+                name: $name, 
+                schemaId: $schemaId,
+                type: $type,
+                required: $required,
+                description: $description
+            })
             RETURN a
         `;
         
         const parameters = {
             schemaId: schemaId,
             name: attributeName,
-            type: attributeDefinition.type,
+            type: attributeDefinition.type || 'string',
             required: attributeDefinition.required || false,
-            defaultValue: attributeDefinition.defaultValue || null,
-            validationRules: JSON.stringify(attributeDefinition.validationRules || []),
-            description: attributeDefinition.description || '',
-            referencesEntityType: attributeDefinition.referencesEntityType || null,
-            relationTypeForReference: attributeDefinition.relationTypeForReference || null,
-            displayAttributeFromReferencedEntity: attributeDefinition.displayAttributeFromReferencedEntity || null,
-            cardinalityForReference: attributeDefinition.cardinalityForReference || null
+            description: attributeDefinition.description || ''
         };
         
         try {
             const result = await this.connector.executeQuery(cypher, parameters);
             if (result.records.length > 0) {
                 const saved = result.records[0].get('a').properties;
-                console.log(`✅ Attributo ${attributeName} salvato per schema ${schemaId}`);
+                
+                // Aggiungi proprietà opzionali in transazione separata
+                await this.updateAttributeOptionalProperties(schemaId, attributeName, attributeDefinition);
+                
+                console.log(`✅ Attributo ${attributeName} salvato (force) per schema ${schemaId}`);
                 return saved;
             }
             throw new Error('Errore durante il salvataggio dell\'attributo');
