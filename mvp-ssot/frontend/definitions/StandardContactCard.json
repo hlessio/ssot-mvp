@@ -1,0 +1,46 @@
+{
+  "moduleId": "StandardContactCard",
+  "moduleVersion": "1.0.0",
+  "targetEntityType": ["Contact", "Contatto"],
+  "description": "Scheda contatto completa con sezioni",
+  "defaultView": {
+    "renderer": "StandardCardRenderer",
+    "layout": [
+      {
+        "sectionTitle": "Informazioni Principali",
+        "attributes": ["nome", "cognome", "email"]
+      },
+      {
+        "sectionTitle": "Dettagli Contatto",
+        "attributes": ["telefono", "indirizzo", "citta"]
+      }
+    ]
+  },
+  "views": {
+    "compactCard": {
+      "renderer": "CompactCardRenderer",
+      "attributesToDisplay": ["nome", "email", "telefono"]
+    },
+    "editableForm": {
+      "renderer": "StandardCardRenderer",
+      "attributesToDisplay": ["nome", "cognome", "email", "telefono", "indirizzo", "citta"],
+      "editable": true
+    }
+  },
+  "instanceConfigurableFields": [
+    "attributesToDisplay",
+    "layout"
+  ],
+  "actions": [
+    {
+      "actionId": "refresh",
+      "label": "Aggiorna",
+      "handler": "handleRefresh"
+    },
+    {
+      "actionId": "edit",
+      "label": "Modifica",
+      "handler": "handleEdit"
+    }
+  ]
+} 

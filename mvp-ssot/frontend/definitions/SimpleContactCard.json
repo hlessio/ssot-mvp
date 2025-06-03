@@ -1,0 +1,20 @@
+{
+  "moduleId": "SimpleContactCard",
+  "moduleVersion": "1.0.0",
+  "targetEntityType": "Contact",
+  "description": "Scheda contatto semplice",
+  "defaultView": {
+    "renderer": "StandardCardRenderer",
+    "attributesToDisplay": ["nome", "cognome", "email", "telefono"]
+  },
+  "instanceConfigurableFields": [
+    "attributesToDisplay"
+  ],
+  "actions": [
+    {
+      "actionId": "refresh",
+      "label": "Aggiorna",
+      "handler": "handleRefresh"
+    }
+  ]
+} 

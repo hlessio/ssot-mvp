@@ -1,0 +1,13 @@
+{
+  "moduleId": "CompactContactCard",
+  "moduleVersion": "1.0.0",
+  "targetEntityType": "*",
+  "description": "Vista compatta per qualsiasi entità",
+  "defaultView": {
+    "renderer": "CompactCardRenderer",
+    "attributesToDisplay": ["nome", "email"]
+  },
+  "instanceConfigurableFields": [
+    "attributesToDisplay"
+  ]
+} 

@@ -188,7 +188,35 @@ async getSchemaVersion(entityType)
 - Operazioni `MERGE ... ON CREATE SET` per sicurezza
 - Gestione relazioni `:HAS_ATTRIBUTE` per struttura schema
 
-### 4.4. Modello Dati Neo4j per Schemi
+### 4.4. EntityEngine Evoluto (`core/entityEngine_evolved.js`)
+
+**Caratteristiche Principali:**
+- **Integrazione Schema Avanzata:** Utilizza `SchemaManager_evolved` per validazione, default e discovery.
+- **Gestione Attributi Reference:** Integra `RelationEngine` per creare, risolvere e aggiornare relazioni che rappresentano attributi reference.
+- **Lazy Loading:** Caricamento differito di attributi reference per ottimizzare le performance.
+- **Caching Intelligente:** Cache multiple per entità, schemi e reference risolte.
+- **Validazione Strict/Flexible:** Supporto per entrambe le modalità di validazione schema.
+- **API Complete:** Fornisce metodi per CRUD entità, gestione attributi, risoluzione reference.
+
+**Metodi Chiave (Esempi):**
+```javascript
+// Creazione e gestione entità
+async createEntity(entityType, data)
+async getEntity(entityId, { includeReferences: true/false })
+async setEntityAttribute(entityId, attributeName, value)
+async getAllEntities(entityType)
+
+// Gestione Reference
+async resolveEntityReferences(entityId, attributeNames)
+async createReferenceRelations(entityId, entityType, referenceAttributes)
+
+// Interazione Schema
+async getOrCreateSchema(entityType, sampleData)
+validateEntity(entityType, data)
+applySchemaDefaults(schema, data, originalSchemaDefinition)
+```
+
+### 4.5. Modello Dati Neo4j per Schemi e Relazioni
 
 **Schema Entity Type:**
 ```cypher
@@ -407,6 +435,13 @@ DELETE (a:AttributeDefinition) -- Mai usato nel sistema evoluto
 2. ✅ Switching dinamico tra tipi in finestre separate
 3. ✅ Persistenza configurazione per tipo entità specifico
 
+**✨ Test Frontend Evoluto (Fase 1):**
+1. ✅ Template-driven rendering con layout strutturato
+2. ✅ Schema-awareness con validazione real-time
+3. ✅ WebSocket integration per aggiornamenti live
+4. ✅ Focus management e user experience in Web Components
+5. ✅ Fallback graceful API evolute→MVP
+
 ### 9.2. Reliability e Robustezza
 
 **Error Handling:**
@@ -419,33 +454,221 @@ DELETE (a:AttributeDefinition) -- Mai usato nel sistema evoluto
 - Validation schema prima dell'applicazione
 - Audit trail completo delle modifiche
 
-## 10. Prossimi Passi e Roadmap
+## 10. ✨ Architettura Frontend Evoluto (Fase 1)
 
-### 10.1. Completamento Core Engine (Doc Tecnico)
-- Implementazione RelationEngine per relazioni tipizzate
-- EntityEngine evoluto con lazy loading e riferimenti
-- AttributeSpace potenziato con pattern matching avanzato
+### 10.1. Stack Tecnologico Frontend
 
-### 10.2. UI Schema-Aware Avanzata  
-- Generazione automatica form basati su schema
-- Validazione client-side dinamica
-- UI admin per gestione schemi visuale
+**Web Components Puri:** Architettura component-based con standard web nativi per massima interoperabilità.
 
-### 10.3. Schema Evolution Avanzata
-- Rollback/undo modifiche schema
-- Migration assistita per trasformazioni complesse
-- Branching e merging schemi per ambienti multipli
+**Struttura Directory Frontend:**
+```
+/frontend
+|-- /components         # ✅ Web Components riutilizzabili
+|   |-- ssot-input.js              # Input con validazione integrata
+|   |-- attribute-display.js       # Visualizzazione schema-aware
+|   `-- template-module-renderer.js # Rendering moduli da template
+|-- /definitions        # ✅ Template JSON per moduli
+|   |-- SimpleContactCard.json
+|   |-- StandardContactCard.json
+|   `-- CompactContactCard.json
+|-- /services           # ✅ Servizi frontend core
+|   |-- ModuleDefinitionService.js  # Gestione template
+|   |-- SchemaService.js            # Interazione schemi backend
+|   |-- EntityService.js            # CRUD entità con cache
+|   `-- WebSocketService.js         # Connessione real-time evoluta
+|-- /views              # ✅ Pagine e interfacce test
+|   `-- template-test.html          # Interface testing completa
+|-- app.js              # Entry point principale (esistente)
+`-- style.css           # Stili globali (esistente)
+```
+
+### 10.2. Servizi Frontend Core
+
+**ModuleDefinitionService.js:**
+- Caricamento template JSON da `/definitions/`
+- Cache intelligente con invalidazione
+- Validazione template e compatibilità entityType
+- Supporto template universali (`targetEntityType: "*"`)
+
+**SchemaService.js:**
+- API evolute `/api/schema/entity/:entityType` con fallback MVP
+- Cache 30s per informazioni schema
+- Validazione attributi con tipo-awareness
+- Lazy loading informazioni attributi dettagliate
+
+**EntityService.js:**
+- CRUD entità con cache per performance
+- Deduplicazione richieste parallele
+- Gestione reference attributes (preparazione RelationEngine)
+- Integrazione EntityEngine evoluto quando disponibile
+
+**WebSocketService.js:**
+- Connessione evoluta con reconnect esponenziale
+- Sottoscrizioni granulari con pattern matching
+- Queue messaggi per gestione offline
+- Callback management per componenti multipli
+
+### 10.3. Web Components Architecture
+
+**`<ssot-input>`:**
+- Validazione integrata con SchemaService
+- Eventi personalizzati (ssot-input, ssot-change, ssot-blur)
+- Debounce validation (300ms) per performance
+- Focus management corretto senza re-render
+- Supporto tipi: text, email, number, url, phone
+
+**`<attribute-display>`:**
+- Rendering schema-aware per tipi diversi
+- Formattazione specifica: email clickable, telefoni, date
+- Tooltip per informazioni aggiuntive
+- Responsive design con breakpoint
+- Fallback graceful per schemi mancanti
+
+**`<template-module-renderer>` (Componente Centrale):**
+- Rendering da template JSON + entity ID
+- Integrazione tutti servizi (ModuleDefinition, Entity, Schema, WebSocket)
+- Supporto viste multiple (defaultView, compactCard, editableForm)
+- WebSocket subscriptions per aggiornamenti real-time
+- Gestione azioni configurabili (placeholder Fase 2)
+
+### 10.4. Template System
+
+**Formato Template JSON:**
+```javascript
+{
+  "moduleId": "StandardContactCard",
+  "targetEntityType": "Contact", // o "*" per universale
+  "defaultView": {
+    "layout": [
+      { 
+        "sectionTitle": "Informazioni Principali", 
+        "attributes": ["nome", "cognome", "email"] 
+      },
+      { 
+        "sectionTitle": "Dettagli Contatto", 
+        "attributes": ["telefono", "indirizzo", "citta"] 
+      }
+    ]
+  },
+  "views": {
+    "compactCard": {
+      "attributesToDisplay": ["nome", "cognome", "email"]
+    }
+  },
+  "actions": [
+    { "actionId": "edit", "label": "Modifica", "handler": "handleEdit" }
+  ]
+}
+```
+
+**Template Implementati:**
+- **SimpleContactCard**: Lista attributi semplice
+- **StandardContactCard**: Layout strutturato con sezioni
+- **CompactContactCard**: Template universale per qualsiasi entità
+
+### 10.5. Testing e Validazione Frontend
+
+**Pagina Test (`views/template-test.html`):**
+- Interface testing per tutti servizi
+- Test template-module-renderer con controlli
+- Test componenti individuali
+- Logging real-time con timestamp e livelli
+- Responsive design per device multipli
+
+**Funzionalità Validate:**
+- ✅ Template rendering con layout strutturato
+- ✅ Schema-awareness con formattazione tipo-specifica
+- ✅ WebSocket real-time updates
+- ✅ Validazione attributi con feedback visivo
+- ✅ Focus management senza perdita input
+- ✅ Fallback graceful API evolute→MVP
+
+### 10.6. Performance e User Experience
+
+**Ottimizzazioni:**
+- Cache intelligente per template, schemi e entità
+- Debounce validation per ridurre overhead
+- Lazy loading informazioni schema
+- Deduplicazione richieste parallele
+- WebSocket reconnection automatica
+
+**User Experience:**
+- Validazione real-time senza interruzioni
+- Indicatori visivi stato validazione (✓/✗)
+- Responsive design multi-device
+- Loading states per operazioni asincrone
+- Error handling con messaggi user-friendly
+
+## 11. Prossimi Passi e Roadmap Frontend
+
+### 11.1. ✅ Fase 1 Completata - Template-Driven Rendering
+- Web Components base operativi
+- Servizi frontend core funzionali
+- Template system con rendering dinamico
+- Testing environment completo
+
+### 11.2. 🔄 Fase 2 Pianificata - Editing e Istanze Salvabili
+- `<attribute-editor>` per editing in-place
+- `SaveInstanceService` per configurazioni personalizzate
+- `<saved-module-instance>` per istanze salvate
+- UI per salvare configurazioni moduli ("Salva Vista Come...")
+
+### 11.3. 🔄 Fase 3 Pianificata - Relazioni e Composizione
+- `<relation-list>` per entità correlate
+- `<relation-editor>` per creazione relazioni
+- `RelationService` integrazione RelationEngine
+- `<document-renderer>` per dashboard composte
+
+### 11.4. 🔄 Fase 4 Futura - Funzionalità Enterprise
+- Versionamento moduli e istanze
+- Condivisione tra utenti
+- UI sofisticate drag-and-drop
+- Integrazione LLM per generazione automatica
+
+## 12. Prossimi Passi e Roadmap
+
+### 12.1. Completamento Core Engine (Doc Tecnico)
+- ✅ RelationEngine implementato e testato
+- ✅ EntityEngine evoluto implementato e testato  
+- ✅ AttributeSpace potenziato implementato e testato
+- ✅ Fase 1 Frontend Evoluto implementata e testata
+
+### 12.2. Frontend Schema-Aware Avanzato (Fase 2)
+- `<attribute-editor>` per editing in-place con validazione
+- Sistema istanze salvabili con `SaveInstanceService`
+- UI personalizzazione avanzata moduli
+- Integrazione completa con RelationEngine per reference attributes
+
+### 12.3. Sistema Relazioni e Composizione (Fase 3)
+- UI relazioni con `<relation-list>` e `<relation-editor>`
+- Composizione documenti con dashboard dinamiche
+- Sub-moduli embedded per visualizzazioni complesse
+- Navigation patterns per esplorazione relazioni
 
 ---
 
 ## Conclusioni
 
-Il **MVP SSOT Dinamico Evoluto** rappresenta una significativa evoluzione del sistema originale, implementando funzionalità core per la gestione dinamica degli schemi con persistenza completa e sincronizzazione real-time. Il sistema dimostra:
+Il **MVP SSOT Dinamico Evoluto** rappresenta una significativa evoluzione del sistema originale, implementando funzionalità core per la gestione dinamica degli schemi con persistenza completa, sincronizzazione real-time e **frontend evoluto schema-aware**. Il sistema ora dimostra:
 
+**🔧 Backend Core Engine Completo:**
 - **Flessibilità:** Schema evolution senza interruzioni
 - **Robustezza:** Operazioni additive-only per sicurezza dati  
 - **Scalabilità:** Architettura pronta per estensioni future
-- **Usabilità:** Interface intuitiva per modifiche strutturali
-- **Compatibilità:** Coesistenza con componenti MVP originali
+- **Relazioni:** RelationEngine completo per gestione relazioni tipizzate
+- **Performance:** AttributeSpace evoluto con pattern matching e batching
 
-La base architettonica è ora solida per implementare le funzionalità complete descritte in `doc_tecnico_evoluzione_core_v1.md`. 
+**🎨 Frontend Evoluto Schema-Aware:**
+- **Template-Driven:** Moduli renderizzati dinamicamente da definizioni JSON
+- **Component-Based:** Web Components puri per massima interoperabilità
+- **Schema-Awareness:** UI che si adatta automaticamente ai tipi attributo
+- **Real-time:** WebSocket integration per aggiornamenti live
+- **User Experience:** Validazione real-time, focus management, responsive design
+
+**🔄 Integrazione Seamless:**
+- **API Dual-Track:** Coesistenza API evolute e MVP con fallback graceful
+- **Cross-Window Sync:** Sincronizzazione dati e schema tra finestre multiple
+- **Testing Completo:** Validation end-to-end per tutti i componenti
+- **Compatibility:** Backward compatibility completa con sistema MVP originale
+
+La base architettonica è ora **completamente operativa** per implementare le fasi successive del frontend (editing, istanze salvabili, relazioni) come descritto in `doc_tecnico_evoluzione_frontend_v1.md` e supportare la piena visione del SSOT Dinamico. 

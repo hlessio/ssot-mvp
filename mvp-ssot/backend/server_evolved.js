@@ -979,3 +979,67 @@ class EvolvedServer {
 }
 
 module.exports = EvolvedServer; 
+
+// ============================================================================
+// 🚀 AVVIO DEL SERVER
+// ============================================================================
+
+// Se questo file viene eseguito direttamente (non importato come modulo)
+if (require.main === module) {
+    console.log('🎯 Avvio Server SSOT Dinamico Evoluto - Fase 1 Frontend');
+    console.log('=' .repeat(60));
+    
+    const server = new EvolvedServer();
+    const PORT = process.env.PORT || 3000;
+    
+    // Gestione graceful shutdown
+    process.on('SIGINT', async () => {
+        console.log('\n🛑 Ricevuto SIGINT, arresto del server...');
+        try {
+            await server.stop();
+            process.exit(0);
+        } catch (error) {
+            console.error('❌ Errore durante arresto:', error);
+            process.exit(1);
+        }
+    });
+    
+    process.on('SIGTERM', async () => {
+        console.log('\n🛑 Ricevuto SIGTERM, arresto del server...');
+        try {
+            await server.stop();
+            process.exit(0);
+        } catch (error) {
+            console.error('❌ Errore durante arresto:', error);
+            process.exit(1);
+        }
+    });
+    
+    // Gestione errori non catturati
+    process.on('uncaughtException', (error) => {
+        console.error('❌ Errore non catturato:', error);
+        process.exit(1);
+    });
+    
+    process.on('unhandledRejection', (reason, promise) => {
+        console.error('❌ Promise rejection non gestita:', reason);
+        process.exit(1);
+    });
+    
+    // Avvia il server
+    server.start(PORT)
+        .then(() => {
+            console.log(`✅ Server pronto per frontend evoluto Fase 1`);
+            console.log(`📋 Servizi disponibili:`);
+            console.log(`   - API MVP compatibili per fallback`);
+            console.log(`   - API evolute per SchemaService`);
+            console.log(`   - File statici frontend da /frontend/`);
+            console.log(`   - WebSocket per real-time updates`);
+            console.log(`   - Template test page: http://localhost:${PORT}/views/template-test.html`);
+            console.log('=' .repeat(60));
+        })
+        .catch((error) => {
+            console.error('❌ Errore avvio server:', error);
+            process.exit(1);
+        });
+} 

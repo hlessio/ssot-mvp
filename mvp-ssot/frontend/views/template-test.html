@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Frontend Evoluto - Fase 1</title>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background-color: #f9fafb;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            margin: 0 0 1rem 0;
+            color: #1f2937;
+        }
+
+        .header p {
+            margin: 0;
+            color: #6b7280;
+        }
+
+        .test-section {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .test-section h2 {
+            margin: 0 0 1rem 0;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .control-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        select, input, button {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        button {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+            cursor: pointer;
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        button:hover {
+            background-color: #2563eb;
+        }
+
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .test-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            min-height: 200px;
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .status.loading {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        .status.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .status.error {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+
+        .logs {
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            margin-bottom: 0.25rem;
+        }
+
+        .log-entry.info { color: #374151; }
+        .log-entry.success { color: #059669; }
+        .log-entry.warning { color: #d97706; }
+        .log-entry.error { color: #dc2626; }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Frontend Evoluto - Test Fase 1</h1>
+            <p>Test dell'integrazione dei Web Components, servizi e template modules del sistema SSOT Dinamico</p>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 Test dei Servizi</h2>
+            <div class="controls">
+                <button id="test-services">Test Servizi</button>
+                <button id="test-websocket">Test WebSocket</button>
+                <button id="clear-logs">Pulisci Log</button>
+            </div>
+            <div class="status" id="services-status">Servizi non testati</div>
+            <div class="logs" id="services-logs"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Test Template Module Renderer</h2>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="module-select">Template Modulo:</label>
+                    <select id="module-select">
+                        <option value="">-- Seleziona Template --</option>
+                        <option value="SimpleContactCard">Simple Contact Card</option>
+                        <option value="StandardContactCard">Standard Contact Card</option>
+                        <option value="CompactContactCard">Compact Contact Card</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="entity-select">Entità:</label>
+                    <select id="entity-select">
+                        <option value="">-- Carica entità disponibili --</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="view-mode">Modalità Vista:</label>
+                    <select id="view-mode">
+                        <option value="default">Default</option>
+                        <option value="compactCard">Compact Card</option>
+                        <option value="editableForm">Editable Form</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                    <button id="load-module">Carica Modulo</button>
+                </div>
+                
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                    <button id="load-entities">Carica Entità</button>
+                </div>
+            </div>
+            
+            <div class="status" id="module-status">Seleziona un template e un'entità</div>
+            
+            <div class="test-area" id="module-area">
+                <!-- Il template module renderer apparirà qui -->
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Test Componenti Individuali</h2>
+            <div class="controls">
+                <button id="test-attribute-display">Test Attribute Display</button>
+                <button id="test-ssot-input">Test SSOT Input</button>
+            </div>
+            
+            <div class="test-area" id="components-area">
+                <!-- I componenti di test appariranno qui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Carica i servizi -->
+    <script type="module" src="../services/ModuleDefinitionService.js"></script>
+    <script type="module" src="../services/SchemaService.js"></script>
+    <script type="module" src="../services/EntityService.js"></script>
+    <script type="module" src="../services/WebSocketService.js"></script>
+
+    <!-- Carica i componenti -->
+    <script type="module" src="../components/ssot-input.js"></script>
+    <script type="module" src="../components/attribute-display.js"></script>
+    <script type="module" src="../components/template-module-renderer.js"></script>
+
+    <script type="module">
+        class FrontendEvolutionTester {
+            constructor() {
+                this.servicesStatus = document.getElementById('services-status');
+                this.servicesLogs = document.getElementById('services-logs');
+                this.moduleStatus = document.getElementById('module-status');
+                this.moduleArea = document.getElementById('module-area');
+                this.componentsArea = document.getElementById('components-area');
+                
+                this.moduleSelect = document.getElementById('module-select');
+                this.entitySelect = document.getElementById('entity-select');
+                this.viewModeSelect = document.getElementById('view-mode');
+                
+                this.availableEntities = [];
+                
+                this.attachEventListeners();
+                this.initializeServices();
+            }
+
+            attachEventListeners() {
+                document.getElementById('test-services').addEventListener('click', () => this.testServices());
+                document.getElementById('test-websocket').addEventListener('click', () => this.testWebSocket());
+                document.getElementById('clear-logs').addEventListener('click', () => this.clearLogs());
+                
+                document.getElementById('load-entities').addEventListener('click', () => this.loadEntities());
+                document.getElementById('load-module').addEventListener('click', () => this.loadModule());
+                
+                document.getElementById('test-attribute-display').addEventListener('click', () => this.testAttributeDisplay());
+                document.getElementById('test-ssot-input').addEventListener('click', () => this.testSSOTInput());
+            }
+
+            async initializeServices() {
+                this.log('🔧 Inizializzazione servizi...', 'info');
+                
+                try {
+                    // Inizializza ModuleDefinitionService
+                    if (window.moduleDefinitionService) {
+                        await window.moduleDefinitionService.initialize();
+                        this.log('✅ ModuleDefinitionService inizializzato', 'success');
+                    } else {
+                        this.log('❌ ModuleDefinitionService non disponibile', 'error');
+                    }
+
+                    // Connetti WebSocketService
+                    if (window.webSocketService) {
+                        await window.webSocketService.connect();
+                        this.log('✅ WebSocketService connesso', 'success');
+                    } else {
+                        this.log('❌ WebSocketService non disponibile', 'error');
+                    }
+
+                    this.updateServicesStatus('Servizi inizializzati', 'success');
+                } catch (error) {
+                    this.log(`❌ Errore inizializzazione: ${error.message}`, 'error');
+                    this.updateServicesStatus('Errore inizializzazione', 'error');
+                }
+            }
+
+            async testServices() {
+                this.log('🧪 Test dei servizi...', 'info');
+                this.updateServicesStatus('Test in corso...', 'loading');
+
+                try {
+                    // Test ModuleDefinitionService
+                    if (window.moduleDefinitionService) {
+                        const definitions = await window.moduleDefinitionService.listDefinitions();
+                        this.log(`✅ ModuleDefinitionService: ${definitions.length} definizioni`, 'success');
+                        
+                        for (const defId of definitions.slice(0, 2)) {
+                            try {
+                                const def = await window.moduleDefinitionService.getDefinition(defId);
+                                this.log(`✅ Definizione caricata: ${def.moduleId}`, 'success');
+                            } catch (error) {
+                                this.log(`⚠️ Errore caricamento ${defId}: ${error.message}`, 'warning');
+                            }
+                        }
+                    }
+
+                    // Test SchemaService
+                    if (window.schemaService) {
+                        const entityTypes = await window.schemaService.getAvailableEntityTypes();
+                        this.log(`✅ SchemaService: ${entityTypes.length} tipi entità`, 'success');
+                        
+                        const attributes = await window.schemaService.getAttributes('Contact');
+                        this.log(`✅ Attributi Contact: ${attributes.join(', ')}`, 'success');
+                    }
+
+                    // Test EntityService
+                    if (window.entityService) {
+                        const entities = await window.entityService.getEntities('Contact');
+                        this.log(`✅ EntityService: ${entities.length} entità Contact`, 'success');
+                    }
+
+                    this.updateServicesStatus('Test completati con successo', 'success');
+                } catch (error) {
+                    this.log(`❌ Errore test: ${error.message}`, 'error');
+                    this.updateServicesStatus('Test falliti', 'error');
+                }
+            }
+
+            async testWebSocket() {
+                this.log('📡 Test WebSocket...', 'info');
+                
+                if (window.webSocketService) {
+                    const status = window.webSocketService.getConnectionStatus();
+                    this.log(`📊 Stato connessione: ${JSON.stringify(status)}`, 'info');
+                    
+                    // Test sottoscrizione
+                    const subId = window.webSocketService.subscribe('test', (message) => {
+                        this.log(`📨 Messaggio ricevuto: ${JSON.stringify(message)}`, 'info');
+                    });
+                    
+                    this.log(`✅ Sottoscrizione test creata: ${subId}`, 'success');
+                    
+                    // Rimuovi sottoscrizione dopo 5 secondi
+                    setTimeout(() => {
+                        window.webSocketService.unsubscribe(subId);
+                        this.log(`🗑️ Sottoscrizione test rimossa`, 'info');
+                    }, 5000);
+                } else {
+                    this.log('❌ WebSocketService non disponibile', 'error');
+                }
+            }
+
+            async loadEntities() {
+                this.log('📥 Caricamento entità...', 'info');
+                
+                try {
+                    if (window.entityService) {
+                        this.availableEntities = await window.entityService.getEntities('Contact');
+                        
+                        this.entitySelect.innerHTML = '<option value="">-- Seleziona Entità --</option>';
+                        this.availableEntities.forEach(entity => {
+                            const option = document.createElement('option');
+                            option.value = entity.id;
+                            option.textContent = entity.nome || `Entità ${entity.id.substring(0, 8)}...`;
+                            this.entitySelect.appendChild(option);
+                        });
+                        
+                        this.log(`✅ ${this.availableEntities.length} entità caricate`, 'success');
+                    }
+                } catch (error) {
+                    this.log(`❌ Errore caricamento entità: ${error.message}`, 'error');
+                }
+            }
+
+            async loadModule() {
+                const moduleId = this.moduleSelect.value;
+                const entityId = this.entitySelect.value;
+                const viewMode = this.viewModeSelect.value;
+
+                if (!moduleId) {
+                    this.updateModuleStatus('Seleziona un template modulo', 'error');
+                    return;
+                }
+
+                if (!entityId) {
+                    this.updateModuleStatus('Seleziona un\'entità', 'error');
+                    return;
+                }
+
+                this.log(`🚀 Caricamento modulo: ${moduleId} per entità ${entityId}`, 'info');
+                this.updateModuleStatus('Caricamento modulo...', 'loading');
+
+                try {
+                    // Rimuovi modulo esistente
+                    this.moduleArea.innerHTML = '';
+
+                    // Crea nuovo template-module-renderer
+                    const moduleRenderer = document.createElement('template-module-renderer');
+                    moduleRenderer.setAttribute('module-id', moduleId);
+                    moduleRenderer.setAttribute('entity-id', entityId);
+                    moduleRenderer.setAttribute('entity-type', 'Contact');
+                    moduleRenderer.setAttribute('show-title', '');
+                    moduleRenderer.setAttribute('show-actions', '');
+                    
+                    if (viewMode !== 'default') {
+                        moduleRenderer.setAttribute('view-mode', viewMode);
+                    }
+
+                    // Event listeners per il modulo
+                    moduleRenderer.addEventListener('module-action', (e) => {
+                        this.log(`🎬 Azione modulo: ${e.detail.actionId}`, 'info');
+                    });
+
+                    moduleRenderer.addEventListener('attribute-action', (e) => {
+                        this.log(`🎬 Azione attributo: ${e.detail.action} su ${e.detail.attributeName}`, 'info');
+                    });
+
+                    this.moduleArea.appendChild(moduleRenderer);
+                    this.updateModuleStatus('Modulo caricato con successo', 'success');
+                    this.log(`✅ Modulo ${moduleId} renderizzato`, 'success');
+
+                } catch (error) {
+                    this.log(`❌ Errore caricamento modulo: ${error.message}`, 'error');
+                    this.updateModuleStatus('Errore caricamento modulo', 'error');
+                }
+            }
+
+            testAttributeDisplay() {
+                this.log('🧪 Test Attribute Display...', 'info');
+                
+                this.componentsArea.innerHTML = `
+                    <h3>Test Attribute Display</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                        <attribute-display 
+                            attribute-name="nome" 
+                            value="Mario Rossi" 
+                            entity-type="Contact"
+                            show-label>
+                        </attribute-display>
+                        
+                        <attribute-display 
+                            attribute-name="email" 
+                            value="mario.rossi@example.com" 
+                            entity-type="Contact"
+                            show-label>
+                        </attribute-display>
+                        
+                        <attribute-display 
+                            attribute-name="telefono" 
+                            value="+39 123 456 7890" 
+                            entity-type="Contact"
+                            show-label>
+                        </attribute-display>
+                        
+                        <attribute-display 
+                            attribute-name="valore_vuoto" 
+                            value="" 
+                            entity-type="Contact"
+                            show-label
+                            empty-text="Non specificato">
+                        </attribute-display>
+                    </div>
+                `;
+            }
+
+            testSSOTInput() {
+                this.log('🧪 Test SSOT Input...', 'info');
+                
+                this.componentsArea.innerHTML = `
+                    <h3>Test SSOT Input</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                        <ssot-input 
+                            label="Nome" 
+                            attribute-name="nome" 
+                            entity-type="Contact"
+                            required
+                            placeholder="Inserisci il nome">
+                        </ssot-input>
+                        
+                        <ssot-input 
+                            label="Email" 
+                            attribute-name="email" 
+                            entity-type="Contact"
+                            validation-type="email"
+                            placeholder="nome@example.com">
+                        </ssot-input>
+                        
+                        <ssot-input 
+                            label="Telefono" 
+                            attribute-name="telefono" 
+                            entity-type="Contact"
+                            validation-type="phone"
+                            placeholder="+39 123 456 7890">
+                        </ssot-input>
+                    </div>
+                `;
+
+                // Attacca event listeners per test
+                const inputs = this.componentsArea.querySelectorAll('ssot-input');
+                inputs.forEach(input => {
+                    input.addEventListener('ssot-change', (e) => {
+                        this.log(`🔄 Input cambiato: ${e.detail.attributeName} = ${e.detail.value} (valido: ${e.detail.isValid})`, 'info');
+                    });
+                });
+            }
+
+            updateServicesStatus(message, type) {
+                this.servicesStatus.textContent = message;
+                this.servicesStatus.className = `status ${type}`;
+            }
+
+            updateModuleStatus(message, type) {
+                this.moduleStatus.textContent = message;
+                this.moduleStatus.className = `status ${type}`;
+            }
+
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${type}`;
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                
+                this.servicesLogs.appendChild(logEntry);
+                this.servicesLogs.scrollTop = this.servicesLogs.scrollHeight;
+            }
+
+            clearLogs() {
+                this.servicesLogs.innerHTML = '';
+            }
+        }
+
+        // Inizializza il tester quando il DOM è pronto
+        document.addEventListener('DOMContentLoaded', () => {
+            window.frontendTester = new FrontendEvolutionTester();
+        });
+    </script>
+</body>
+</html> 
