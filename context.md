@@ -88,39 +88,96 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 *   [x] **Performance Optimization**: Caching intelligente (30s timeout), debounce validation (300ms), lazy loading attribute info, deduplicazione richieste parallele.
 *   [x] **User Experience**: Focus management corretto in Web Components, validazione real-time senza perdita focus, indicatori visivi stato validazione, responsive design.
 
-### ✨ **FASE 2 FRONTEND EVOLUTO COMPLETATA - Editing, Azioni e ModuleInstance Salvabili**:
+### ✅ FASE 2 FRONTEND EVOLUTO COMPLETATA - Editing, Azioni e ModuleInstance Salvabili
+**Data Completamento:** 03 Giugno 2025
+**Status:** ✅ Implementato e Testato con Successo
 
-#### **2.1 - Web Components di Editing (1 componente)**:
-*   [x] **attribute-editor.js** (640 righe): Editor schema-aware completo con validazione real-time, debounce 300ms, keyboard shortcuts (Enter=save, Esc=cancel), eventi personalizzati (value-changing, value-saved, save-error), stili CSS responsive, gestione focus corretta.
+**Componenti Implementati:**
+- ✅ **attribute-editor.js** (640 righe): Editor schema-aware con validazione real-time, debounce 300ms, keyboard shortcuts
+- ✅ **SaveInstanceService.js** (396 righe): CRUD ModuleInstance con cache intelligente, validazione, deduplicazione richieste
+- ✅ **saved-module-instance.js** (550 righe): Rendering istanze salvate con configurazioni override e metadati
+- ✅ **template-module-renderer.js EVOLUTO**: Editing mode, batch save/cancel, azioni configurabili, "Salva Vista Come..."
+- ✅ **Backend API /api/module-instances**: CRUD completo con WebSocket notifications
+- ✅ **StandardContactCard v2.0.0**: Template evoluto con viste multiple, azioni categorizzate, configurazioni estese
 
-#### **2.2 - Gestione ModuleInstance (2 componenti)**:
-*   [x] **SaveInstanceService.js** (396 righe): CRUD ModuleInstance completo, cache intelligente (30s timeout), deduplicazione richieste parallele, validazione struttura dati, metodi: createInstance, getInstance, updateInstance, deleteInstance, listInstances, duplicateInstance, extractSavableConfig.
-*   [x] **saved-module-instance.js** (550 righe): Rendering istanze salvate, carica istanza + template + entità target, merge configurazioni template + overrides, delega rendering a template-module-renderer, azioni istanza (modifica, duplica, elimina), header con metadati.
+**Funzionalità Validate:**
+- ✅ Editing in-place con validazione schema-aware e salvataggio batch
+- ✅ Sistema ModuleInstance per configurazioni personalizzate salvabili
+- ✅ Template evoluti con azioni configurabili (🔄 Aggiorna, ✏️ Modifica, 📋 Duplica)
+- ✅ "Salva Vista Come..." per creare istanze da configurazioni correnti
+- ✅ Rendering istanze salvate con override configurazioni template
+- ✅ WebSocket real-time per sincronizzazione istanze e modifiche
+- ✅ Gestione errori robusta con normalizzazione tipi entità
+- ✅ API backend completa con validazione e metadati sistema
 
-#### **2.3 - Evoluzione Template e Componenti Core**:
-*   [x] **template-module-renderer.js EVOLUTO**: Supporto modalità editing (isEditMode, dirtyAttributes tracking), integrazione attribute-editor, azione "Salva Vista Come...", gestione azioni configurabili, metodi: handleToggleEdit, handleSaveChanges, handleCancelEdit, handleSaveAs, batch operations, API pubbliche estese.
-*   [x] **StandardContactCard v2.0.0**: Versione evoluta con viste multiple (minimalCard, fullDetails), campi configurabili estesi, azioni categorizzate con emoji (🔄 Aggiorna, ✏️ Modifica, 📋 Duplica), metadati completi (author, phase, tags).
+**Risoluzione Problemi:**
+- ✅ Errore HTTP 500 instanceConfigOverrides: Serializzazione JSON corretta
+- ✅ Errore schema "Contact,Contatto": Normalizzazione array entityType
+- ✅ Errore logMessage undefined: Correzione riferimenti pagina test
 
-#### **2.4 - Backend API ModuleInstance**:
-*   [x] **Endpoint API completi** in `server_evolved.js`: POST/GET/PUT/DELETE `/api/module-instances`, validazione campi richiesti, integrazione EntityEngine per persistenza, WebSocket notifications per sincronizzazione, filtri e paginazione per lista istanze.
-*   [x] **Schema ModuleInstance** completo: Attributi instanceName, templateModuleId, targetEntityId, targetEntityType, ownerUserId, instanceConfigOverrides (JSON), description, version, createdAt, updatedAt.
+### ✅ DEMO FASE 2 COMPLETATA - Risoluzione Bug Moduli Tabellari Dinamici
+**Data Completamento:** Dicembre 2024
+**Status:** ✅ Tutti i Bug Risolti e Sistema Operativo
 
-#### **2.5 - Risoluzione Problemi Critical**:
-*   [x] **Errore HTTP 500 instanceConfigOverrides**: Serializzazione JSON corretta in handleSaveAs (`typeof currentConfig === 'object' ? JSON.stringify(currentConfig) : currentConfig`).
-*   [x] **Errore schema "Contact,Contatto"**: Normalizzazione array entityType con `normalizeEntityType()` in SchemaService e template-module-renderer.
-*   [x] **Errore logMessage undefined**: Correzione riferimenti da `logMessage()` a `log()` in phase2-test.html.
+**Problemi Risolti durante Demo:**
 
-#### **2.6 - Database e Testing**:
-*   [x] **10+ ModuleInstance** create con successo nel database Neo4j.
-*   [x] **Pagina test Fase 2** (`views/phase2-test.html`): Interface testing completa per editing, istanze salvate, servizi, logging real-time.
-*   [x] **API Testing**: Validazione endpoint via curl, creazione/recupero/aggiornamento istanze funzionali.
+#### **1. Errore 500 Aggiunta Attributi (TabularModule.js)**
+- **Problema**: `PUT http://localhost:3000/api/schema/entity/Persona 500 (Internal Server Error)`
+- **Causa**: Mismatch formato dati tra frontend e backend
+- **Soluzione**: Incapsulamento dati in campo `evolution: { addAttributes: {...} }`
+- **File Modificato**: `TabularModule.js` linea ~570 handleAddAttribute()
 
-#### **2.7 - Funzionalità End-to-End Validate**:
-*   [x] **Editing Completo**: Modalità editing con attribute-editor, validazione schema-aware, salvataggio batch, keyboard shortcuts.
-*   [x] **Sistema Istanze**: "Salva Vista Come...", configurazioni personalizzate salvabili, override template, rendering istanze.
-*   [x] **Template Evoluti**: Azioni configurabili, viste multiple, metadati sistema, versioning.
-*   [x] **WebSocket Real-time**: Sincronizzazione istanze, modifiche attributi, notifiche sistema.
-*   [x] **Gestione Errori**: Robusta con fallback, logging italiano con emoji, normalizzazione tipi.
+#### **2. Errore Validazione "Salva Vista Come..."**
+- **Problema**: "targetEntityId deve essere una stringa, instanceConfigOverrides deve essere un oggetto"
+- **Causa**: Frontend inviava `targetEntityId: null` e `instanceConfigOverrides` stringificato
+- **Soluzione**: Invio `targetEntityId: ''` e `instanceConfigOverrides` come oggetto JavaScript
+- **File Modificato**: `TabularModule.js` handleSaveInstance()
+
+#### **3. Errore "map is not a function" Dashboard**
+- **Problema**: `this.instances.map is not a function` in dashboard istanze
+- **Causa**: SaveInstanceService.listInstances() restituiva `{instances: [...]}` invece di array
+- **Soluzione**: Estrazione `response?.instances || []` in dashboard
+- **File Modificato**: `table_demo_dashboard.js`
+
+#### **4. Backend Neo4j Serializzazione**
+- **Problema**: "Property values can only be of primitive types. Encountered: Map"
+- **Causa**: Neo4j non supporta oggetti JavaScript complessi
+- **Soluzione**: Serializzazione `instanceConfigOverrides` come stringa JSON
+- **File Modificato**: `server_evolved.js`
+
+#### **5. Metodo WebSocket Mancante**
+- **Problema**: `this.websocketService.isConnected is not a function`
+- **Causa**: WebSocketService aveva proprietà `isConnected` ma non metodo
+- **Soluzione**: Aggiunto metodo `isConnected()`, rinominato proprietà in `_isConnected`
+- **File Modificato**: `WebSocketService.js`
+
+#### **6. Gestione Entità Senza Schema Esistente**
+- **Problema**: Multipli errori quando si apre tabella per tipo non esistente (es. "Task")
+- **Causa**: `this.attributes` undefined quando schema non esiste
+- **Soluzioni Multiple**:
+  - `fetchAttributes()`: Restituisce sempre almeno array vuoto
+  - `renderTableHeader()`: Gestisce attributes undefined, messaggio informativo
+  - `showAddEntityModal()`: Permette creazione entità senza attributi predefiniti
+  - `handleAddEntity()` e `addEntityRow()`: Gestiscono casi senza attributi
+- **File Modificato**: `TabularModule.js` (gestione completa schema mancanti)
+
+**Risultato Demo Finale:**
+- ✅ Sistema gestisce correttamente evoluzione schema con formato dati corretto
+- ✅ Salvataggio istanze con validazione corretta funzionante
+- ✅ Dashboard con lista istanze operativa
+- ✅ Connessione WebSocket con metodi completi
+- ✅ Creazione entità per tipi non esistenti (schema mancanti)
+- ✅ Interfaccia informativa quando non ci sono attributi definiti
+- ✅ Persistenza Neo4j corretta per oggetti complessi
+- ✅ Navigazione directory server chiarificata
+
+**File Complessivamente Modificati:**
+1. **TabularModule.js** - Correzioni formato evolution, validazione istanze, gestione schema mancanti
+2. **table_demo_dashboard.js** - Correzione estrazione array istanze
+3. **server_evolved.js** - Serializzazione JSON per Neo4j
+4. **WebSocketService.js** - Metodo isConnected() e risoluzione conflitti
+
+**Status Complessivo**: 🚀 **SISTEMA SSOT DINAMICO COMPLETO CON EDITING & ISTANZE SALVABILI OPERATIVO + DEMO FASE 2 VALIDATA** 🚀
 
 ### Task in Corso:
 

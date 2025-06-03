@@ -162,7 +162,7 @@ class ModuleWindowManager {
     }
 
     async loadTabularModule(container) {
-        // Crea solo la struttura essenziale della tabella, stile web primitivo
+        // Crea solo la struttura essenziale della tabella, stile web primitivo + pulsante Fase 2
         container.innerHTML = `
             <div style="padding: 10px; font-family: monospace; background: white;">
                 <p style="margin: 5px 0; font-weight: bold;">TABELLA ENTITÀ</p>
@@ -170,7 +170,8 @@ class ModuleWindowManager {
                 <div style="margin-bottom: 10px;">
                     <input type="button" id="btn-add-row" value="[Aggiungi Riga]" style="margin-right: 5px; font-family: monospace; border: 1px solid black; background: #f0f0f0; padding: 2px 6px;">
                     <input type="button" id="btn-add-column" value="[Aggiungi Colonna]" style="margin-right: 5px; font-family: monospace; border: 1px solid black; background: #f0f0f0; padding: 2px 6px;">
-                    <input type="button" id="btn-refresh-table" value="[Aggiorna]" style="font-family: monospace; border: 1px solid black; background: #f0f0f0; padding: 2px 6px;">
+                    <input type="button" id="btn-refresh-table" value="[Aggiorna]" style="margin-right: 5px; font-family: monospace; border: 1px solid black; background: #f0f0f0; padding: 2px 6px;">
+                    <input type="button" id="btn-save-instance" value="[💾 Salva Vista Come...]" style="font-family: monospace; border: 1px solid black; background: #e6ffe6; padding: 2px 6px;">
                 </div>
                 
                 <div style="border: 2px inset #c0c0c0; background: white; overflow: auto; height: calc(100vh - 80px);">

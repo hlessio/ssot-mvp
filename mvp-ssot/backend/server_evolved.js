@@ -452,6 +452,11 @@ class EvolvedServer {
                     version: 1
                 };
 
+                // Serializza instanceConfigOverrides se è un oggetto
+                if (instanceToCreate.instanceConfigOverrides && typeof instanceToCreate.instanceConfigOverrides === 'object') {
+                    instanceToCreate.instanceConfigOverrides = JSON.stringify(instanceToCreate.instanceConfigOverrides);
+                }
+
                 console.log('📝 [ModuleInstance] Creando istanza:', instanceToCreate);
 
                 // Crea entità ModuleInstance tramite EntityEngine
@@ -525,6 +530,11 @@ class EvolvedServer {
                     updatedAt: new Date().toISOString(),
                     version: (existingInstance.version || 1) + 1
                 };
+
+                // Serializza instanceConfigOverrides se è un oggetto
+                if (updatedData.instanceConfigOverrides && typeof updatedData.instanceConfigOverrides === 'object') {
+                    updatedData.instanceConfigOverrides = JSON.stringify(updatedData.instanceConfigOverrides);
+                }
                 
                 // Aggiorna attributi singolarmente per preservare validazioni
                 for (const [attributeName, value] of Object.entries(updatedData)) {

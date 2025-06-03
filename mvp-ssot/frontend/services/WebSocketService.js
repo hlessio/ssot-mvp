@@ -11,14 +11,19 @@
 class WebSocketService {
     constructor() {
         this.websocket = null;
-        this.isConnected = false;
+        this._isConnected = false;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
-        this.reconnectInterval = 2000;
-        this.subscriptions = new Map(); // Gestione sottoscrizioni
-        this.messageQueue = []; // Coda messaggi per quando non connesso
-        this.connectionListeners = [];
+        this.reconnectInterval = 1000;
         this.isReconnecting = false;
+        this.subscriptions = new Map();
+        this.messageQueue = [];
+        this.connectionListeners = [];
+        
+        // Contatori per generare ID unici sottoscrizioni
+        this.subscriptionCounter = 0;
+        
+        console.log('🔌 [WebSocketService] Inizializzato');
     }
 
     /**
@@ -64,7 +69,7 @@ class WebSocketService {
      */
     handleOpen(event) {
         console.log('✅ [WebSocketService] Connessione WebSocket stabilita');
-        this.isConnected = true;
+        this._isConnected = true;
         this.reconnectAttempts = 0;
         this.isReconnecting = false;
 
@@ -101,7 +106,7 @@ class WebSocketService {
      */
     handleClose(event) {
         console.log(`🔌 [WebSocketService] Connessione chiusa (Code: ${event.code})`);
-        this.isConnected = false;
+        this._isConnected = false;
 
         // Notifica listeners
         this.notifyConnectionListeners('disconnected');
@@ -139,7 +144,7 @@ class WebSocketService {
         console.log(`📋 [WebSocketService] Sottoscrizione creata: ${eventPattern} (ID: ${subscriptionId})`);
 
         // Se connesso, invia registrazione sottoscrizione al server (per future implementazioni)
-        if (this.isConnected) {
+        if (this._isConnected) {
             this.sendSubscriptionToServer(eventPattern, 'subscribe');
         }
 
@@ -157,7 +162,7 @@ class WebSocketService {
             console.log(`📋 [WebSocketService] Sottoscrizione rimossa: ${subscription.pattern}`);
 
             // Notifica server se connesso
-            if (this.isConnected) {
+            if (this._isConnected) {
                 this.sendSubscriptionToServer(subscription.pattern, 'unsubscribe');
             }
         }
@@ -219,7 +224,7 @@ class WebSocketService {
      * @param {Object} message - Messaggio da inviare
      */
     send(message) {
-        if (this.isConnected && this.websocket.readyState === WebSocket.OPEN) {
+        if (this._isConnected && this.websocket.readyState === WebSocket.OPEN) {
             try {
                 this.websocket.send(JSON.stringify(message));
                 console.log(`📤 [WebSocketService] Messaggio inviato: ${message.type}`);
@@ -317,7 +322,7 @@ class WebSocketService {
     notifyConnectionListeners(status) {
         this.connectionListeners.forEach(listener => {
             try {
-                listener(status, { isConnected: this.isConnected, attempts: this.reconnectAttempts });
+                listener(status, { isConnected: this._isConnected, attempts: this.reconnectAttempts });
             } catch (error) {
                 console.error('❌ [WebSocketService] Errore in connection listener:', error);
             }
@@ -340,12 +345,20 @@ class WebSocketService {
      */
     getConnectionStatus() {
         return {
-            isConnected: this.isConnected,
+            isConnected: this._isConnected,
             readyState: this.websocket ? this.websocket.readyState : -1,
             reconnectAttempts: this.reconnectAttempts,
             subscriptions: this.subscriptions.size,
             queuedMessages: this.messageQueue.length
         };
+    }
+
+    /**
+     * Verifica se il WebSocket è connesso
+     * @returns {boolean} - True se connesso
+     */
+    isConnected() {
+        return this._isConnected && this.websocket && this.websocket.readyState === WebSocket.OPEN;
     }
 
     /**
