@@ -444,6 +444,9 @@
             relationService: null,
             entityService: null,
             webSocketService: null,
+            moduleDefinitionService: null,  // Aggiunto per template-module-renderer
+            schemaService: null,            // Aggiunto per template-module-renderer
+            saveInstanceService: null,      // Aggiunto per template-module-renderer
             currentEditor: null,
             currentRelationList: null,
             initialized: false
@@ -472,10 +475,27 @@
         function waitForServices() {
             return new Promise((resolve) => {
                 const checkServices = () => {
-                    if (window.RelationService && window.EntityService && window.WebSocketService) {
+                    if (window.RelationService && 
+                        window.EntityService && 
+                        window.WebSocketService &&
+                        window.ModuleDefinitionService &&
+                        window.SchemaService &&
+                        window.SaveInstanceService) {
+                        
                         testApp.relationService = window.RelationService;
                         testApp.entityService = window.EntityService;
                         testApp.webSocketService = window.WebSocketService;
+                        testApp.moduleDefinitionService = window.ModuleDefinitionService;
+                        testApp.schemaService = window.SchemaService;
+                        testApp.saveInstanceService = window.SaveInstanceService;
+                        
+                        // Espone i servizi con i nomi corretti per template-module-renderer
+                        window.moduleDefinitionService = window.ModuleDefinitionService;  // lowercase
+                        window.schemaService = window.SchemaService;                      // lowercase
+                        window.entityService = window.EntityService;                     // lowercase
+                        window.webSocketService = window.WebSocketService;               // lowercase
+                        window.saveInstanceService = window.SaveInstanceService;         // lowercase
+                        
                         resolve();
                     } else {
                         setTimeout(checkServices, 100);
@@ -536,6 +556,19 @@
                     throw new Error('EntityService non disponibile');
                 }
                 
+                // Verifica servizi aggiuntivi per template-module-renderer
+                if (!testApp.moduleDefinitionService) {
+                    throw new Error('ModuleDefinitionService non disponibile');
+                }
+                
+                if (!testApp.schemaService) {
+                    throw new Error('SchemaService non disponibile');
+                }
+                
+                if (!testApp.saveInstanceService) {
+                    throw new Error('SaveInstanceService non disponibile');
+                }
+                
                 // Inizializza WebSocket
                 await testApp.webSocketService.connect();
                 log('✅ WebSocket connesso', 'success');
@@ -543,6 +576,11 @@
                 // Inizializza RelationService con WebSocket
                 testApp.relationService.initialize(testApp.webSocketService);
                 log('✅ RelationService inizializzato', 'success');
+                
+                // Log conferma servizi aggiuntivi
+                log('✅ ModuleDefinitionService disponibile', 'success');
+                log('✅ SchemaService disponibile', 'success');
+                log('✅ SaveInstanceService disponibile', 'success');
                 
                 // Test connessione API
                 const stats = await testApp.relationService.getRelationStats();
