@@ -73,13 +73,14 @@ class AttributeEditor extends HTMLElement {
             return;
         }
 
-        if (!window.schemaService) {
+        if (!window.SchemaService) {
             console.warn('⚠️ [attribute-editor] SchemaService non disponibile');
             return;
         }
 
         try {
-            this.attributeInfo = await window.schemaService.getAttributeInfo(entityType, attributeName);
+            console.log(`🔄 [attribute-editor] Caricamento info attributo: ${entityType}.${attributeName}`);
+            this.attributeInfo = await window.SchemaService.getAttributeInfo(entityType, attributeName);
             console.log(`✅ [attribute-editor] Info attributo caricata: ${attributeName}`, this.attributeInfo);
             
             // Inizializza valori se non presenti
@@ -334,8 +335,8 @@ class AttributeEditor extends HTMLElement {
             console.log(`💾 [attribute-editor] Salvando ${attributeName}: ${this.originalValue} -> ${this.currentValue}`);
 
             // Usa EntityService per persistere
-            if (window.entityService) {
-                await window.entityService.updateEntityAttribute(entityId, attributeName, this.currentValue);
+            if (window.EntityService) {
+                await window.EntityService.updateEntityAttribute(entityId, attributeName, this.currentValue);
             }
 
             // Aggiorna stato
@@ -389,7 +390,7 @@ class AttributeEditor extends HTMLElement {
      * Valida il valore corrente
      */
     async validateValue() {
-        if (!this.attributeInfo || !window.schemaService) {
+        if (!this.attributeInfo || !window.SchemaService) {
             this.validationResult = { isValid: true, message: '' };
             return;
         }
@@ -401,7 +402,7 @@ class AttributeEditor extends HTMLElement {
             const entityType = this.getAttribute('entity-type');
             const attributeName = this.getAttribute('attribute-name');
             
-            this.validationResult = await window.schemaService.validateAttributeValue(
+            this.validationResult = await window.SchemaService.validateAttributeValue(
                 entityType, 
                 attributeName, 
                 this.currentValue

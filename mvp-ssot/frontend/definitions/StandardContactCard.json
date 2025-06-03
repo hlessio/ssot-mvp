@@ -1,8 +1,8 @@
 {
   "moduleId": "StandardContactCard",
-  "moduleVersion": "2.0.0",
+  "moduleVersion": "3.0.0",
   "targetEntityType": ["Contact", "Contatto"],
-  "description": "Scheda contatto completa con sezioni (✨ Fase 2)",
+  "description": "Scheda contatto completa con sezioni e relazioni (✨ Fase 3)",
   "defaultView": {
     "renderer": "StandardCardRenderer",
     "layout": [
@@ -46,14 +46,77 @@
           "attributes": ["indirizzo", "citta"]
         }
       ]
+    },
+    "withRelations": {
+      "renderer": "StandardCardRenderer",
+      "layout": [
+        {
+          "sectionTitle": "Informazioni Principali",
+          "attributes": ["nome", "cognome", "email"]
+        },
+        {
+          "sectionTitle": "Dettagli Contatto",
+          "attributes": ["telefono", "indirizzo", "citta"]
+        }
+      ],
+      "showRelations": true
     }
   },
+  "relations": [
+    {
+      "relationType": "Conosce",
+      "targetEntityType": ["Contact", "Contatto", "Persona"],
+      "displayAs": "relationList",
+      "subModuleId": "CompactContactCard",
+      "label": "Persone Conosciute",
+      "direction": "out",
+      "allowCreate": true,
+      "allowDelete": true,
+      "maxItems": 10
+    },
+    {
+      "relationType": "HaCliente",
+      "targetEntityType": ["Contact", "Contatto", "Cliente"],
+      "displayAs": "relationList",
+      "subModuleId": "CompactContactCard",
+      "label": "Clienti",
+      "direction": "out",
+      "allowCreate": true,
+      "allowDelete": false,
+      "maxItems": 20
+    },
+    {
+      "relationType": "Ha_Task",
+      "targetEntityType": ["Task", "Attività"],
+      "displayAs": "relationList",
+      "subModuleId": "TaskRowItem",
+      "label": "Task Associati",
+      "direction": "out",
+      "allowCreate": true,
+      "allowDelete": true,
+      "maxItems": 15
+    },
+    {
+      "relationType": "*",
+      "targetEntityType": "*",
+      "displayAs": "relationList",
+      "subModuleId": "CompactContactCard",
+      "label": "Altre Relazioni",
+      "direction": "both",
+      "allowCreate": true,
+      "allowDelete": true,
+      "maxItems": 50,
+      "collapsible": true
+    }
+  ],
   "instanceConfigurableFields": [
     "viewMode",
     "attributesToDisplay",
     "layout",
     "showTitle",
     "showActions",
+    "showRelations",
+    "relationsConfig",
     "sortOrder",
     "customTitle"
   ],
@@ -75,13 +138,32 @@
       "label": "📋 Duplica",
       "handler": "handleDuplicate",
       "category": "actions"
+    },
+    {
+      "actionId": "createRelation",
+      "label": "🔗 Crea Relazione",
+      "handler": "handleCreateRelation",
+      "category": "relations"
+    },
+    {
+      "actionId": "manageRelations",
+      "label": "🔍 Gestisci Relazioni",
+      "handler": "handleManageRelations",
+      "category": "relations"
     }
   ],
   "metadata": {
     "author": "Sistema SSOT Dinamico",
     "createdAt": "2025-01-03",
-    "phase": "Fase 2 - Editing & Instances",
+    "updatedAt": "2025-01-03",
+    "phase": "Fase 3 - Relazioni & Sub-moduli",
     "compatibleEntityTypes": ["Contact", "Contatto", "Persona"],
-    "tags": ["contatti", "anagrafica", "base"]
+    "tags": ["contatti", "anagrafica", "relazioni", "fase3"],
+    "features": [
+      "editing",
+      "instances",
+      "relations",
+      "submodules"
+    ]
   }
 } 

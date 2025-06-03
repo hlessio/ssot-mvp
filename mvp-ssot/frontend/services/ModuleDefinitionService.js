@@ -172,7 +172,7 @@ class ModuleDefinitionService {
     }
 }
 
-// Esporta istanza singleton
-window.moduleDefinitionService = new ModuleDefinitionService();
+// Istanza singleton globale
+window.ModuleDefinitionService = new ModuleDefinitionService();
 
 console.log('✅ [ModuleDefinitionService] Servizio registrato globalmente'); 

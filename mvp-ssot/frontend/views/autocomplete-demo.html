@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Entity Autocomplete - SSOT Dinamico</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-section h2 {
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        .code-example {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 12px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+
+        .result-display {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 12px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .btn:hover {
+            background: #f0f0f0;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .status {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .log-output {
+            background: #1e1e1e;
+            color: #f8f8f2;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .log-section {
+            grid-column: 1 / -1;
+        }
+
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            padding: 4px 8px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-success { color: #28a745; }
+        .log-error { color: #dc3545; }
+        .log-warning { color: #ffc107; }
+        .log-info { color: #17a2b8; }
+
+        .performance-tips {
+            background: #e7f3ff;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            margin-top: 16px;
+        }
+
+        .performance-tips h4 {
+            margin: 0 0 12px 0;
+            color: #007bff;
+        }
+
+        .performance-tips ol {
+            margin: 8px 0 0 0;
+            padding-left: 24px;
+        }
+
+        .performance-tips li {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .performance-tips strong {
+            color: #0056b3;
+        }
+
+        /* Evidenzia risultati performance test */
+        #performanceResult {
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Demo Entity Autocomplete</h1>
+            <p>Componente universale per ricerca e selezione entità con autocomplete intelligente</p>
+            <span class="status">✨ Componente Universale SSOT</span>
+        </div>
+
+        <div class="demo-grid">
+            <!-- Demo Base -->
+            <div class="demo-section">
+                <h2>🎯 Autocomplete Base</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Ricerca in tutti i tipi di entità</label>
+                    <entity-autocomplete 
+                        id="demo1"
+                        placeholder="Cerca qualsiasi entità..."
+                        field-name="demo1">
+                    </entity-autocomplete>
+                </div>
+
+                <div class="code-example">
+&lt;entity-autocomplete 
+    placeholder="Cerca qualsiasi entità..."
+    field-name="demo1"&gt;
+&lt;/entity-autocomplete&gt;
+                </div>
+
+                <div class="result-display" id="result1">Nessuna selezione</div>
+            </div>
+
+            <!-- Demo Tipi Specifici -->
+            <div class="demo-section">
+                <h2>🎭 Tipi Specifici</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Solo Contact e Persona</label>
+                    <entity-autocomplete 
+                        id="demo2"
+                        entity-types="Contact,Persona"
+                        placeholder="Cerca Contact o Persona..."
+                        field-name="demo2">
+                    </entity-autocomplete>
+                </div>
+
+                <div class="code-example">
+&lt;entity-autocomplete 
+    entity-types="Contact,Persona"
+    placeholder="Cerca Contact o Persona..."&gt;
+&lt;/entity-autocomplete&gt;
+                </div>
+
+                <div class="result-display" id="result2">Nessuna selezione</div>
+            </div>
+
+            <!-- Demo Senza Creazione -->
+            <div class="demo-section">
+                <h2>🚫 Senza Creazione</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Solo selezione da entità esistenti</label>
+                    <entity-autocomplete 
+                        id="demo3"
+                        entity-types="Contact"
+                        allow-create="false"
+                        placeholder="Solo Contact esistenti..."
+                        field-name="demo3">
+                    </entity-autocomplete>
+                </div>
+
+                <div class="code-example">
+&lt;entity-autocomplete 
+    entity-types="Contact"
+    allow-create="false"
+    placeholder="Solo Contact esistenti..."&gt;
+&lt;/entity-autocomplete&gt;
+                </div>
+
+                <div class="result-display" id="result3">Nessuna selezione</div>
+            </div>
+
+            <!-- Demo Campo Richiesto -->
+            <div class="demo-section">
+                <h2>⚠️ Campo Richiesto</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Selezione obbligatoria</label>
+                    <entity-autocomplete 
+                        id="demo4"
+                        entity-types="Cliente"
+                        required="true"
+                        placeholder="Seleziona un Cliente (richiesto)..."
+                        field-name="demo4">
+                    </entity-autocomplete>
+                </div>
+
+                <div class="code-example">
+&lt;entity-autocomplete 
+    entity-types="Cliente"
+    required="true"
+    placeholder="Seleziona un Cliente (richiesto)..."&gt;
+&lt;/entity-autocomplete&gt;
+                </div>
+
+                <div class="result-display" id="result4">Nessuna selezione</div>
+            </div>
+
+            <!-- Demo Controllo Programmatico -->
+            <div class="demo-section">
+                <h2>⚙️ Controllo Programmatico</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Controllo via JavaScript</label>
+                    <entity-autocomplete 
+                        id="demo5"
+                        entity-types="Task,Contact"
+                        placeholder="Controlla programmaticamente..."
+                        field-name="demo5">
+                    </entity-autocomplete>
+                </div>
+
+                <div style="margin: 12px 0;">
+                    <button class="btn btn-primary" onclick="setDemoValue()">Imposta Valore</button>
+                    <button class="btn" onclick="clearDemoValue()">Pulisci</button>
+                    <button class="btn" onclick="getDemoValue()">Leggi Valore</button>
+                </div>
+
+                <div class="code-example">
+// Imposta valore
+autocomplete.setValue(entityObject);
+
+// Pulisci selezione  
+autocomplete.clearSelection();
+
+// Leggi valore corrente
+const value = autocomplete.value;
+                </div>
+
+                <div class="result-display" id="result5">Nessuna selezione</div>
+            </div>
+
+            <!-- Demo Integrazione Form -->
+            <div class="demo-section">
+                <h2>📝 Integrazione Form</h2>
+                
+                <form id="demoForm" style="background: #f8f9fa; padding: 16px; border-radius: 4px;">
+                    <div class="form-group">
+                        <label class="form-label">Cliente</label>
+                        <entity-autocomplete 
+                            id="formDemo"
+                            entity-types="Cliente,Contact"
+                            required="true"
+                            field-name="cliente"
+                            placeholder="Seleziona cliente...">
+                        </entity-autocomplete>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Note</label>
+                        <textarea rows="3" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" 
+                                  placeholder="Note aggiuntive..."></textarea>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary" onclick="submitDemoForm()">Invia Form</button>
+                </form>
+
+                <div class="result-display" id="formResult">Form non inviato</div>
+            </div>
+
+            <!-- Log Section -->
+            <div class="demo-section log-section">
+                <h2>📋 Log Eventi</h2>
+                
+                <div style="margin-bottom: 12px;">
+                    <button class="btn" onclick="clearLog()">🗑️ Pulisci Log</button>
+                    <button class="btn" onclick="testAllEvents()">🧪 Test Eventi</button>
+                </div>
+
+                <div class="log-output" id="logOutput">
+Aspettando eventi...
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h3>⚡ Autocomplete Semplificato e Veloce</h3>
+                <p>Questa versione è stata ottimizzata per semplicità e velocità:</p>
+                <ul>
+                    <li>✨ <strong>Semplice e diretto</strong>: niente cache complesse o precaricamenti</li>
+                    <li>✨ <strong>Veloce</strong>: debounce fisso 200ms, ricerca parallela</li>
+                    <li>✨ <strong>Intelligente</strong>: ordina per rilevanza (chi inizia con la query per primo)</li>
+                    <li>✨ <strong>Affidabile</strong>: meno stati, meno errori, più stabile</li>
+                    <li>✨ <strong>Leggero</strong>: codice semplificato, meno overhead</li>
+                </ul>
+                
+                <div style="margin: 16px 0;">
+                    <button class="btn btn-primary" onclick="createTestEntities()">🎯 Crea Entità di Test</button>
+                    <button class="btn" onclick="clearAllTestData()">🗑️ Pulisci Test Data</button>
+                    <button class="btn btn-primary" onclick="testPersonaCreation()">🧪 Test Creazione Persona</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="performanceTest">Test Velocità (digita subito le prime lettere):</label>
+                    <entity-autocomplete 
+                        id="performanceTest"
+                        entity-types="Contact,Persona"
+                        placeholder="Prova con 'm', 'g', 'a'..."
+                        field-name="performanceTest">
+                    </entity-autocomplete>
+                    <div class="result-display" id="performanceResult">Test velocità - nessuna selezione</div>
+                </div>
+                
+                <div class="performance-tips">
+                    <h4>⚡ Come testare la velocità:</h4>
+                    <ol>
+                        <li><strong>Focus pulito</strong>: Clicca nel campo → non mostra nulla se vuoto</li>
+                        <li><strong>Ricerca veloce</strong>: Digita "m" → dovrebbe essere rapido e fluido</li>
+                        <li><strong>Ordine intelligente</strong>: Chi inizia con "m" appare per primo</li>
+                        <li><strong>Sempre funziona</strong>: Niente stati inconsistenti o blocchi</li>
+                        <li><strong>Debounce giusto</strong>: 200ms fisso, né troppo veloce né troppo lento</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h3>6️⃣ Integrazione Form Completo</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Services -->
+    <script src="../services/ModuleDefinitionService.js"></script>
+    <script src="../services/SchemaService.js"></script>
+    <script src="../services/EntityService.js"></script>
+    <script src="../services/WebSocketService.js"></script>
+
+    <!-- Load Components -->
+    <script src="../components/entity-autocomplete.js"></script>
+
+    <script>
+        // Demo App
+        const demoApp = {
+            initialized: false,
+            entityService: null,
+            schemaService: null
+        };
+
+        // Utility per logging
+        function log(message, type = 'info') {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            
+            logOutput.textContent += `${timestamp} ${icon} ${message}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('logOutput').textContent = 'Log pulito.\n';
+        }
+
+        // Setup event listeners per tutti i demo
+        function setupEventListeners() {
+            const demos = ['demo1', 'demo2', 'demo3', 'demo4', 'demo5', 'formDemo', 'performanceTest'];
+            
+            demos.forEach(demoId => {
+                const autocomplete = document.getElementById(demoId);
+                if (autocomplete) {
+                    autocomplete.addEventListener('entity-selected', (e) => {
+                        const { entity, fieldName } = e.detail;
+                        log(`Entità selezionata in ${fieldName}: ${entity.nome || entity.name} (${entity.entityType})`, 'success');
+                        updateResultDisplay(fieldName, entity);
+                    });
+
+                    autocomplete.addEventListener('entity-cleared', (e) => {
+                        const { fieldName } = e.detail;
+                        log(`Entità rimossa da ${fieldName}`, 'info');
+                        updateResultDisplay(fieldName, null);
+                    });
+
+                    autocomplete.addEventListener('create-entity-requested', async (e) => {
+                        const { entityType, suggestedName, fieldName } = e.detail;
+                        log(`🔍 DEBUG: Evento create-entity-requested ricevuto`, 'info');
+                        log(`🔍 DEBUG: entityType="${entityType}", suggestedName="${suggestedName}", fieldName="${fieldName}"`, 'info');
+                        
+                        // ✅ Verifica servizio disponibile
+                        if (!demoApp.entityService) {
+                            log(`❌ EntityService non disponibile!`, 'error');
+                            alert('EntityService non inizializzato');
+                            return;
+                        }
+                        
+                        log(`Richiesta creazione entità ${entityType} "${suggestedName}" da ${fieldName}`, 'warning');
+                        
+                        try {
+                            // ✅ Prepara dati basati sul tipo di entità
+                            let entityData = {};
+                            
+                            // ✅ Gestione schema-aware per diversi tipi
+                            if (entityType === 'Persona') {
+                                // Persona ha schema strict con nome+cognome required
+                                const parts = suggestedName.split(' ');
+                                entityData = {
+                                    nome: parts[0] || suggestedName,
+                                    cognome: parts[1] || 'N/A' // Fallback per cognome
+                                };
+                                log(`🔍 DEBUG: Dati Persona preparati: ${JSON.stringify(entityData)}`, 'info');
+                            } else if (entityType === 'Contact') {
+                                // Contact ha schema flexible
+                                entityData = {
+                                    nome: suggestedName,
+                                    name: suggestedName, // Supporto nomi alternativi
+                                    email: '', // Campo vuoto per ora
+                                    telefono: ''
+                                };
+                                log(`🔍 DEBUG: Dati Contact preparati: ${JSON.stringify(entityData)}`, 'info');
+                            } else if (entityType === 'Cliente') {
+                                // Cliente potrebbe non avere schema
+                                entityData = {
+                                    nome: suggestedName,
+                                    name: suggestedName,
+                                    ragioneSociale: suggestedName
+                                };
+                                log(`🔍 DEBUG: Dati Cliente preparati: ${JSON.stringify(entityData)}`, 'info');
+                            } else {
+                                // Fallback generico
+                                entityData = {
+                                    nome: suggestedName,
+                                    name: suggestedName,
+                                    title: suggestedName
+                                };
+                                log(`🔍 DEBUG: Dati generici preparati: ${JSON.stringify(entityData)}`, 'info');
+                            }
+                            
+                            log(`🔍 DEBUG: EntityService disponibile: ${!!demoApp.entityService}`, 'info');
+                            log(`🔍 DEBUG: Chiamando createEntity con tipo="${entityType}" e dati:`, 'info');
+                            console.log('🔍 DEBUG entityData completo:', entityData);
+                            
+                            // ✅ Crea effettivamente l'entità
+                            const newEntity = await demoApp.entityService.createEntity(entityType, entityData);
+                            
+                            log(`✅ Entità ${entityType} "${suggestedName}" creata con ID: ${newEntity.id}`, 'success');
+                            
+                            // ✅ Verifica che l'entità abbia i dati per il display
+                            if (!newEntity.nome && !newEntity.name && !newEntity.title) {
+                                // Aggiungi nome per il display se mancante
+                                newEntity.nome = suggestedName;
+                                newEntity.name = suggestedName;
+                                log(`ℹ️ Aggiunto nome per display: ${suggestedName}`, 'info');
+                            }
+                            
+                            // ✅ Seleziona automaticamente l'entità appena creata
+                            autocomplete.setValue(newEntity);
+                            
+                        } catch (error) {
+                            log(`❌ Errore creazione entità: ${error.message}`, 'error');
+                            console.error('🔍 DEBUG: Errore completo:', error);
+                            
+                            // ✅ Messaggio di errore più user-friendly
+                            let errorMsg = error.message;
+                            if (errorMsg.includes('required mancante')) {
+                                errorMsg = `Il tipo ${entityType} richiede più informazioni. Impossibile creare con solo il nome.`;
+                            } else if (errorMsg.includes('Cannot read properties of null')) {
+                                errorMsg = `Il tipo ${entityType} non ha uno schema definito. Creazione non supportata.`;
+                            } else if (errorMsg.includes('Status: 500')) {
+                                errorMsg = `Errore server durante creazione ${entityType}. Verifica i log del server.`;
+                            }
+                            
+                            alert(`Errore nella creazione dell'entità: ${errorMsg}`);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Aggiorna display risultati
+        function updateResultDisplay(fieldName, entity) {
+            const resultId = fieldName.replace('demo', 'result').replace('cliente', 'formResult').replace('performanceTest', 'performanceResult');
+            const resultElement = document.getElementById(resultId);
+            
+            if (resultElement && fieldName !== 'cliente') {
+                if (entity) {
+                    const displayText = fieldName === 'performanceTest' 
+                        ? `✅ Performance OK - ${entity.nome || entity.name} (${entity.entityType}) - ID: ${entity.id}`
+                        : `${entity.nome || entity.name} (${entity.entityType}) - ID: ${entity.id}`;
+                    resultElement.textContent = displayText;
+                } else {
+                    const displayText = fieldName === 'performanceTest' 
+                        ? 'Performance test - nessuna selezione'
+                        : 'Nessuna selezione';
+                    resultElement.textContent = displayText;
+                }
+            }
+        }
+
+        // Controllo programmatico demo
+        function setDemoValue() {
+            const autocomplete = document.getElementById('demo5');
+            // Simuliamo un'entità
+            const fakeEntity = {
+                id: 'demo-entity-123',
+                nome: 'Entità Demo',
+                entityType: 'Task',
+                email: 'demo@example.com'
+            };
+            autocomplete.setValue(fakeEntity);
+            log('Valore impostato programmaticamente', 'success');
+        }
+
+        function clearDemoValue() {
+            const autocomplete = document.getElementById('demo5');
+            autocomplete.clearSelection();
+            log('Valore pulito programmaticamente', 'info');
+        }
+
+        function getDemoValue() {
+            const autocomplete = document.getElementById('demo5');
+            const value = autocomplete.value;
+            if (value) {
+                log(`Valore corrente: ${value.nome} (${value.entityType})`, 'info');
+                alert(`Valore: ${JSON.stringify(value, null, 2)}`);
+            } else {
+                log('Nessun valore selezionato', 'warning');
+                alert('Nessun valore selezionato');
+            }
+        }
+
+        // Form demo
+        function submitDemoForm() {
+            const formAutocomplete = document.getElementById('formDemo');
+            const formResult = document.getElementById('formResult');
+            
+            if (formAutocomplete.value) {
+                const entity = formAutocomplete.value;
+                formResult.textContent = `Form inviato con cliente: ${entity.nome || entity.name} (${entity.entityType})`;
+                log(`Form demo inviato con cliente: ${entity.id}`, 'success');
+            } else {
+                formResult.textContent = 'Errore: Cliente richiesto!';
+                log('Form demo: cliente richiesto', 'error');
+            }
+        }
+
+        // Test eventi
+        function testAllEvents() {
+            log('Inizio test eventi automatico...', 'info');
+            
+            const autocomplete = document.getElementById('demo1');
+            
+            // Simula selezione
+            setTimeout(() => {
+                const testEntity = {
+                    id: 'test-123',
+                    nome: 'Test Entity',
+                    entityType: 'Test'
+                };
+                autocomplete.setValue(testEntity);
+                log('Test: Entità impostata', 'info');
+            }, 1000);
+
+            // Simula pulizia
+            setTimeout(() => {
+                autocomplete.clearSelection();
+                log('Test: Entità rimossa', 'info');
+            }, 3000);
+
+            log('Test eventi completato', 'success');
+        }
+
+        // ✅ NUOVO: Crea entità di test per migliorare i test
+        async function createTestEntities() {
+            if (!demoApp.entityService) {
+                alert('Servizi non inizializzati');
+                return;
+            }
+            
+            log('🎯 Creazione entità di test in corso...', 'info');
+            
+            const testEntities = [
+                // Contact con nomi vari
+                { type: 'Contact', data: { nome: 'Mario', cognome: 'Rossi', email: 'mario.rossi@email.it' }},
+                { type: 'Contact', data: { nome: 'Giulia', cognome: 'Verdi', email: 'giulia.verdi@email.it' }},
+                { type: 'Contact', data: { nome: 'Alessandro', cognome: 'Bianchi', email: 'alex@email.it' }},
+                
+                // Persona con schema strict
+                { type: 'Persona', data: { nome: 'Anna', cognome: 'Neri', eta: 28 }},
+                { type: 'Persona', data: { nome: 'Marco', cognome: 'Blu', eta: 35 }},
+                
+                // Task con nomi descrittivi
+                { type: 'Task', data: { nome: 'Chiamare cliente importante', Check: false }},
+                { type: 'Task', data: { nome: 'Preparare presentazione', Check: true }},
+            ];
+            
+            let createdCount = 0;
+            let failedCount = 0;
+            
+            for (const { type, data } of testEntities) {
+                try {
+                    const entity = await demoApp.entityService.createEntity(type, data);
+                    log(`✅ Creato ${type}: ${data.nome}`, 'success');
+                    createdCount++;
+                } catch (error) {
+                    log(`❌ Errore creando ${type}: ${error.message}`, 'error');
+                    failedCount++;
+                }
+            }
+            
+            log(`🎯 Completato: ${createdCount} entità create, ${failedCount} fallimenti`, 'info');
+        }
+
+        // ✅ NUOVO: Funzione per pulire dati di test
+        async function clearAllTestData() {
+            if (!confirm('Sicuro di voler eliminare tutti i dati di test? Questa operazione non è reversibile.')) {
+                return;
+            }
+            
+            log('🗑️ Pulizia dati di test... (funzione placeholder)', 'warning');
+            log('ℹ️ Per ora puoi usare Neo4j Browser per pulire il database', 'info');
+            // TODO: Implementare API per eliminazione bulk
+        }
+
+        // ✅ NUOVO: Test diretto creazione Persona
+        async function testPersonaCreation() {
+            if (!demoApp.entityService) {
+                alert('Servizi non inizializzati');
+                return;
+            }
+            
+            log('🧪 Test diretto creazione Persona...', 'info');
+            
+            const testData = {
+                nome: 'Mario',
+                cognome: 'Test'
+            };
+            
+            console.log('🧪 Test dati da inviare:', testData);
+            
+            try {
+                const result = await demoApp.entityService.createEntity('Persona', testData);
+                log(`✅ Test completato: Persona creata con ID ${result.id}`, 'success');
+                console.log('🧪 Test risultato:', result);
+            } catch (error) {
+                log(`❌ Test fallito: ${error.message}`, 'error');
+                console.error('🧪 Test errore:', error);
+            }
+        }
+
+        // Attende il caricamento dei servizi
+        async function waitForServices() {
+            let attempts = 0;
+            while (attempts < 50) {
+                if (window.EntityService && window.SchemaService) {
+                    return true;
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            throw new Error('Servizi non caricati dopo 5 secondi');
+        }
+
+        // Inizializzazione
+        async function initializeDemo() {
+            try {
+                log('Inizializzazione demo...', 'info');
+                
+                // Attende servizi
+                await waitForServices();
+                
+                // ✅ CORRETTO: I servizi sono istanze singleton, non constructor
+                demoApp.entityService = window.EntityService;
+                demoApp.schemaService = window.SchemaService;
+                
+                demoApp.initialized = true;
+                
+                // Setup event listeners
+                setupEventListeners();
+                
+                log('Demo inizializzato con successo!', 'success');
+                log('Prova a digitare "mario" o "gianni" per testare l\'autocomplete', 'info');
+                
+            } catch (error) {
+                log(`Errore inizializzazione: ${error.message}`, 'error');
+            }
+        }
+
+        // Avvia al caricamento pagina
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Pagina demo caricata', 'info');
+            initializeDemo();
+        });
+    </script>
+</body>
+</html> 

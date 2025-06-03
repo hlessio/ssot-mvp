@@ -315,7 +315,7 @@ class SchemaService {
     }
 }
 
-// Esporta istanza singleton
-window.schemaService = new SchemaService();
+// Istanza singleton globale
+window.SchemaService = new SchemaService();
 
 console.log('✅ [SchemaService] Servizio registrato globalmente'); 

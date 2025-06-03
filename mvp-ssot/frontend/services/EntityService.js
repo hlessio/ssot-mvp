@@ -11,6 +11,7 @@
 class EntityService {
     constructor() {
         this.entityCache = new Map();
+        this.entitiesListCache = new Map(); // ✨ Cache per liste di entità per tipo
         this.cacheTimeout = 30000; // 30 secondi
         this.pendingRequests = new Map(); // Per evitare richieste duplicate
     }
@@ -104,49 +105,76 @@ class EntityService {
     }
 
     /**
-     * Ottiene una lista di entità per tipo
+     * ✨ NUOVO: Esegue effettivamente la richiesta per ottenere entità per tipo
      * @param {string} entityType - Tipo di entità
-     * @param {Object} queryParams - Parametri di query (limit, offset, filter)
-     * @returns {Promise<Array>} - Array delle entità
+     * @returns {Promise<Array>} - Lista delle entità
      */
-    async getEntities(entityType, queryParams = {}) {
+    async performGetEntities(entityType) {
+        const url = `/api/entities/${entityType}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`Errore nel caricamento entità tipo ${entityType} (Status: ${response.status})`);
+        }
+
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Errore nel recupero entità');
+        }
+
+        return result.data || [];
+    }
+
+    /**
+     * Ottiene tutte le entità di un tipo specifico - OTTIMIZZATO
+     * @param {string} entityType - Tipo di entità
+     * @param {boolean} forceRefresh - Forzare refresh della cache
+     * @returns {Promise<Array>} - Lista delle entità
+     */
+    async getEntities(entityType, forceRefresh = false) {
         try {
+            const cacheKey = `entities_${entityType}`;
+            
+            // ✨ Controlla cache per liste entità
+            if (!forceRefresh && this.entitiesListCache.has(cacheKey)) {
+                const cached = this.entitiesListCache.get(cacheKey);
+                if (Date.now() - cached.timestamp < this.cacheTimeout) {
+                    console.log(`🔄 [EntityService] Cache hit per entità tipo ${entityType} (${cached.data.length} entità)`);
+                    return cached.data;
+                }
+            }
+
+            // ✨ Evita richieste duplicate per stesso tipo
+            const pendingKey = `entities_${entityType}`;
+            if (this.pendingRequests.has(pendingKey)) {
+                console.log(`⏳ [EntityService] Attesa richiesta in corso per tipo ${entityType}`);
+                return await this.pendingRequests.get(pendingKey);
+            }
+
             console.log(`📥 [EntityService] Caricamento entità tipo ${entityType}...`);
 
-            const params = new URLSearchParams();
-            
-            // Aggiungi parametri di query
-            Object.keys(queryParams).forEach(key => {
-                if (queryParams[key] !== undefined && queryParams[key] !== null) {
-                    params.append(key, queryParams[key]);
-                }
-            });
+            const requestPromise = this.performGetEntities(entityType);
+            this.pendingRequests.set(pendingKey, requestPromise);
 
-            const url = `/api/entities/${entityType}${params.toString() ? '?' + params.toString() : ''}`;
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                throw new Error(`Errore nel caricamento entità tipo ${entityType} (Status: ${response.status})`);
+            try {
+                const entities = await requestPromise;
+                // ✨ Cache il risultato
+                this.entitiesListCache.set(cacheKey, {
+                    data: entities,
+                    timestamp: Date.now()
+                });
+                
+                // ✨ Cache anche le singole entità
+                entities.forEach(entity => {
+                    this.cacheEntity(`entity_${entity.id}`, entity);
+                });
+                
+                console.log(`✅ [EntityService] ${entities.length} entità tipo ${entityType} caricate e cachate`);
+                return entities;
+            } finally {
+                this.pendingRequests.delete(pendingKey);
             }
-
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.error || 'Errore nel recupero entità');
-            }
-
-            const entities = result.data || [];
-            console.log(`✅ [EntityService] Caricate ${entities.length} entità tipo ${entityType}`);
-            
-            // Cache ogni entità individualmente
-            entities.forEach(entity => {
-                if (entity.id) {
-                    const cacheKey = `entity_${entity.id}`;
-                    this.cacheEntity(cacheKey, entity);
-                }
-            });
-
-            return entities;
 
         } catch (error) {
             console.error(`❌ [EntityService] Errore recupero entità tipo ${entityType}:`, error);
@@ -163,11 +191,15 @@ class EntityService {
     async createEntity(entityType, data) {
         try {
             console.log(`📝 [EntityService] Creazione entità tipo ${entityType}...`);
+            console.log(`🔍 [EntityService] DEBUG: Dati ricevuti:`, data);
 
             const requestBody = {
                 entityType: entityType,
                 ...data
             };
+            
+            console.log(`🔍 [EntityService] DEBUG: Request body completo:`, requestBody);
+            console.log(`🔍 [EntityService] DEBUG: Request body stringificato:`, JSON.stringify(requestBody));
 
             const response = await fetch('/api/entities', {
                 method: 'POST',
@@ -177,7 +209,11 @@ class EntityService {
                 body: JSON.stringify(requestBody)
             });
 
+            console.log(`🔍 [EntityService] DEBUG: Response status:`, response.status);
+
             if (!response.ok) {
+                const errorText = await response.text();
+                console.log(`🔍 [EntityService] DEBUG: Error response:`, errorText);
                 throw new Error(`Errore nella creazione entità (Status: ${response.status})`);
             }
 
@@ -265,12 +301,6 @@ class EntityService {
                 throw new Error(`Errore nell'eliminazione entità (Status: ${response.status})`);
             }
 
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.error || 'Errore nell\'eliminazione entità');
-            }
-
             // Rimuovi da cache
             this.invalidateEntityCache(entityId);
 
@@ -342,12 +372,22 @@ class EntityService {
     }
 
     /**
+     * Pulisce la cache per un tipo specifico
+     */
+    clearTypeCache(entityType) {
+        const cacheKey = `entities_${entityType}`;
+        this.entitiesListCache.delete(cacheKey);
+        console.log(`🗑️ [EntityService] Cache pulita per tipo ${entityType}`);
+    }
+
+    /**
      * Pulisce tutta la cache
      */
-    clearCache() {
+    clearAllCache() {
         this.entityCache.clear();
+        this.entitiesListCache.clear();
         this.pendingRequests.clear();
-        console.log('🧹 [EntityService] Cache completamente pulita');
+        console.log('🗑️ [EntityService] Tutta la cache pulita');
     }
 
     /**
@@ -363,7 +403,7 @@ class EntityService {
     }
 }
 
-// Esporta istanza singleton
-window.entityService = new EntityService();
+// Istanza singleton globale
+window.EntityService = new EntityService();
 
 console.log('✅ [EntityService] Servizio registrato globalmente'); 

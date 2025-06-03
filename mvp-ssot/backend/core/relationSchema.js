@@ -52,12 +52,12 @@ class RelationSchema {
     validateRelation(sourceEntityType, targetEntityType, attributes = {}) {
         const warnings = [];
         
-        // Valida tipi partecipanti
-        if (this.sourceTypes.length > 0 && !this.sourceTypes.includes(sourceEntityType)) {
+        // Valida tipi partecipanti - supporta wildcard "*" per relazioni universali
+        if (this.sourceTypes.length > 0 && !this.sourceTypes.includes('*') && !this.sourceTypes.includes(sourceEntityType)) {
             return { valid: false, error: `Tipo sorgente non valido: ${sourceEntityType}. Tipi consentiti: ${this.sourceTypes.join(', ')}` };
         }
         
-        if (this.targetTypes.length > 0 && !this.targetTypes.includes(targetEntityType)) {
+        if (this.targetTypes.length > 0 && !this.targetTypes.includes('*') && !this.targetTypes.includes(targetEntityType)) {
             return { valid: false, error: `Tipo target non valido: ${targetEntityType}. Tipi consentiti: ${this.targetTypes.join(', ')}` };
         }
         
@@ -179,8 +179,8 @@ class RelationSchema {
      * @returns {boolean} True se la relazione è supportata
      */
     supportsRelation(sourceType, targetType) {
-        const sourceValid = this.sourceTypes.length === 0 || this.sourceTypes.includes(sourceType);
-        const targetValid = this.targetTypes.length === 0 || this.targetTypes.includes(targetType);
+        const sourceValid = this.sourceTypes.length === 0 || this.sourceTypes.includes('*') || this.sourceTypes.includes(sourceType);
+        const targetValid = this.targetTypes.length === 0 || this.targetTypes.includes('*') || this.targetTypes.includes(targetType);
         return sourceValid && targetValid;
     }
 

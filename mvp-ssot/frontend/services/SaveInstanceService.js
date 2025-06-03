@@ -390,7 +390,7 @@ class SaveInstanceService {
     }
 }
 
-// Inizializza servizio globale
-window.saveInstanceService = new SaveInstanceService();
+// Istanza singleton globale
+window.SaveInstanceService = new SaveInstanceService();
 
 console.log('✅ [SaveInstanceService] Servizio inizializzato e disponibile globalmente'); 

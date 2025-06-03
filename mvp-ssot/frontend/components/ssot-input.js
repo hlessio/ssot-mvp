@@ -268,9 +268,9 @@ class SSOTInput extends HTMLElement {
             }
 
             // Validazione via SchemaService se disponibile
-            if (this.value && this.value.trim() !== '' && entityType && attributeName && window.schemaService) {
+            if (this.value && this.value.trim() !== '' && entityType && attributeName && window.SchemaService) {
                 try {
-                    const result = await window.schemaService.validateAttributeValue(
+                    const result = await window.SchemaService.validateAttributeValue(
                         entityType, 
                         attributeName, 
                         this.value

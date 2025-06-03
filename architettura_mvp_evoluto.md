@@ -671,4 +671,9 @@ Il **MVP SSOT Dinamico Evoluto** rappresenta una significativa evoluzione del si
 - **Testing Completo:** Validation end-to-end per tutti i componenti
 - **Compatibility:** Backward compatibility completa con sistema MVP originale
 
+**✨ Recenti Miglioramenti Post-Fase 3:**
+- **Autocomplete Universale:** Componente `entity-autocomplete` migliorato con display names intelligenti, creazione entità e aggiornamento real-time tramite WebSocket
+- **User Experience Enhansed:** Visualizzazione nomi significativi invece di ID, pulsante refresh manuale, integrazione WebSocket per sincronizzazione immediata
+- **Robustezza Backend:** Correzione endpoint `/api/entities` per gestione flessibile dati creazione entità, supporto sia `initialData` che direct body data
+
 La base architettonica è ora **completamente operativa** per implementare le fasi successive del frontend (editing, istanze salvabili, relazioni) come descritto in `doc_tecnico_evoluzione_frontend_v1.md` e supportare la piena visione del SSOT Dinamico. 

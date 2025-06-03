@@ -49,9 +49,9 @@ class AttributeDisplay extends HTMLElement {
             const entityType = this.getAttribute('entity-type');
             const attributeName = this.getAttribute('attribute-name');
 
-            if (entityType && attributeName && window.schemaService) {
+            if (entityType && attributeName && window.SchemaService) {
                 try {
-                    this.attributeInfo = await window.schemaService.getAttributeInfo(entityType, attributeName);
+                    this.attributeInfo = await window.SchemaService.getAttributeInfo(entityType, attributeName);
                 } catch (error) {
                     console.warn(`⚠️ [attribute-display] Info attributo non disponibile per ${attributeName}:`, error.message);
                     this.attributeInfo = this.getDefaultAttributeInfo(attributeName);

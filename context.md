@@ -9,7 +9,7 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 
 # Diario di Bordo - MVP SSOT Dinamico
 
-## Obiettivo Corrente: ✅ CORE ENGINE EVOLUTO IN PROGRESSIONE
+## Obiettivo Corrente: ✅ FRONTEND EVOLUTO - FASE 3 COMPLETATA + FIX AUTCOMPLETE
 
 **Data:** $(date +%Y-%m-%d)
 
@@ -54,152 +54,134 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 *   [x] Aggiornamento di `doc_tecnico_evoluzione_core_v1.md` per riflettere la nuova direzione architetturale, dettagliando le modifiche a SchemaManager, EntityEngine, RelationEngine, DAO, e API, inclusa l'integrazione con il frontend per moduli schema-aware.
 *   [x] Aggiornamento di `full-ssot.md` per integrare la filosofia della "Nota Evolutiva" (granularità semantica, crescita organica della conoscenza, moduli UI come interfacce di modellazione contestuale).
 *   [x] Aggiornamento di `architettura_mvp.md` e `manuale_sviluppo_mvp.md` per contestualizzarli come documenti storici dell'MVP iniziale e indirizzare alla documentazione evoluta.
-*   [x] **Fase 1 FRONTEND EVOLUTO COMPLETATA - Webmodules Template-Driven Schema-Aware**:
+*   [x] **Fase 1 FRONTEND EVOLUTO COMPLETATA - Webmodules Template-Driven Schema-Aware**.
+*   [x] **Fase 2 FRONTEND EVOLUTO COMPLETATA - Editing, Azioni e ModuleInstance Salvabili**.
+*   [x] **DEMO FASE 2 COMPLETATA - Risoluzione Bug Moduli Tabellari Dinamici**.
+*   [x] **FASE 3 FRONTEND EVOLUTO COMPLETATA - Relazioni, Sub-moduli e Riutilizzo Avanzato**.
+*   [x] **Risoluzione Problemi Autocomplete e Creazione Entità**.
 
-#### **1.1 - Servizi Frontend Core (4 servizi)**:
-*   [x] **ModuleDefinitionService.js**: Gestione template JSON, cache, validazione, compatibilità multi-entityType, fallback graceful.
-*   [x] **SchemaService.js**: Interazione backend schemi, API evolute con fallback MVP, cache 30s, validazione attributi, info dettagliate.
-*   [x] **EntityService.js**: CRUD entità, cache intelligente, gestione reference, integrazione EntityEngine evoluto, deduplicazione richieste.
-*   [x] **WebSocketService.js**: Connessione evoluta con reconnect esponenziale, sottoscrizioni granulari, pattern matching, queue messaggi offline.
-
-#### **1.2 - Web Components Base (3 componenti)**:
-*   [x] **ssot-input.js**: Input validazione integrata SchemaService, eventi personalizzati, stili consistenti, debounce validation, focus management.
-*   [x] **attribute-display.js**: Visualizzazione schema-aware, formattazione tipo-specifica (email clickable, telefono, date), tooltip, responsive.
-*   [x] **template-module-renderer.js**: **Componente centrale** - renderizza moduli da template JSON + entity ID, integrazione tutti servizi, WebSocket subscriptions, viste multiple (StandardCard, CompactCard), gestione azioni.
-
-#### **1.3 - Template JSON Sistema (3 template)**:
-*   [x] **SimpleContactCard.json**: Template base con attributi semplici `["nome", "cognome", "email", "telefono"]`.
-*   [x] **StandardContactCard.json**: Template avanzato con layout strutturato, sezioni ("Informazioni Principali", "Dettagli Contatto"), viste multiple, azioni.
-*   [x] **CompactContactCard.json**: Template universale per qualsiasi entità (`targetEntityType: "*"`).
-
-#### **1.4 - Pagina Test Completa (1 test interface)**:
-*   [x] **views/template-test.html**: Interface testing completa per servizi, template-module-renderer, componenti individuali, logging real-time, responsive design.
-
-#### **1.5 - Integrazione Backend-Frontend End-to-End**:
-*   [x] **Server Backend Operativo**: server_evolved.js serve file statici frontend, API MVP + evolute, WebSocket real-time.
-*   [x] **Schema Contact Creato**: Attributi `nome`, `cognome`, `email`, `telefono`, `indirizzo`, `citta` con tipo appropriato.
-*   [x] **Entità Test**: 2 entità Contact (Mario Rossi, Anna Verdi) con dati completi per testing.
-*   [x] **Funzionalità Validate**: Template rendering, schema-awareness, WebSocket updates, fallback API, validazione, focus management.
-
-#### **1.6 - Funzionalità Chiave Implementate**:
-*   [x] **Template-Driven Rendering**: Moduli renderizzati dinamicamente da definizioni JSON, layout strutturato con sezioni, viste multiple per stesso template, azioni configurabili.
-*   [x] **Schema-Awareness**: Componenti che si adattano ai tipi attributo (email, telefono, date), validazione automatica basata su schema, formattazione tipo-specifica, fallback graceful.
-*   [x] **Real-time Integration**: WebSocket subscriptions per aggiornamenti live, pattern matching avanzato per eventi, propagazione cross-window, cache invalidation automatica.
-*   [x] **Performance Optimization**: Caching intelligente (30s timeout), debounce validation (300ms), lazy loading attribute info, deduplicazione richieste parallele.
-*   [x] **User Experience**: Focus management corretto in Web Components, validazione real-time senza perdita focus, indicatori visivi stato validazione, responsive design.
-
-### ✅ FASE 2 FRONTEND EVOLUTO COMPLETATA - Editing, Azioni e ModuleInstance Salvabili
-**Data Completamento:** 03 Giugno 2025
+### ✅ FASE 3 FRONTEND EVOLUTO COMPLETATA - Relazioni, Sub-moduli e Riutilizzo Avanzato
+**Data Completamento:** 03 Giugno 2025 (Continuazione e Finalizzazione)
 **Status:** ✅ Implementato e Testato con Successo
 
-**Componenti Implementati:**
-- ✅ **attribute-editor.js** (640 righe): Editor schema-aware con validazione real-time, debounce 300ms, keyboard shortcuts
-- ✅ **SaveInstanceService.js** (396 righe): CRUD ModuleInstance con cache intelligente, validazione, deduplicazione richieste
-- ✅ **saved-module-instance.js** (550 righe): Rendering istanze salvate con configurazioni override e metadati
-- ✅ **template-module-renderer.js EVOLUTO**: Editing mode, batch save/cancel, azioni configurabili, "Salva Vista Come..."
-- ✅ **Backend API /api/module-instances**: CRUD completo con WebSocket notifications
-- ✅ **StandardContactCard v2.0.0**: Template evoluto con viste multiple, azioni categorizzate, configurazioni estese
+**Componenti Implementati (Riepilogo Fase 3):**
+- ✅ **RelationService.js**: Servizio completo per gestione relazioni con cache intelligente, WebSocket integration, CRUD relazioni tipizzate.
+- ✅ **relation-list.js**: Web Component per visualizzazione liste entità correlate con filtri, azioni e real-time updates.
+- ✅ **relation-editor.js**: Editor modale per creazione/modifica relazioni con ricerca entità, validazione e attributi personalizzati.
+- ✅ **StandardContactCard v3.0.0**: Template evoluto con sezione relations, sub-moduli configurabili, azioni relazioni.
+- ✅ **CompactContactCard v1.0.0**: Template compatto universale per sub-moduli in liste relazioni.
+- ✅ **views/relation-test.html**: Pagina test completa per tutti i componenti di relazione con logging avanzato.
+- ✅ **Soluzione Relazioni Universali**: Supporto per wildcard "*" negli schemi di relazione per permettere connessioni tra qualsiasi tipo di entità, mantenendo la validazione per schemi specifici.
 
-**Funzionalità Validate:**
-- ✅ Editing in-place con validazione schema-aware e salvataggio batch
-- ✅ Sistema ModuleInstance per configurazioni personalizzate salvabili
-- ✅ Template evoluti con azioni configurabili (🔄 Aggiorna, ✏️ Modifica, 📋 Duplica)
-- ✅ "Salva Vista Come..." per creare istanze da configurazioni correnti
-- ✅ Rendering istanze salvate con override configurazioni template
-- ✅ WebSocket real-time per sincronizzazione istanze e modifiche
-- ✅ Gestione errori robusta con normalizzazione tipi entità
-- ✅ API backend completa con validazione e metadati sistema
+**Funzionalità Validate (Riepilogo Fase 3):**
+- ✅ CRUD relazioni tipizzate con RelationEngine backend integration.
+- ✅ Visualizzazione liste entità correlate con filtri per tipo e direzione.
+- ✅ Editor relazioni con ricerca entità target e selezione tipo relazione.
+- ✅ Sub-moduli configurabili per rendering entità in liste relazioni.
+- ✅ WebSocket real-time per sincronizzazione eventi relazioni.
+- ✅ Template evolution con supporto `relations` section.
+- ✅ Gestione flessibile degli schemi di relazione (specifici e universali).
 
-**Risoluzione Problemi:**
-- ✅ Errore HTTP 500 instanceConfigOverrides: Serializzazione JSON corretta
-- ✅ Errore schema "Contact,Contatto": Normalizzazione array entityType
-- ✅ Errore logMessage undefined: Correzione riferimenti pagina test
+### ✅ RISOLUZIONE PROBLEMI RECENTI - Autocomplete e Creazione Entità
+**Data Completamento:** $(date +%Y-%m-%d)
+**Status:** ✅ Bug Corretti e Sistema Migliorato
 
-### ✅ DEMO FASE 2 COMPLETATA - Risoluzione Bug Moduli Tabellari Dinamici
-**Data Completamento:** Dicembre 2024
-**Status:** ✅ Tutti i Bug Risolti e Sistema Operativo
+**Problemi Risolti e Miglioramenti:**
 
-**Problemi Risolti durante Demo:**
+#### **1. Autocomplete: Visualizzazione Nomi e Non Solo ID**
+- **Problema**: L'autocomplete mostrava solo l'ID dell'entità (es. `a02df10a-4b96-4966-90b8-b807197ba4d5`) invece di un nome significativo.
+- **Soluzione**:
+    - Migliorati i metodi `getDisplayName(entity)` e `getSecondareName(entity)` in `entity-autocomplete.js` per cercare in modo più intelligente il nome/titolo/ragione sociale da visualizzare.
+    - Aggiornato il rendering dell'entità selezionata e dei risultati di ricerca per utilizzare questi metodi.
+- **File Modificato**: `mvp-ssot/frontend/components/entity-autocomplete.js`.
 
-#### **1. Errore 500 Aggiunta Attributi (TabularModule.js)**
-- **Problema**: `PUT http://localhost:3000/api/schema/entity/Persona 500 (Internal Server Error)`
-- **Causa**: Mismatch formato dati tra frontend e backend
-- **Soluzione**: Incapsulamento dati in campo `evolution: { addAttributes: {...} }`
-- **File Modificato**: `TabularModule.js` linea ~570 handleAddAttribute()
+#### **2. Creazione Entità Persona Fallita (Errore 500)**
+- **Problema**: La creazione di entità di tipo `Persona` (e potenzialmente altre con schemi strict) falliva con un errore 500 dal server. Console log: `EntityService.js:204 POST http://localhost:3000/api/entities 500 (Internal Server Error)`.
+- **Causa**: Il server (`server_evolved.js`) si aspettava i dati della nuova entità all'interno di un oggetto `initialData` nel corpo della richiesta (`req.body.initialData`). Tuttavia, il frontend (`EntityService.js` e la logica di creazione in `autocomplete-demo.html`) inviava i dati direttamente nel corpo della richiesta (es. `{ "entityType": "Persona", "nome": "Mario", "cognome": "Test" }`). Questo portava il server a interpretare `initialData` come `{}` (oggetto vuoto), causando fallimenti di validazione per attributi richiesti come `nome` e `cognome`.
+- **Soluzione**:
+    - Modificato `mvp-ssot/backend/server_evolved.js` nell'endpoint `POST /api/entities`. Ora il server estrae i dati in modo più flessibile:
+      ```javascript
+      const { entityType, initialData, ...directData } = req.body;
+      const entityData = initialData || directData;
+      ```
+      Questo permette al server di usare `directData` (dati inviati direttamente nel body) se `initialData` non è presente.
+- **File Modificati**: `mvp-ssot/backend/server_evolved.js`.
 
-#### **2. Errore Validazione "Salva Vista Come..."**
-- **Problema**: "targetEntityId deve essere una stringa, instanceConfigOverrides deve essere un oggetto"
-- **Causa**: Frontend inviava `targetEntityId: null` e `instanceConfigOverrides` stringificato
-- **Soluzione**: Invio `targetEntityId: ''` e `instanceConfigOverrides` come oggetto JavaScript
-- **File Modificato**: `TabularModule.js` handleSaveInstance()
+#### **3. Autocomplete Non Trova Entità Appena Create**
+- **Problema**: Dopo aver creato una nuova entità tramite un modulo con opzione di creazione, l'autocomplete in un altro modulo (specialmente uno "senza creazione") non trovava immediatamente la nuova entità.
+- **Causa**: Il componente `entity-autocomplete.js` non era in ascolto di eventi WebSocket per aggiornare la sua lista di entità o i risultati di ricerca in tempo reale dopo la creazione/aggiornamento di entità nel sistema. Ricaricava i dati solo rieseguendo una ricerca.
+- **Soluzione**:
+    - **WebSocket Listeners**: Aggiunto il metodo `setupWebSocketListeners()` in `entity-autocomplete.js`. Questo metodo si registra agli eventi `entity-created` e `attribute-updated` inviati dal `WebSocketService`.
+    - **Auto-Refresh**: Quando viene ricevuto un evento `entity-created` per un tipo di entità rilevante, o un `attribute-updated` per un'entità nei risultati correnti, e l'autocomplete è aperto con una query, viene triggerato un auto-refresh della ricerca (con un piccolo timeout per dare tempo al server di processare).
+    - **Pulsante Refresh Manuale**: Aggiunto un pulsante "🔄" (refresh) accanto al campo di input dell'autocomplete. Questo permette all'utente di forzare un aggiornamento della lista di entità.
+    - **CSS e Gestione Eventi**: Aggiunti stili CSS per il pulsante e la logica nell' `setupEventListeners()` per gestire il click sul pulsante refresh.
+    - **Cleanup Listeners**: Implementato `disconnectedCallback()` per rimuovere i listener WebSocket quando il componente viene distrutto, prevenendo memory leak.
+- **File Modificati**: `mvp-ssot/frontend/components/entity-autocomplete.js`.
 
-#### **3. Errore "map is not a function" Dashboard**
-- **Problema**: `this.instances.map is not a function` in dashboard istanze
-- **Causa**: SaveInstanceService.listInstances() restituiva `{instances: [...]}` invece di array
-- **Soluzione**: Estrazione `response?.instances || []` in dashboard
-- **File Modificato**: `table_demo_dashboard.js`
+### Task in Corso:
+*   Nessuno - In attesa di nuovi task.
 
-#### **4. Backend Neo4j Serializzazione**
-- **Problema**: "Property values can only be of primitive types. Encountered: Map"
-- **Causa**: Neo4j non supporta oggetti JavaScript complessi
-- **Soluzione**: Serializzazione `instanceConfigOverrides` come stringa JSON
-- **File Modificato**: `server_evolved.js`
+### Decisioni Prese Recenti:
+*   Confermata la strategia di aggiornamento real-time per l'autocomplete tramite WebSocket per migliorare la UX.
+*   Adottata una gestione più flessibile del parsing del corpo della richiesta nel backend per la creazione di entità.
 
-#### **5. Metodo WebSocket Mancante**
-- **Problema**: `this.websocketService.isConnected is not a function`
-- **Causa**: WebSocketService aveva proprietà `isConnected` ma non metodo
-- **Soluzione**: Aggiunto metodo `isConnected()`, rinominato proprietà in `_isConnected`
-- **File Modificato**: `WebSocketService.js`
+### Prossimi Passi:
+*   Attendere nuove richieste o feedback dall'utente.
+*   Eventuale refactoring o ottimizzazioni basate sull'uso.
 
-#### **6. Gestione Entità Senza Schema Esistente**
-- **Problema**: Multipli errori quando si apre tabella per tipo non esistente (es. "Task")
-- **Causa**: `this.attributes` undefined quando schema non esiste
-- **Soluzioni Multiple**:
-  - `fetchAttributes()`: Restituisce sempre almeno array vuoto
-  - `renderTableHeader()`: Gestisce attributes undefined, messaggio informativo
-  - `showAddEntityModal()`: Permette creazione entità senza attributi predefiniti
-  - `handleAddEntity()` e `addEntityRow()`: Gestiscono casi senza attributi
-- **File Modificato**: `TabularModule.js` (gestione completa schema mancanti)
-
-**Risultato Demo Finale:**
-- ✅ Sistema gestisce correttamente evoluzione schema con formato dati corretto
-- ✅ Salvataggio istanze con validazione corretta funzionante
-- ✅ Dashboard con lista istanze operativa
-- ✅ Connessione WebSocket con metodi completi
-- ✅ Creazione entità per tipi non esistenti (schema mancanti)
-- ✅ Interfaccia informativa quando non ci sono attributi definiti
-- ✅ Persistenza Neo4j corretta per oggetti complessi
-- ✅ Navigazione directory server chiarificata
-
-**File Complessivamente Modificati:**
-1. **TabularModule.js** - Correzioni formato evolution, validazione istanze, gestione schema mancanti
-2. **table_demo_dashboard.js** - Correzione estrazione array istanze
-3. **server_evolved.js** - Serializzazione JSON per Neo4j
-4. **WebSocketService.js** - Metodo isConnected() e risoluzione conflitti
-
-**Status Complessivo**: 🚀 **SISTEMA SSOT DINAMICO COMPLETO CON EDITING & ISTANZE SALVABILI OPERATIVO + DEMO FASE 2 VALIDATA** 🚀
+**Status Complessivo**: 🚀 **SISTEMA SSOT DINAMICO COMPLETO CON RELAZIONI E AUTOCOMPLETE FUNZIONANTE E SINCRONIZZATO** 🚀
 
 ### Task in Corso:
 
 
+**Componenti Implementati:**
+- ✅ **RelationService.js** (376 righe): Servizio completo per gestione relazioni con cache intelligente, WebSocket integration, CRUD relazioni tipizzate
+- ✅ **relation-list.js** (550 righe): Web Component per visualizzazione liste entità correlate con filtri, azioni e real-time updates
+- ✅ **relation-editor.js** (763 righe): Editor modale per creazione/modifica relazioni con ricerca entità, validazione e attributi personalizzati
+- ✅ **StandardContactCard v3.0.0**: Template evoluto con sezione relations, sub-moduli configurabili, azioni relazioni
+- ✅ **CompactContactCard v1.0.0**: Template compatto universale per sub-moduli in liste relazioni
+- ✅ **views/relation-test.html**: Pagina test completa per tutti i componenti di relazione con logging avanzato
+
+**Funzionalità Validate:**
+- ✅ CRUD relazioni tipizzate con RelationEngine backend integration
+- ✅ Visualizzazione liste entità correlate con filtri per tipo e direzione
+- ✅ Editor relazioni con ricerca entità target e selezione tipo relazione
+- ✅ Sub-moduli configurabili per rendering entità in liste relazioni
+- ✅ WebSocket real-time per sincronizzazione eventi relazioni
+- ✅ Cache intelligente con invalidazione automatica per performance
+- ✅ Template evolution con supporto relations section
+- ✅ Interface testing completa con logging e statistiche real-time
+
+**Architettura Implementata:**
+- ✅ **RelationService**: Cache 30s, deduplicazione richieste, WebSocket events, pattern matching
+- ✅ **relation-list**: Lazy loading, paginazione, azioni configurabili, sub-module rendering
+- ✅ **relation-editor**: Modalità create/edit, ricerca entità, attributi personalizzati, validazione
+- ✅ **Template Integration**: Relations section nei template JSON, configurazione sub-moduli
+- ✅ **Cross-Component Communication**: Eventi customizzati per integrazione seamless
+
+**Integrazione Backend-Frontend:**
+- ✅ **API RelationEngine**: Utilizzo completo endpoint /api/relations/* per CRUD
+- ✅ **WebSocket Events**: Sottoscrizione relation-created/updated/deleted con propagazione
+- ✅ **Schema Integration**: Compatibilità con SchemaService per validazione attributi
+- ✅ **EntityService Integration**: Ricerca e selezione entità per creazione relazioni
 
 ### Decisioni Prese Recenti:
 
-#### **Schema Evolution - Implementazione Additive-Only**:
-*   **Decisione**: Implementare solo operazioni additive (MERGE, ON CREATE SET).
-*   **Motivazione**: Sicurezza dati e robustezza.
+#### **Fase 3 - Architettura Relazioni Frontend**:
+*   **Decisione**: Web Components puri per massima interoperabilità e performance.
+*   **Motivazione**: Evita dipendenze framework, integrazione seamless con sistema esistente.
 
-#### **API Strategy - Dual Track**:
-*   **Decisione**: Mantenere API MVP originali e aggiungere API evolute.
-*   **Motivazione**: Backward compatibility e migrazione graduale.
+#### **RelationService Caching Strategy**:
+*   **Decisione**: Cache 30s con invalidazione basata su eventi WebSocket.
+*   **Motivazione**: Bilanciamento performance vs. consistenza dati real-time.
 
-#### **Frontend URL Parameters**:
-*   **Decisione**: Utilizzare URL parameters per passare `entityType`.
-*   **Motivazione**: Finestre separate con tipi entità diversi.
+#### **Template Relations Integration**:
+*   **Decisione**: Estendere template JSON con sezione "relations" configurabile.
+*   **Motivazione**: Flessibilità massima e retrocompatibilità template esistenti.
 
-#### **Cross-Window Schema Sync**:
-*   **Decisione**: Estendere BroadcastChannel per notifiche schema.
-*   **Motivazione**: Sincronizzazione immediata modifiche struttura.
+#### **Sub-Moduli Universali**:
+*   **Decisione**: CompactContactCard con targetEntityType: "*" per riutilizzo.
+*   **Motivazione**: Reduce duplicazione template e maggiore flessibilità rendering.
 
 ### Problemi Riscontrati (e Risolti):
 *   ✅ **Neo4j Schema Evolution Error**: Risolto con operazioni additive-only.
@@ -211,6 +193,17 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 
 ### Prossimi Passi (Roadmap Evoluzione Core Engine):
 
+**🔮 Fase 4 Futura - Dashboard Dinamici e Composizione Documenti:**
+*   document-renderer Web Component per dashboard composte
+*   DynamicDocument entity per persistenza configurazioni dashboard
+*   Drag-and-drop interface per composizione moduli
+*   Export/import configurazioni moduli e dashboard
+
+**🔮 Fase 5 Futura - Funzionalità Enterprise:**
+*   Sistema permessi e condivisione per ModuleInstance
+*   Versionamento template e istanze con migrazione automatica
+*   Integration LLM per generazione automatica template e configurazioni
+*   Analytics e monitoring utilizzo moduli
 
 **Status MVP Originale**: ✅🚀 **MVP COMPLETATO E DIMOSTRATO CON SUCCESSO!** 🚀✅
 **Status Estensione Cross-Window**: ✅🎯 **ESTENSIONE CROSS-WINDOW COMPLETATA!** 🎯✅ 
@@ -220,7 +213,8 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 **Status Fase 4 AttributeSpace**: ✅⚡ **ATTRIBUTESPACE EVOLUTO CON PATTERN MATCHING COMPLETATO!** ⚡✅
 **Status Fase 1 Frontend Evoluto**: ✅🎨 **FRONTEND WEBMODULES TEMPLATE-DRIVEN COMPLETATO!** 🎨✅
 **Status Fase 2 Frontend Evoluto**: ✅✏️ **FRONTEND EDITING & MODULE INSTANCES COMPLETATO!** ✏️✅
-**Status Complessivo**: 🚀 **SISTEMA SSOT DINAMICO COMPLETO CON EDITING & ISTANZE SALVABILI OPERATIVO** 🚀
+**Status Fase 3 Frontend Evoluto**: ✅🔗 **FRONTEND RELAZIONI & SUB-MODULI COMPLETATO!** 🔗✅
+**Status Complessivo**: 🚀 **SISTEMA SSOT DINAMICO COMPLETO CON RELAZIONI OPERATIVO** 🚀
 
 ### 🌟 Architettura Finale Core Engine Evoluto:
 
@@ -230,7 +224,7 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 *   ✅ EntityEngine evoluto: gestione entità con schema integration, lazy loading, reference.
 *   ✅ Server API evoluto: endpoint schema, backward compatibility.
 *   ✅ DAO evoluto: query ottimizzate, operazioni additive-only.
-*   ✅ WebSocket evoluto: propagazione dati + schema changes.
+*   ✅ WebSocket evoluto: propagazione dati + schema changes + eventi relazioni.
 
 **🎨 Frontend Schema-Aware Evoluto:**
 *   ✅ Moduli UI dinamici basati su schema.
@@ -239,7 +233,7 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 *   ✅ URL parameters per entity types multipli.
 *   ✅ **Fase 1**: Template-driven rendering con Web Components, servizi core, WebSocket real-time.
 *   ✅ **Fase 2**: Editing completo con attribute-editor, ModuleInstance salvabili, azioni configurabili.
-*   ⏳ **Fase 3**: UI relazioni e composizione documenti (prossima implementazione).
+*   ✅ **Fase 3**: Relazioni complete con relation-list, relation-editor, sub-moduli, template integration.
 
 **💾 Database Neo4j Evoluto:**
 *   ✅ Persistenza schema completa (:SchemaEntityType, :SchemaRelationType).
@@ -250,9 +244,84 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 
 **📋 Documentazione Aggiornata:**
 *   ✅ `doc_tecnico_evoluzione_core_v1.md`: Fase 3 completata, roadmap aggiornata.
-*   ✅ `context.md`: questo diario aggiornato con Fase 3 EntityEngine.
-*   ✅ `architettura_mvp_evoluto.md`: architettura sistema evoluto aggiornata con EntityEngine.
-*   ✅ Test end-to-end per EntityEngine validati e documentati.
+*   ✅ `context.md`: questo diario aggiornato con Fase 3 Frontend Relazioni.
+*   ✅ `architettura_mvp_evoluto.md`: architettura sistema evoluto aggiornata con Relazioni.
+*   ✅ Test end-to-end per Relazioni validati e documentati.
 
+### ✅ FASE 3 FRONTEND EVOLUTO COMPLETATA - Relazioni, Sub-moduli e Riutilizzo Avanzato
+**Data Completamento:** 03 Gennaio 2025
+**Status:** ✅ Implementato e Testato con Successo
+
+**Componenti Implementati:**
+- ✅ **RelationService.js** (376 righe): Servizio completo per gestione relazioni con cache intelligente, WebSocket integration, CRUD relazioni tipizzate
+- ✅ **relation-list.js** (550 righe): Web Component per visualizzazione liste entità correlate con filtri, azioni e real-time updates
+- ✅ **relation-editor.js** (763 righe): Editor modale per creazione/modifica relazioni con ricerca entità, validazione e attributi personalizzati
+- ✅ **StandardContactCard v3.0.0**: Template evoluto con sezione relations, sub-moduli configurabili, azioni relazioni
+- ✅ **CompactContactCard v1.0.0**: Template compatto universale per sub-moduli in liste relazioni
+- ✅ **views/relation-test.html**: Pagina test completa per tutti i componenti di relazione con logging avanzato
+
+**Funzionalità Validate:**
+- ✅ CRUD relazioni tipizzate con RelationEngine backend integration
+- ✅ Visualizzazione liste entità correlate con filtri per tipo e direzione
+- ✅ Editor relazioni con ricerca entità target e selezione tipo relazione
+- ✅ Sub-moduli configurabili per rendering entità in liste relazioni
+- ✅ WebSocket real-time per sincronizzazione eventi relazioni
+- ✅ Cache intelligente con invalidazione automatica per performance
+- ✅ Template evolution con supporto relations section
+- ✅ Interface testing completa con logging e statistiche real-time
+
+**Architettura Implementata:**
+- ✅ **RelationService**: Cache 30s, deduplicazione richieste, WebSocket events, pattern matching
+- ✅ **relation-list**: Lazy loading, paginazione, azioni configurabili, sub-module rendering
+- ✅ **relation-editor**: Modalità create/edit, ricerca entità, attributi personalizzati, validazione
+- ✅ **Template Integration**: Relations section nei template JSON, configurazione sub-moduli
+- ✅ **Cross-Component Communication**: Eventi customizzati per integrazione seamless
+
+**Integrazione Backend-Frontend:**
+- ✅ **API RelationEngine**: Utilizzo completo endpoint /api/relations/* per CRUD
+- ✅ **WebSocket Events**: Sottoscrizione relation-created/updated/deleted con propagazione
+- ✅ **Schema Integration**: Compatibilità con SchemaService per validazione attributi
+- ✅ **EntityService Integration**: Ricerca e selezione entità per creazione relazioni
+
+**✅ RISOLUZIONE PROBLEMA RELAZIONI UNIVERSALI (03 Gennaio 2025):**
+
+**Problema Identificato:**
+- **Validazione troppo restrittiva**: Schema relazioni "Conosce" limitato a Persona↔Persona
+- **Errore**: "Tipo sorgente non valido: Contact. Tipi consentiti: Persona"
+- **Richiesta utente**: Permettere relazioni tra qualsiasi tipo di entità
+
+**✅ Soluzione Implementata - Supporto Wildcard "*":**
+
+**1. Modifica RelationSchema.validateRelation():**
+- **File**: `mvp-ssot/backend/core/relationSchema.js` (righe 53-59)
+- **Cambiamento**: Aggiunto controllo `!this.sourceTypes.includes('*')` e `!this.targetTypes.includes('*')`
+- **Effetto**: Schema con wildcard "*" permettono relazioni tra qualsiasi tipo di entità
+
+**2. Aggiornamento supportsRelation():**
+- **Coerenza**: Metodo `supportsRelation()` aggiornato per supportare wildcard
+- **Logica**: `sourceTypes.includes('*')` bypassa validazione tipo specifico
+
+**3. Test Validazione Cross-Type:**
+- ✅ **Relazione Contact → Persona**: Creata con successo usando tipo "Correlato"
+- ✅ **Relazione Persona → Persona**: Funziona con tipi esistenti "Conosce"
+- ✅ **Sistema Permissivo**: Relazioni senza schema definito vengono accettate
+- ✅ **4 relazioni totali**: 1 cross-type + 3 same-type
+
+**4. Aggiornamento Pagina Test:**
+- **Tipo predefinito**: Ripristinato "Contact" per testing cross-type
+- **Relazioni universali**: Aggiunti tipi "Correlato", "È_Connesso_A", "Ha_Relazione_Con"
+- **Quick actions**: Configurate per relazioni universali
+
+**Architettura Finale Relazioni:**
+- **Schema Specifici**: Relazioni con validazione tipo-specifica (es. "Conosce": Persona↔Persona)
+- **Schema Universali**: Relazioni con wildcard "*" per qualsiasi tipo (es. "Correlato": *↔*)
+- **Schema-less**: Relazioni senza schema definito accettate in modalità permissiva
+- **Backward Compatibility**: Schema esistenti continuano a funzionare normalmente
+
+**Vantaggi Soluzione:**
+- ✅ **Flessibilità**: Relazioni tra qualsiasi combinazione di tipi entità
+- ✅ **Controllo Semantico**: Schema specifici mantengono validazione quando necessario
+- ✅ **Evolutiva**: Sistema supporta sia relazioni specifiche che universali
+- ✅ **Compatibilità**: Nessuna modifica breaking per sistema esistente
 
 </rewritten_file> 

@@ -736,7 +736,13 @@ class EvolvedServer {
         // POST /api/entities - Crea una nuova entità
         this.app.post('/api/entities', async (req, res) => {
             try {
-                const { entityType, initialData = {} } = req.body;
+                // ✅ CORREZIONE: Estrae i dati sia da initialData che direttamente dal body
+                const { entityType, initialData, ...directData } = req.body;
+                
+                // Determina i dati da usare: se c'è initialData lo usa, altrimenti usa i dati diretti
+                const entityData = initialData || directData;
+                
+                console.log(`🔧 Creazione entità tipo ${entityType}`, entityData);
                 
                 if (!entityType) {
                     return res.status(400).json({
@@ -748,9 +754,9 @@ class EvolvedServer {
                 // Usa EntityEngine evoluto se abilitato
                 let newEntity;
                 if (this.enableEvolvedFeatures) {
-                    newEntity = await this.entityEngine.createEntity(entityType, initialData);
+                    newEntity = await this.entityEngine.createEntity(entityType, entityData);
                 } else {
-                    newEntity = await this.entityEngine_MVP.createEntity(entityType, initialData);
+                    newEntity = await this.entityEngine_MVP.createEntity(entityType, entityData);
                 }
                 
                 res.status(201).json({

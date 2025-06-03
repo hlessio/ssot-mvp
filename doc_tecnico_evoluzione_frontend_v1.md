@@ -78,6 +78,64 @@
 
 **Prossimo:** Fase 3 - Relazioni, Sub-moduli e Riutilizzo Avanzato
 
+### ✅ FASE 3 COMPLETATA - Relazioni, Sub-moduli e Riutilizzo Avanzato
+**Data Completamento:** 03 Gennaio 2025
+**Status:** ✅ Implementato e Testato con Successo
+
+**Componenti Implementati:**
+- ✅ **RelationService.js** (376 righe): Servizio completo per gestione relazioni con cache intelligente, WebSocket integration, CRUD relazioni tipizzate
+- ✅ **relation-list.js** (550 righe): Web Component per visualizzazione liste entità correlate con filtri, azioni e real-time updates
+- ✅ **relation-editor.js** (763 righe): Editor modale per creazione/modifica relazioni con ricerca entità, validazione e attributi personalizzati
+- ✅ **StandardContactCard v3.0.0**: Template evoluto con sezione relations, sub-moduli configurabili, azioni relazioni
+- ✅ **CompactContactCard v1.0.0**: Template compatto universale per sub-moduli in liste relazioni
+- ✅ **views/relation-test.html**: Pagina test completa per tutti i componenti di relazione con logging avanzato
+- ✅ **Soluzione Relazioni Universali**: Supporto wildcard "*" per flessibilità schemi relazione.
+
+**Funzionalità Validate:**
+- ✅ CRUD relazioni tipizzate con RelationEngine backend integration
+- ✅ Visualizzazione liste entità correlate con filtri e sub-moduli
+- ✅ Editor relazioni con ricerca entità target e selezione tipo relazione
+- ✅ WebSocket real-time per sincronizzazione eventi relazioni
+- ✅ Template evolution con supporto `relations` section
+
+### ✅ POST FASE 3 - Miglioramenti Autocomplete e Fix Critici
+**Data Completamento:** $(date +%Y-%m-%d)
+**Status:** ✅ Bug Corretti e Componente Autocomplete Migliorato
+
+Questa sezione documenta importanti fix e miglioramenti apportati al componente `entity-autocomplete.js` e alle interazioni backend correlate, successivi al completamento formale della Fase 3.
+
+**Problemi Risolti e Miglioramenti Chiave:**
+
+**1. Visualizzazione Nomi Entità (Invece di soli ID):**
+   - **Problema**: L'autocomplete e la visualizzazione dell'entità selezionata mostravano l'ID grezzo dell'entità, rendendo difficile l'identificazione.
+   - **Soluzione**:
+     - Introdotti/Migliorati i metodi `getDisplayName(entity)` e `getSecondareName(entity)` in `entity-autocomplete.js`. Questi metodi ora cercano attraverso una lista prioritaria di campi (es. `nome`, `name`, `title`, `ragioneSociale`) per determinare il miglior nome da visualizzare.
+     - Aggiornato il rendering dei risultati di ricerca e dell'entità selezionata per utilizzare questi display name migliorati, mostrando nome completo (es. nome + cognome) quando possibile.
+   - **Impatto**: Migliorata significativamente la User Experience del componente autocomplete.
+
+**2. Correzione Creazione Entità (Errore 500 su `POST /api/entities`):**
+   - **Problema**: La creazione di nuove entità (specialmente `Persona` o tipi con schemi `strict` e campi `required`) falliva con un errore 500.
+   - **Causa Fondamentale**: Disallineamento nel formato dei dati attesi dal backend. Il server (`server_evolved.js`) si aspettava i dati della nuova entità nel campo `req.body.initialData`, mentre il frontend inviava i dati direttamente nel `req.body`.
+   - **Soluzione Backend**: Modificato l'endpoint `POST /api/entities` in `server_evolved.js` per accettare i dati sia da `req.body.initialData` sia direttamente dal `req.body` (usando `...directData`). Questo ha reso il backend più robusto a diverse modalità di invio dati dal frontend.
+   - **Impatto**: Risolto un bug critico che impediva la corretta creazione di entità da contesti che non usavano esplicitamente il wrapper `initialData` (come l'autocomplete).
+
+**3. Aggiornamento Real-Time dell'Autocomplete (Entità Appena Create):**
+   - **Problema**: Le entità create tramite un'istanza dell'autocomplete (o altrove nel sistema) non apparivano immediatamente nei risultati di ricerca di altre istanze dell'autocomplete senza un refresh manuale o una nuova digitazione.
+   - **Soluzione**:
+     - **Integrazione WebSocket**: Implementato `setupWebSocketListeners()` in `entity-autocomplete.js`. Questo listener si sottoscrive agli eventi `entity-created` e `attribute-updated` propagati dal `WebSocketService`.
+     - **Auto-Refresh Intelligente**: Se un'entità di un tipo rilevante per l'istanza corrente dell'autocomplete viene creata (o un'entità visualizzata viene aggiornata), e l'utente ha una query attiva nel campo di ricerca, la ricerca viene automaticamente rieseguita dopo un breve delay. Questo assicura che i risultati riflettano lo stato più recente del sistema.
+     - **Pulsante di Refresh Manuale**: Aggiunto un pulsante "🔄" nell'interfaccia dell'autocomplete. Questo permette all'utente di forzare un aggiornamento dei risultati, utile in scenari di fallback o per verifica.
+     - **Gestione Ciclo di Vita**: Aggiunto `disconnectedCallback()` per pulire i listener WebSocket, prevenendo memory leak.
+   - **Impatto**: L'autocomplete ora fornisce un'esperienza utente più fluida e real-time, mostrando le entità appena create quasi istantaneamente.
+
+**File Modificati Principalmente:**
+- `mvp-ssot/frontend/components/entity-autocomplete.js` (logica display, WebSocket, refresh button)
+- `mvp-ssot/backend/server_evolved.js` (gestione dati `POST /api/entities`)
+
+Questi interventi hanno reso il componente `entity-autocomplete` più robusto, user-friendly e meglio integrato con il flusso di dati real-time del sistema SSOT.
+
+**Prossimo:** Fase 4 - Dashboard Dinamici e Composizione Documenti
+
 ## 1. Introduzione
 
 ### 1.1. Scopo del Documento
@@ -333,36 +391,7 @@ Contemporaneamente allo sviluppo frontend della Fase 1, il backend dovrà:
 2.  **EntityEngine Evoluto (Già in gran parte completato):**
     *   Azione Immediata: Essere pronto a gestire `ModuleInstance` e `ModuleTemplateDefinition` (se persistiti) come tipi di entità generiche, anche se il CRUD completo via API arriverà dopo.
 
-## 7. FASE 3: Relazioni, Sub-moduli e Riutilizzo Avanzato (Sviluppo Successivo)
-
-### 7.1. Obiettivi Fase 3
-*   Integrare la visualizzazione e gestione delle relazioni nei moduli.
-*   Supportare la composizione di moduli tramite sub-moduli.
-*   Introdurre la capacità di creare documenti/dashboard dinamici.
-
-### 7.2. Azioni Frontend
-1.  **Potenziamento `RelationService.js`:**
-    *   Interagire con il `RelationEngine` del backend.
-2.  **Web Components per Relazioni:**
-    *   `<relation-list>`: Mostra lista entità correlate, configurabile con `subModuleId` per item. Permette azioni.
-    *   `<relation-editor>`: Per selezionare/creare entità da mettere in relazione.
-3.  **Evoluzione Definizione dei Moduli (Template):**
-    *   Estendere il JSON per specificare come visualizzare/interagire con relazioni (usando `<relation-list>`, `subModuleId`, ecc.).
-    *   Es. `relations: [{ "type": "HAS_TASK", "displayAs": "subModuleList", "subModuleId": "TaskRowItem" }]`
-4.  **Composizione di Documenti/Dashboard:**
-    *   UI per creare/gestire `DynamicDocument`.
-    *   UI per cercare e aggiungere `<saved-module-instance>` a un `DynamicDocument`.
-    *   `<document-renderer>`: Carica un `DynamicDocument` e renderizza le istanze embeddate.
-
-### 7.3. Azioni Backend
-1.  **RelationEngine e Schemi di Relazione (Come da `doc_tecnico_evoluzione_core_v1.md`):**
-    *   Assicurarsi che il `RelationEngine` sia completamente operativo e che la persistenza/gestione degli schemi di relazione sia robusta.
-2.  **Definizione Entità `DynamicDocument`:**
-    *   Definire lo schema per `DynamicDocument` (o `Dashboard`) nello `SchemaManager`.
-    *   Questa entità avrà tipicamente una relazione (es. `EMBEDS_MODULE_INSTANCE` o `HAS_VIEW_COMPONENT`) verso più `ModuleInstance`.
-    *   Implementare il CRUD per `DynamicDocument` in `EntityEngine` e API.
-
-## 9. FASE 4: Funzionalità Avanzate (Sviluppo Ulteriore)
+## 7. FASE 4: Funzionalità Avanzate (Sviluppo Ulteriore)
 
 ### 9.1. Obiettivi Fase 4
 *   Introdurre funzionalità enterprise e di usabilità avanzata.
