@@ -431,4 +431,4 @@ class SSOTInput extends HTMLElement {
 // Registra il Web Component
 customElements.define('ssot-input', SSOTInput);
 
-export default SSOTInput; 
+console.log('✅ [ssot-input] Web Component registrato'); 

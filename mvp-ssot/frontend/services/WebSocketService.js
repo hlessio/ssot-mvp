@@ -364,4 +364,4 @@ class WebSocketService {
 // Esporta istanza singleton
 window.webSocketService = new WebSocketService();
 
-export default window.webSocketService; 
+console.log('✅ [WebSocketService] Servizio registrato globalmente'); 

@@ -425,6 +425,239 @@ class EvolvedServer {
         });
 
         // ============================================
+        // ✨ ENDPOINT MODULE INSTANCE (Fase 2 Frontend)
+        // ============================================
+
+        // POST /api/module-instances - Crea una nuova istanza di modulo
+        this.app.post('/api/module-instances', async (req, res) => {
+            try {
+                const instanceData = req.body;
+                
+                // Validazione dati richiesti
+                const requiredFields = ['instanceName', 'templateModuleId', 'targetEntityType'];
+                const missingFields = requiredFields.filter(field => !instanceData[field]);
+                
+                if (missingFields.length > 0) {
+                    return res.status(400).json({
+                        success: false,
+                        error: `Campi richiesti mancanti: ${missingFields.join(', ')}`
+                    });
+                }
+
+                // Aggiunge metadati di sistema
+                const instanceToCreate = {
+                    ...instanceData,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    version: 1
+                };
+
+                console.log('📝 [ModuleInstance] Creando istanza:', instanceToCreate);
+
+                // Crea entità ModuleInstance tramite EntityEngine
+                const createdInstance = await this.entityEngine.createEntity('ModuleInstance', instanceToCreate);
+                
+                // Notifica via WebSocket
+                this.broadcastMessage({
+                    type: 'module-instance-created',
+                    data: {
+                        instance: createdInstance
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.status(201).json(createdInstance);
+            } catch (error) {
+                console.error('❌ Errore creazione istanza modulo:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/module-instances/:instanceId - Recupera istanza specifica
+        this.app.get('/api/module-instances/:instanceId', async (req, res) => {
+            try {
+                const { instanceId } = req.params;
+                
+                console.log(`🔍 [ModuleInstance] Recuperando istanza: ${instanceId}`);
+                
+                const instance = await this.entityEngine.getEntity(instanceId);
+                
+                if (!instance) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Istanza modulo non trovata'
+                    });
+                }
+                
+                res.json(instance);
+            } catch (error) {
+                console.error('❌ Errore recupero istanza modulo:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // PUT /api/module-instances/:instanceId - Aggiorna istanza
+        this.app.put('/api/module-instances/:instanceId', async (req, res) => {
+            try {
+                const { instanceId } = req.params;
+                const updateData = req.body;
+                
+                console.log(`📝 [ModuleInstance] Aggiornando istanza: ${instanceId}`, updateData);
+                
+                // Verifica esistenza istanza
+                const existingInstance = await this.entityEngine.getEntity(instanceId);
+                if (!existingInstance) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Istanza modulo non trovata'
+                    });
+                }
+                
+                // Aggiorna metadati
+                const updatedData = {
+                    ...updateData,
+                    updatedAt: new Date().toISOString(),
+                    version: (existingInstance.version || 1) + 1
+                };
+                
+                // Aggiorna attributi singolarmente per preservare validazioni
+                for (const [attributeName, value] of Object.entries(updatedData)) {
+                    await this.entityEngine.setEntityAttribute(instanceId, attributeName, value);
+                }
+                
+                // Recupera istanza aggiornata
+                const updatedInstance = await this.entityEngine.getEntity(instanceId);
+                
+                // Notifica via WebSocket
+                this.broadcastMessage({
+                    type: 'module-instance-updated',
+                    data: {
+                        instanceId,
+                        instance: updatedInstance,
+                        changes: updateData
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.json(updatedInstance);
+            } catch (error) {
+                console.error('❌ Errore aggiornamento istanza modulo:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // DELETE /api/module-instances/:instanceId - Elimina istanza
+        this.app.delete('/api/module-instances/:instanceId', async (req, res) => {
+            try {
+                const { instanceId } = req.params;
+                
+                console.log(`🗑️ [ModuleInstance] Eliminando istanza: ${instanceId}`);
+                
+                // Verifica esistenza istanza
+                const existingInstance = await this.entityEngine.getEntity(instanceId);
+                if (!existingInstance) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Istanza modulo non trovata'
+                    });
+                }
+                
+                // Elimina istanza tramite EntityEngine evoluto
+                // Nota: Il DAO non ha deleteEntity, usiamo EntityEngine
+                const deleteQuery = `
+                    MATCH (e:Entity {id: $entityId})
+                    DELETE e
+                `;
+                
+                await neo4jConnector.executeQuery(deleteQuery, { entityId: instanceId });
+                
+                // Notifica via WebSocket
+                this.broadcastMessage({
+                    type: 'module-instance-deleted',
+                    data: {
+                        instanceId,
+                        deletedInstance: existingInstance
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.json({
+                    success: true,
+                    message: 'Istanza modulo eliminata con successo'
+                });
+            } catch (error) {
+                console.error('❌ Errore eliminazione istanza modulo:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/module-instances - Lista istanze con filtri
+        this.app.get('/api/module-instances', async (req, res) => {
+            try {
+                const {
+                    templateModuleId,
+                    targetEntityType,
+                    ownerUserId,
+                    limit = 50,
+                    offset = 0
+                } = req.query;
+                
+                console.log('📋 [ModuleInstance] Listando istanze con filtri:', req.query);
+                
+                // Costruisce filtri per la query
+                const filters = {};
+                if (templateModuleId) filters.templateModuleId = templateModuleId;
+                if (targetEntityType) filters.targetEntityType = targetEntityType;
+                if (ownerUserId) filters.ownerUserId = ownerUserId;
+                
+                // Recupera tutte le istanze ModuleInstance
+                const allInstances = await this.entityEngine.getAllEntities('ModuleInstance');
+                
+                // Applica filtri manualmente (in futuro si può migliorare con query Neo4j)
+                let filteredInstances = allInstances.filter(instance => {
+                    return Object.entries(filters).every(([key, value]) => {
+                        return instance[key] === value;
+                    });
+                });
+                
+                // Applica paginazione
+                const totalCount = filteredInstances.length;
+                const startIndex = parseInt(offset);
+                const limitCount = parseInt(limit);
+                filteredInstances = filteredInstances.slice(startIndex, startIndex + limitCount);
+                
+                res.json({
+                    success: true,
+                    instances: filteredInstances,
+                    pagination: {
+                        total: totalCount,
+                        limit: limitCount,
+                        offset: startIndex,
+                        hasMore: startIndex + limitCount < totalCount
+                    }
+                });
+            } catch (error) {
+                console.error('❌ Errore lista istanze modulo:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // ============================================
         // ENDPOINT ESISTENTI MVP (per compatibilità)
         // ============================================
 

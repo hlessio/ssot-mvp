@@ -7,6 +7,11 @@
  * - Integrazione con tutti i servizi (ModuleDefinition, Schema, Entity, WebSocket)
  * - Gestire sottoscrizioni WebSocket per aggiornamenti real-time
  * - Fornire base per future espansioni (editing, azioni, relazioni)
+ * 
+ * ✨ FASE 2: Aggiunto supporto editing e azioni:
+ * - Modalità editing con attribute-editor
+ * - Azione "Salva Vista Come..." per creare ModuleInstance
+ * - Gestione azioni configurabili da template
  */
 
 class TemplateModuleRenderer extends HTMLElement {
@@ -21,17 +26,28 @@ class TemplateModuleRenderer extends HTMLElement {
         this.hasError = false;
         this.errorMessage = '';
         
+        // ✨ FASE 2: Stato editing
+        this.isEditMode = false;
+        this.dirtyAttributes = new Set();
+        this.saveInProgress = false;
+        
         // Sottoscrizioni WebSocket
         this.wsSubscriptions = [];
         
         // Cache
         this.attributeComponents = new Map();
+        
+        // Binding metodi
+        this.handleSaveAs = this.handleSaveAs.bind(this);
+        this.handleToggleEdit = this.handleToggleEdit.bind(this);
+        this.handleSaveChanges = this.handleSaveChanges.bind(this);
+        this.handleCancelEdit = this.handleCancelEdit.bind(this);
     }
 
     static get observedAttributes() {
         return [
             'module-id', 'entity-id', 'entity-type', 'view-mode', 
-            'show-title', 'show-actions', 'auto-refresh'
+            'show-title', 'show-actions', 'auto-refresh', 'edit-mode'
         ];
     }
 
@@ -49,6 +65,9 @@ class TemplateModuleRenderer extends HTMLElement {
             // Re-carica completamente se cambiano parametri critici
             if (['module-id', 'entity-id'].includes(name)) {
                 this.loadAndRender();
+            } else if (name === 'edit-mode') {
+                this.isEditMode = newValue === 'true';
+                this.render();
             } else {
                 this.render();
             }
@@ -206,41 +225,36 @@ class TemplateModuleRenderer extends HTMLElement {
             <style>
                 ${this.getBaseStyles()}
                 .empty-container {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
                     padding: 2rem;
-                    color: #9ca3af;
-                    font-style: italic;
+                    text-align: center;
+                    color: #6b7280;
                 }
             </style>
             <div class="module-container">
                 <div class="empty-container">
-                    Nessun dato da visualizzare
+                    Nessun modulo da visualizzare
                 </div>
             </div>
         `;
     }
 
     /**
-     * Renderizza il modulo principale
+     * Renderizza il modulo completo
      */
     renderModule() {
-        const showTitle = this.hasAttribute('show-title');
-        const viewMode = this.getAttribute('view-mode') || 'default';
-        
-        // Determina quale vista usare
-        const view = this.getViewConfiguration(viewMode);
-        
+        const showTitle = this.getAttribute('show-title') !== 'false';
+        const showActions = this.getAttribute('show-actions') !== 'false';
+
         this.shadowRoot.innerHTML = `
             <style>
                 ${this.getBaseStyles()}
                 ${this.getModuleStyles()}
+                ${this.getEditStyles()}
             </style>
-            <div class="module-container" data-module-id="${this.moduleDefinition.moduleId}">
+            <div class="module-container ${this.isEditMode ? 'edit-mode' : ''}">
                 ${showTitle ? this.renderModuleHeader() : ''}
-                ${this.renderModuleContent(view)}
-                ${this.renderModuleActions()}
+                ${this.renderModuleContent()}
+                ${showActions ? this.renderModuleActions() : ''}
             </div>
         `;
 
@@ -248,50 +262,60 @@ class TemplateModuleRenderer extends HTMLElement {
     }
 
     /**
-     * Renderizza l'header del modulo
+     * Renderizza header del modulo
      */
     renderModuleHeader() {
+        const title = this.moduleDefinition.description || this.moduleDefinition.moduleId;
+        const entityName = this.entityData.nome || this.entityData.name || 'Entità';
+        
         return `
             <div class="module-header">
-                <h3 class="module-title">${this.moduleDefinition.description || this.moduleDefinition.moduleId}</h3>
+                <h3 class="module-title">${title}: ${entityName}</h3>
                 <div class="module-meta">
-                    <span class="module-version">v${this.moduleDefinition.moduleVersion}</span>
-                    <span class="entity-type">${this.moduleDefinition.targetEntityType}</span>
+                    <span>ID: ${this.getAttribute('entity-id')}</span>
+                    <span>Template: ${this.moduleDefinition.moduleId}</span>
+                    ${this.isEditMode ? '<span class="edit-indicator">✏️ Modalità Editing</span>' : ''}
                 </div>
             </div>
         `;
     }
 
     /**
-     * Renderizza il contenuto del modulo
+     * Renderizza contenuto del modulo
      */
-    renderModuleContent(view) {
-        const renderer = view.renderer || 'StandardCardRenderer';
+    renderModuleContent() {
+        const viewMode = this.getAttribute('view-mode') || 'default';
+        const view = this.getViewConfiguration(viewMode);
         
-        switch (renderer) {
-            case 'StandardCardRenderer':
-                return this.renderStandardCard(view);
-            case 'CompactCardRenderer':
-                return this.renderCompactCard(view);
-            case 'ListRenderer':
-                return this.renderList(view);
-            default:
-                return this.renderStandardCard(view);
+        return `
+            <div class="module-content">
+                ${this.renderViewContent(view)}
+            </div>
+        `;
+    }
+
+    /**
+     * Renderizza contenuto basato sulla vista
+     */
+    renderViewContent(view) {
+        if (view.renderer === 'StandardCardRenderer') {
+            return this.renderStandardCard(view);
+        } else if (view.renderer === 'CompactCardRenderer') {
+            return this.renderCompactCard(view);
+        } else {
+            // Default rendering
+            return this.renderStandardCard(view);
         }
     }
 
     /**
-     * Renderizza una vista card standard
+     * Renderizza vista standard card
      */
     renderStandardCard(view) {
-        const attributesToShow = this.getAttributesToShow(view);
-        const layout = view.layout || null;
-
-        if (layout && Array.isArray(layout)) {
-            // Rendering con layout strutturato
-            return this.renderStructuredLayout(layout, attributesToShow);
+        if (view.layout && Array.isArray(view.layout)) {
+            return this.renderStructuredLayout(view.layout);
         } else {
-            // Rendering semplice per attributi
+            const attributesToShow = this.getAttributesToShow(view);
             return this.renderSimpleAttributes(attributesToShow);
         }
     }
@@ -299,231 +323,435 @@ class TemplateModuleRenderer extends HTMLElement {
     /**
      * Renderizza layout strutturato con sezioni
      */
-    renderStructuredLayout(layout, attributesToShow) {
-        return `
-            <div class="module-content structured">
-                ${layout.map(section => `
-                    <div class="content-section">
-                        ${section.sectionTitle ? `<h4 class="section-title">${section.sectionTitle}</h4>` : ''}
-                        <div class="section-attributes">
-                            ${section.attributes.map(attrName => 
-                                this.renderAttributeDisplay(attrName)
-                            ).join('')}
-                        </div>
-                    </div>
-                `).join('')}
+    renderStructuredLayout(layout) {
+        return layout.map(section => `
+            <div class="content-section">
+                <h4 class="section-title">${section.sectionTitle}</h4>
+                <div class="section-attributes">
+                    ${section.attributes.map(attr => this.renderAttributeComponent(attr)).join('')}
+                </div>
             </div>
-        `;
+        `).join('');
     }
 
     /**
-     * Renderizza attributi in forma semplice
+     * Renderizza attributi semplici
      */
     renderSimpleAttributes(attributesToShow) {
         return `
-            <div class="module-content simple">
-                <div class="attributes-container">
-                    ${attributesToShow.map(attrName => 
-                        this.renderAttributeDisplay(attrName)
-                    ).join('')}
-                </div>
+            <div class="attributes-container">
+                ${attributesToShow.map(attr => this.renderAttributeComponent(attr)).join('')}
             </div>
         `;
     }
 
     /**
-     * Renderizza un singolo attribute-display
+     * Normalizza il tipo di entità da array a stringa singola
+     * @param {string|Array} entityType - Tipo di entità dal template
+     * @returns {string} - Tipo di entità normalizzato
      */
-    renderAttributeDisplay(attributeName) {
-        const value = this.entityData[attributeName] || '';
-        const entityType = this.entityData.entityType || this.getAttribute('entity-type') || this.moduleDefinition.targetEntityType;
+    normalizeEntityType(entityType) {
+        if (!entityType) return 'Contact';
         
-        return `
-            <attribute-display
-                attribute-name="${attributeName}"
-                value="${value}"
-                entity-type="${entityType}"
-                entity-id="${this.entityData.id}"
-                show-label
-                class="module-attribute"
-                data-attribute="${attributeName}">
-            </attribute-display>
-        `;
+        // Se è array, prendi il primo elemento
+        if (Array.isArray(entityType)) {
+            return entityType[0] || 'Contact';
+        }
+        
+        // Se è stringa, restituiscila così com'è
+        return entityType;
     }
 
     /**
-     * Renderizza vista compatta
+     * Renderizza componente attributo (display o editor)
+     */
+    renderAttributeComponent(attributeName) {
+        const value = this.entityData[attributeName];
+        const entityId = this.getAttribute('entity-id');
+        const entityType = this.normalizeEntityType(
+            this.getAttribute('entity-type') || this.moduleDefinition.targetEntityType
+        );
+
+        if (this.isEditMode) {
+            // ✨ FASE 2: Usa attribute-editor in modalità editing
+            return `
+                <attribute-editor
+                    attribute-name="${attributeName}"
+                    value="${value || ''}"
+                    entity-id="${entityId}"
+                    entity-type="${entityType}"
+                    show-actions="true"
+                    data-attribute="${attributeName}">
+                </attribute-editor>
+            `;
+        } else {
+            // Modalità visualizzazione standard
+            return `
+                <attribute-display
+                    attribute-name="${attributeName}"
+                    value="${value || ''}"
+                    entity-type="${entityType}"
+                    data-attribute="${attributeName}">
+                </attribute-display>
+            `;
+        }
+    }
+
+    /**
+     * Renderizza vista compact card
      */
     renderCompactCard(view) {
         const attributesToShow = this.getAttributesToShow(view);
         
         return `
-            <div class="module-content compact">
-                <div class="compact-attributes">
-                    ${attributesToShow.slice(0, 3).map(attrName => 
-                        this.renderCompactAttribute(attrName)
-                    ).join('')}
-                </div>
+            <div class="compact-attributes">
+                ${attributesToShow.map(attr => this.renderCompactAttribute(attr)).join('')}
             </div>
         `;
     }
 
     /**
-     * Renderizza attributo in forma compatta
+     * Renderizza attributo compatto
      */
     renderCompactAttribute(attributeName) {
-        const value = this.entityData[attributeName] || '';
-        const entityType = this.entityData.entityType || this.getAttribute('entity-type') || this.moduleDefinition.targetEntityType;
+        const value = this.entityData[attributeName];
+        const entityType = this.normalizeEntityType(
+            this.getAttribute('entity-type') || this.moduleDefinition.targetEntityType
+        );
         
-        return `
-            <attribute-display
-                attribute-name="${attributeName}"
-                value="${value}"
-                entity-type="${entityType}"
-                entity-id="${this.entityData.id}"
-                inline
-                class="compact-attribute"
-                data-attribute="${attributeName}">
-            </attribute-display>
-        `;
+        if (this.isEditMode) {
+            return `
+                <attribute-editor
+                    attribute-name="${attributeName}"
+                    value="${value || ''}"
+                    entity-id="${this.getAttribute('entity-id')}"
+                    entity-type="${entityType}"
+                    data-attribute="${attributeName}">
+                </attribute-editor>
+            `;
+        } else {
+            return `
+                <attribute-display
+                    attribute-name="${attributeName}"
+                    value="${value || ''}"
+                    entity-type="${entityType}"
+                    data-attribute="${attributeName}"
+                    compact="true">
+                </attribute-display>
+            `;
+        }
     }
 
     /**
-     * Renderizza le azioni del modulo
+     * ✨ FASE 2: Renderizza azioni del modulo con nuove funzionalità
      */
     renderModuleActions() {
-        if (!this.hasAttribute('show-actions') || !this.moduleDefinition.actions) {
-            return '';
-        }
+        const actions = this.moduleDefinition.actions || [];
+        const hasConfigurableFields = this.moduleDefinition.instanceConfigurableFields && 
+                                      this.moduleDefinition.instanceConfigurableFields.length > 0;
 
         return `
             <div class="module-actions">
-                ${this.moduleDefinition.actions.map(action => `
-                    <button class="action-button" data-action="${action.actionId}">
-                        ${action.label}
-                    </button>
-                `).join('')}
+                ${this.renderEditActions()}
+                ${hasConfigurableFields ? this.renderSaveAsAction() : ''}
+                ${actions.map(action => this.renderCustomAction(action)).join('')}
             </div>
         `;
     }
 
     /**
-     * Ottiene la configurazione della vista
+     * ✨ FASE 2: Renderizza azioni di editing
      */
-    getViewConfiguration(viewMode) {
-        if (viewMode !== 'default' && this.moduleDefinition.views && this.moduleDefinition.views[viewMode]) {
-            return this.moduleDefinition.views[viewMode];
+    renderEditActions() {
+        if (this.isEditMode) {
+            return `
+                <button class="action-button save-changes-button" ${this.saveInProgress ? 'disabled' : ''}>
+                    ${this.saveInProgress ? '⏳' : '💾'} Salva Modifiche
+                </button>
+                <button class="action-button cancel-edit-button">
+                    ❌ Annulla
+                </button>
+            `;
+        } else {
+            return `
+                <button class="action-button edit-mode-button">
+                    ✏️ Modifica
+                </button>
+            `;
         }
-        return this.moduleDefinition.defaultView;
     }
 
     /**
-     * Ottiene gli attributi da mostrare per una vista
+     * ✨ FASE 2: Renderizza azione "Salva Vista Come..."
+     */
+    renderSaveAsAction() {
+        return `
+            <button class="action-button save-as-button">
+                📋 Salva Vista Come...
+            </button>
+        `;
+    }
+
+    /**
+     * Renderizza azioni personalizzate dal template
+     */
+    renderCustomAction(action) {
+        return `
+            <button class="action-button custom-action-button" data-action-id="${action.actionId}">
+                ${action.label}
+            </button>
+        `;
+    }
+
+    /**
+     * Ottiene configurazione vista
+     */
+    getViewConfiguration(viewMode) {
+        const views = this.moduleDefinition.views || {};
+        
+        if (viewMode !== 'default' && views[viewMode]) {
+            return views[viewMode];
+        }
+        
+        return this.moduleDefinition.defaultView || { attributesToDisplay: [] };
+    }
+
+    /**
+     * Ottiene attributi da mostrare per una vista
      */
     getAttributesToShow(view) {
-        if (view.attributesToDisplay) {
-            return view.attributesToDisplay;
-        }
-        
         if (view.layout && Array.isArray(view.layout)) {
-            return view.layout.flatMap(section => section.attributes || []);
+            // Estrae attributi dalle sezioni del layout
+            return view.layout.reduce((attrs, section) => {
+                return attrs.concat(section.attributes || []);
+            }, []);
         }
         
-        // Fallback: tutti gli attributi dell'entità tranne quelli di sistema
-        return Object.keys(this.entityData).filter(key => 
-            !['id', 'entityType', 'createdAt', 'updatedAt'].includes(key)
+        return view.attributesToDisplay || [];
+    }
+
+    /**
+     * ✨ FASE 2: Gestori eventi evoluti
+     */
+    attachEventListeners() {
+        // Gestori azioni editing
+        const editButton = this.shadowRoot.querySelector('.edit-mode-button');
+        const saveButton = this.shadowRoot.querySelector('.save-changes-button');
+        const cancelButton = this.shadowRoot.querySelector('.cancel-edit-button');
+        const saveAsButton = this.shadowRoot.querySelector('.save-as-button');
+
+        if (editButton) editButton.addEventListener('click', this.handleToggleEdit);
+        if (saveButton) saveButton.addEventListener('click', this.handleSaveChanges);
+        if (cancelButton) cancelButton.addEventListener('click', this.handleCancelEdit);
+        if (saveAsButton) saveAsButton.addEventListener('click', this.handleSaveAs);
+
+        // Gestori azioni personalizzate
+        const customButtons = this.shadowRoot.querySelectorAll('.custom-action-button');
+        customButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const actionId = button.getAttribute('data-action-id');
+                this.handleAction(actionId, event);
+            });
+        });
+
+        // ✨ FASE 2: Listener per eventi attribute-editor
+        const attributeEditors = this.shadowRoot.querySelectorAll('attribute-editor');
+        attributeEditors.forEach(editor => {
+            editor.addEventListener('value-saved', this.handleAttributeSaved.bind(this));
+            editor.addEventListener('value-changing', this.handleAttributeChanging.bind(this));
+            editor.addEventListener('save-error', this.handleAttributeSaveError.bind(this));
+        });
+    }
+
+    /**
+     * ✨ FASE 2: Gestisce toggle modalità editing
+     */
+    handleToggleEdit() {
+        this.isEditMode = !this.isEditMode;
+        this.setAttribute('edit-mode', this.isEditMode.toString());
+        console.log(`🔧 [template-module-renderer] Modalità editing: ${this.isEditMode}`);
+    }
+
+    /**
+     * ✨ FASE 2: Gestisce salvataggio modifiche batch
+     */
+    async handleSaveChanges() {
+        if (this.saveInProgress) return;
+        
+        try {
+            this.saveInProgress = true;
+            this.render(); // Aggiorna UI
+
+            // Salva tutte le modifiche pendenti tramite attribute-editor
+            const attributeEditors = this.shadowRoot.querySelectorAll('attribute-editor');
+            const savePromises = Array.from(attributeEditors)
+                .filter(editor => editor.isDirty)
+                .map(editor => editor.handleSave());
+
+            await Promise.all(savePromises);
+            
+            this.dirtyAttributes.clear();
+            this.isEditMode = false;
+            this.setAttribute('edit-mode', 'false');
+            
+            console.log('✅ [template-module-renderer] Tutte le modifiche salvate');
+
+        } catch (error) {
+            console.error('❌ [template-module-renderer] Errore salvataggio modifiche:', error);
+        } finally {
+            this.saveInProgress = false;
+            this.render();
+        }
+    }
+
+    /**
+     * ✨ FASE 2: Gestisce annullamento editing
+     */
+    handleCancelEdit() {
+        // Annulla modifiche in tutti gli attribute-editor
+        const attributeEditors = this.shadowRoot.querySelectorAll('attribute-editor');
+        attributeEditors.forEach(editor => {
+            if (editor.isDirty) {
+                editor.handleCancel();
+            }
+        });
+
+        this.dirtyAttributes.clear();
+        this.isEditMode = false;
+        this.setAttribute('edit-mode', 'false');
+        
+        console.log('❌ [template-module-renderer] Editing annullato');
+    }
+
+    /**
+     * ✨ FASE 2: Gestisce "Salva Vista Come..."
+     */
+    async handleSaveAs() {
+        try {
+            const instanceName = prompt('Nome per la vista salvata:');
+            if (!instanceName) return;
+
+            if (!window.saveInstanceService) {
+                throw new Error('SaveInstanceService non disponibile');
+            }
+
+            const currentConfig = this.extractCurrentConfig();
+            
+            const instanceData = {
+                instanceName,
+                templateModuleId: this.moduleDefinition.moduleId,
+                targetEntityId: this.getAttribute('entity-id'),
+                targetEntityType: this.normalizeEntityType(
+                    this.getAttribute('entity-type') || this.moduleDefinition.targetEntityType
+                ),
+                ownerUserId: 'current-user', // TODO: Gestire utente corrente
+                instanceConfigOverrides: typeof currentConfig === 'object' ? JSON.stringify(currentConfig) : currentConfig,
+                description: `Vista personalizzata di ${this.moduleDefinition.description || this.moduleDefinition.moduleId}`
+            };
+
+            const savedInstance = await window.saveInstanceService.createInstance(instanceData);
+            
+            console.log('✅ [template-module-renderer] Vista salvata:', savedInstance);
+            
+            // Notifica successo
+            this.dispatchEvent(new CustomEvent('instance-saved', {
+                detail: { instance: savedInstance },
+                bubbles: true
+            }));
+
+        } catch (error) {
+            console.error('❌ [template-module-renderer] Errore salvataggio vista:', error);
+            alert('Errore nel salvataggio della vista: ' + error.message);
+        }
+    }
+
+    /**
+     * ✨ FASE 2: Estrae configurazione corrente salvabile
+     */
+    extractCurrentConfig() {
+        if (!window.saveInstanceService || !this.moduleDefinition) {
+            return {};
+        }
+
+        const currentConfig = {
+            viewMode: this.getAttribute('view-mode') || 'default',
+            showTitle: this.getAttribute('show-title') !== 'false',
+            showActions: this.getAttribute('show-actions') !== 'false'
+        };
+
+        return window.saveInstanceService.extractSavableConfig(
+            this.moduleDefinition, 
+            currentConfig
         );
     }
 
     /**
-     * Attacca event listeners
+     * ✨ FASE 2: Gestisce eventi attribute-editor
      */
-    attachEventListeners() {
-        // Event listeners per azioni
-        const actionButtons = this.shadowRoot.querySelectorAll('.action-button');
-        actionButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const actionId = e.target.getAttribute('data-action');
-                this.handleAction(actionId, e);
-            });
-        });
+    handleAttributeSaved(event) {
+        const { attributeName } = event.detail;
+        this.dirtyAttributes.delete(attributeName);
+        console.log(`✅ [template-module-renderer] Attributo salvato: ${attributeName}`);
+    }
 
-        // Event listeners per attribute-display components
-        const attributeDisplays = this.shadowRoot.querySelectorAll('attribute-display');
-        attributeDisplays.forEach(display => {
-            display.addEventListener('attribute-action', (e) => {
-                this.handleAttributeAction(e.detail);
-            });
-        });
+    handleAttributeChanging(event) {
+        const { attributeName, isDirty } = event.detail;
+        if (isDirty) {
+            this.dirtyAttributes.add(attributeName);
+        } else {
+            this.dirtyAttributes.delete(attributeName);
+        }
+    }
+
+    handleAttributeSaveError(event) {
+        const { attributeName, error } = event.detail;
+        console.error(`❌ [template-module-renderer] Errore salvataggio ${attributeName}:`, error);
     }
 
     /**
-     * Gestisce le azioni del modulo
+     * Gestisce azioni personalizzate
      */
     handleAction(actionId, event) {
         console.log(`🎬 [template-module-renderer] Azione: ${actionId}`);
         
-        // Emetti evento personalizzato
+        // Emette evento per gestione esterna
         this.dispatchEvent(new CustomEvent('module-action', {
             detail: {
-                actionId: actionId,
+                actionId,
                 moduleId: this.moduleDefinition.moduleId,
-                entityId: this.entityData.id,
+                entityId: this.getAttribute('entity-id'),
                 entityData: this.entityData
             },
             bubbles: true
         }));
-
-        // Gestione azioni predefinite
-        switch (actionId) {
-            case 'refresh':
-                this.refreshData();
-                break;
-            case 'edit':
-                this.enableEditMode();
-                break;
-            default:
-                console.log(`⚠️ [template-module-renderer] Azione non gestita: ${actionId}`);
-        }
     }
 
     /**
-     * Gestisce azioni su attributi
+     * Gestisce azioni attributo
      */
     handleAttributeAction(actionDetail) {
-        console.log(`🎬 [template-module-renderer] Azione attributo:`, actionDetail);
+        console.log('🎯 [template-module-renderer] Azione attributo:', actionDetail);
         
-        // Propaga l'evento
         this.dispatchEvent(new CustomEvent('attribute-action', {
-            detail: {
-                ...actionDetail,
-                moduleId: this.moduleDefinition.moduleId
-            },
+            detail: actionDetail,
             bubbles: true
         }));
     }
 
     /**
-     * Aggiorna i dati dell'entità
+     * Aggiorna dati
      */
     async refreshData() {
         try {
-            this.entityData = await window.entityService.getEntity(
-                this.getAttribute('entity-id'), 
-                { forceRefresh: true }
-            );
-            this.render();
+            const entityId = this.getAttribute('entity-id');
+            if (window.entityService && entityId) {
+                this.entityData = await window.entityService.getEntity(entityId);
+                this.render();
+                console.log('🔄 [template-module-renderer] Dati aggiornati');
+            }
         } catch (error) {
-            console.error('❌ [template-module-renderer] Errore refresh:', error);
+            console.error('❌ [template-module-renderer] Errore aggiornamento dati:', error);
         }
-    }
-
-    /**
-     * Abilita modalità editing (per future implementazioni)
-     */
-    enableEditMode() {
-        console.log('🔧 [template-module-renderer] Modalità editing non ancora implementata');
-        // TODO: Implementare in Fase 2
     }
 
     /**
@@ -533,7 +761,9 @@ class TemplateModuleRenderer extends HTMLElement {
         if (!window.webSocketService) return;
 
         const entityId = this.getAttribute('entity-id');
-        const entityType = this.getAttribute('entity-type') || this.moduleDefinition?.targetEntityType;
+        const entityType = this.normalizeEntityType(
+            this.getAttribute('entity-type') || this.moduleDefinition?.targetEntityType
+        );
 
         // Sottoscrizione per cambiamenti attributi
         const attrSubId = window.webSocketService.subscribe('attributeChange', (message) => {
@@ -570,6 +800,12 @@ class TemplateModuleRenderer extends HTMLElement {
                 attributeDisplay.updateValue(newValue);
             }
 
+            // ✨ FASE 2: Aggiorna anche attribute-editor se in modalità editing
+            const attributeEditor = this.shadowRoot.querySelector(`attribute-editor[data-attribute="${attributeName}"]`);
+            if (attributeEditor && !this.isEditMode) {
+                attributeEditor.setValue(newValue);
+            }
+
             console.log(`🔄 [template-module-renderer] Attributo aggiornato: ${attributeName} = ${newValue}`);
         }
     }
@@ -595,6 +831,27 @@ class TemplateModuleRenderer extends HTMLElement {
     }
 
     /**
+     * ✨ FASE 2: API pubbliche estese
+     */
+    enterEditMode() {
+        this.isEditMode = true;
+        this.setAttribute('edit-mode', 'true');
+    }
+
+    exitEditMode() {
+        this.isEditMode = false;
+        this.setAttribute('edit-mode', 'false');
+    }
+
+    hasUnsavedChanges() {
+        return this.dirtyAttributes.size > 0;
+    }
+
+    getDirtyAttributes() {
+        return Array.from(this.dirtyAttributes);
+    }
+
+    /**
      * Stili CSS base
      */
     getBaseStyles() {
@@ -609,6 +866,73 @@ class TemplateModuleRenderer extends HTMLElement {
                 border-radius: 0.5rem;
                 background-color: white;
                 overflow: hidden;
+                transition: all 0.2s ease-in-out;
+            }
+            
+            .module-container.edit-mode {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+        `;
+    }
+
+    /**
+     * ✨ FASE 2: Stili editing
+     */
+    getEditStyles() {
+        return `
+            .edit-indicator {
+                background-color: #3b82f6;
+                color: white;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
+                font-size: 0.625rem;
+                font-weight: 500;
+            }
+
+            .save-changes-button {
+                background-color: #10b981;
+                color: white;
+                border-color: #10b981;
+            }
+
+            .save-changes-button:hover:not(:disabled) {
+                background-color: #059669;
+            }
+
+            .save-changes-button:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .cancel-edit-button {
+                background-color: #ef4444;
+                color: white;
+                border-color: #ef4444;
+            }
+
+            .cancel-edit-button:hover {
+                background-color: #dc2626;
+            }
+
+            .edit-mode-button {
+                background-color: #3b82f6;
+                color: white;
+                border-color: #3b82f6;
+            }
+
+            .edit-mode-button:hover {
+                background-color: #2563eb;
+            }
+
+            .save-as-button {
+                background-color: #f59e0b;
+                color: white;
+                border-color: #f59e0b;
+            }
+
+            .save-as-button:hover {
+                background-color: #d97706;
             }
         `;
     }
@@ -639,6 +963,7 @@ class TemplateModuleRenderer extends HTMLElement {
                 gap: 0.5rem;
                 font-size: 0.75rem;
                 color: #6b7280;
+                align-items: center;
             }
             
             .module-content {
@@ -700,7 +1025,7 @@ class TemplateModuleRenderer extends HTMLElement {
                 transition: all 0.15s ease-in-out;
             }
             
-            .action-button:hover {
+            .action-button:hover:not(:disabled) {
                 background-color: #f3f4f6;
                 border-color: #9ca3af;
             }
@@ -720,10 +1045,8 @@ class TemplateModuleRenderer extends HTMLElement {
                     flex-direction: column;
                 }
                 
-                .module-header {
+                .module-actions {
                     flex-direction: column;
-                    align-items: flex-start;
-                    gap: 0.5rem;
                 }
             }
         `;
@@ -733,4 +1056,4 @@ class TemplateModuleRenderer extends HTMLElement {
 // Registra il Web Component
 customElements.define('template-module-renderer', TemplateModuleRenderer);
 
-export default TemplateModuleRenderer; 
+console.log('✅ [template-module-renderer] Web Component registrato (Fase 2 - Editing & Actions)'); 

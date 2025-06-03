@@ -76,29 +76,53 @@ class SchemaService {
     }
 
     /**
+     * Normalizza il tipo di entità da array o stringa multipla a stringa singola
+     * @param {string|Array} entityType - Tipo di entità (potrebbe essere array o stringa con virgole)
+     * @returns {string} - Primo tipo di entità valido
+     */
+    normalizeEntityType(entityType) {
+        if (!entityType) return 'Contact'; // Default fallback
+        
+        // Se è array, prendi il primo elemento
+        if (Array.isArray(entityType)) {
+            return entityType[0] || 'Contact';
+        }
+        
+        // Se è stringa con virgole, prendi il primo elemento
+        if (typeof entityType === 'string' && entityType.includes(',')) {
+            return entityType.split(',')[0].trim();
+        }
+        
+        // Se è stringa normale, restituiscila così com'è
+        return entityType;
+    }
+
+    /**
      * Ottiene lo schema completo per un tipo di entità (API evoluta)
-     * @param {string} entityType - Tipo di entità
+     * @param {string|Array} entityType - Tipo di entità
      * @returns {Promise<Object>} - Schema completo dell'entità
      */
     async getEntitySchema(entityType) {
         try {
-            const cacheKey = `schema_${entityType}`;
+            // Normalizza il tipo di entità
+            const normalizedType = this.normalizeEntityType(entityType);
+            const cacheKey = `schema_${normalizedType}`;
             
             // Controlla cache
             if (this.schemaCache.has(cacheKey)) {
                 const cached = this.schemaCache.get(cacheKey);
                 if (Date.now() - cached.timestamp < this.cacheTimeout) {
-                    console.log(`🔄 [SchemaService] Cache hit per schema ${entityType}`);
+                    console.log(`🔄 [SchemaService] Cache hit per schema ${normalizedType}`);
                     return cached.data;
                 }
             }
 
-            console.log(`📥 [SchemaService] Caricamento schema completo per ${entityType}...`);
+            console.log(`📥 [SchemaService] Caricamento schema completo per ${normalizedType}...`);
 
-            const response = await fetch(`/api/schema/entity/${entityType}`);
+            const response = await fetch(`/api/schema/entity/${normalizedType}`);
             
             if (!response.ok) {
-                throw new Error(`Schema non trovato per ${entityType} (Status: ${response.status})`);
+                throw new Error(`Schema non trovato per ${normalizedType} (Status: ${response.status})`);
             }
 
             const result = await response.json();
@@ -110,24 +134,27 @@ class SchemaService {
             const schema = result.data;
             this.cacheSchema(cacheKey, schema);
             
-            console.log(`✅ [SchemaService] Schema ${entityType} caricato:`, schema);
+            console.log(`✅ [SchemaService] Schema ${normalizedType} caricato:`, schema);
             return schema;
 
         } catch (error) {
-            console.error(`❌ [SchemaService] Errore recupero schema ${entityType}:`, error);
+            console.error(`❌ [SchemaService] Errore recupero schema ${this.normalizeEntityType(entityType)}:`, error);
             throw error;
         }
     }
 
     /**
      * Ottiene informazioni dettagliate su un attributo specifico
-     * @param {string} entityType - Tipo di entità
+     * @param {string|Array} entityType - Tipo di entità
      * @param {string} attributeName - Nome dell'attributo
      * @returns {Promise<Object>} - Informazioni dettagliate dell'attributo
      */
     async getAttributeInfo(entityType, attributeName) {
         try {
-            const schema = await this.getEntitySchema(entityType);
+            // Normalizza il tipo di entità
+            const normalizedType = this.normalizeEntityType(entityType);
+            
+            const schema = await this.getEntitySchema(normalizedType);
             
             if (schema.attributes && schema.attributes.length > 0) {
                 const attributeInfo = schema.attributes.find(attr => attr.name === attributeName);
@@ -150,7 +177,14 @@ class SchemaService {
 
         } catch (error) {
             console.error(`❌ [SchemaService] Errore recupero info attributo ${attributeName}:`, error);
-            throw error;
+            
+            // Fallback anche in caso di errore
+            return {
+                name: attributeName,
+                type: 'string',
+                required: false,
+                description: `Attributo ${attributeName}`
+            };
         }
     }
 
@@ -284,4 +318,4 @@ class SchemaService {
 // Esporta istanza singleton
 window.schemaService = new SchemaService();
 
-export default window.schemaService; 
+console.log('✅ [SchemaService] Servizio registrato globalmente'); 

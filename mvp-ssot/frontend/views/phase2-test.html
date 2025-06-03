@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Fase 2 - Editing & Module Instances</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .demo-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            background: #fafafa;
+        }
+
+        .demo-title {
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background: white;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #f3f4f6;
+        }
+
+        .btn.primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .btn.primary:hover {
+            background: #2563eb;
+        }
+
+        .btn.success {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        .btn.success:hover {
+            background: #059669;
+        }
+
+        .btn.warning {
+            background: #f59e0b;
+            color: white;
+            border-color: #f59e0b;
+        }
+
+        .btn.warning:hover {
+            background: #d97706;
+        }
+
+        .logs {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.75rem;
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .log-entry {
+            margin-bottom: 0.25rem;
+            padding: 0.25rem;
+        }
+
+        .log-entry.success {
+            color: #10b981;
+        }
+
+        .log-entry.error {
+            color: #ef4444;
+        }
+
+        .log-entry.info {
+            color: #3b82f6;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-badge.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .instances-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+        }
+
+        .instance-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .instance-item:last-child {
+            border-bottom: none;
+        }
+
+        .instance-info {
+            flex: 1;
+        }
+
+        .instance-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .instance-meta {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .instance-actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .instance-actions .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Test Fase 2: Editing & Module Instances</h1>
+        <p>Dimostra editing attributi, azioni moduli, salvataggio istanze e gestione configurazioni</p>
+    </div>
+
+    <div class="container">
+        <!-- Sezione 1: Test Editing -->
+        <div class="test-section">
+            <h2 class="section-title">🎯 Test 1: Modalità Editing & attribute-editor</h2>
+            <div class="grid grid-2">
+                <div class="demo-card">
+                    <div class="demo-title">📇 Standard Card - Mario Rossi</div>
+                    <div class="controls">
+                        <button class="btn" onclick="refreshRenderer('mario-renderer')">🔄 Refresh</button>
+                        <button class="btn warning" onclick="testEdit('mario-renderer')">✏️ Test Edit</button>
+                    </div>
+                    <template-module-renderer 
+                        module-id="StandardContactCard"
+                        entity-id="11ef8b2e-91ae-4db3-9bed-eca44ffb763a"
+                        id="mario-renderer">
+                    </template-module-renderer>
+                </div>
+
+                <div class="demo-card">
+                    <div class="demo-title">📇 Standard Card - Anna Verdi</div>
+                    <div class="controls">
+                        <button class="btn" onclick="refreshRenderer('anna-renderer')">🔄 Refresh</button>
+                        <button class="btn warning" onclick="testEdit('anna-renderer')">✏️ Test Edit</button>
+                    </div>
+                    <template-module-renderer 
+                        module-id="StandardContactCard"
+                        entity-id="e6b25c55-8532-4b76-b557-ae2764a7c0b5"
+                        id="anna-renderer">
+                    </template-module-renderer>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sezione 2: Test Viste Multiple -->
+        <div class="test-section">
+            <h2 class="section-title">👁️ Test 2: Viste Multiple & Configurazioni</h2>
+            <div class="grid grid-3">
+                <div class="demo-card">
+                    <div class="demo-title">📇 Standard Card - Mario Rossi</div>
+                    <template-module-renderer 
+                        module-id="StandardContactCard"
+                        entity-id="11ef8b2e-91ae-4db3-9bed-eca44ffb763a"
+                        id="mario-vista-minima">
+                    </template-module-renderer>
+                </div>
+
+                <div class="demo-card">
+                    <div class="demo-title">📇 Standard Card - Mario Rossi</div>
+                    <template-module-renderer 
+                        module-id="StandardContactCard"
+                        entity-id="11ef8b2e-91ae-4db3-9bed-eca44ffb763a"
+                        id="mario-full-details">
+                    </template-module-renderer>
+                </div>
+
+                <div class="demo-card">
+                    <div class="demo-title">📇 Standard Card - Mario Rossi</div>
+                    <template-module-renderer 
+                        module-id="StandardContactCard"
+                        entity-id="11ef8b2e-91ae-4db3-9bed-eca44ffb763a"
+                        id="mario-editing">
+                    </template-module-renderer>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sezione 3: Test Istanze Salvate -->
+        <div class="test-section">
+            <h2 class="section-title">💾 Test 3: Module Instances Salvabili</h2>
+            <div class="grid grid-2">
+                <div class="demo-card">
+                    <div class="demo-title">Gestione Istanze</div>
+                    <div class="controls">
+                        <button class="btn primary" onclick="createTestInstance()">📝 Crea Istanza Test</button>
+                        <button class="btn" onclick="listInstances()">📋 Lista Istanze</button>
+                        <button class="btn warning" onclick="clearInstances()">🗑️ Clear All</button>
+                    </div>
+                    
+                    <div class="instances-list" id="instances-list">
+                        <div style="padding: 2rem; text-align: center; color: #6b7280;">
+                            Nessuna istanza caricata. Clicca "Lista Istanze" per caricare.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <div class="demo-title">Render Istanza Salvata (dinamico)</div>
+                    <div class="controls">
+                        <button class="btn" onclick="loadSampleInstance()">🔄 Carica Istanza Esempio</button>
+                    </div>
+                    <div id="saved-instance-container">
+                        <div style="padding: 2rem; text-align: center; color: #6b7280;">
+                            Seleziona un'istanza dalla lista per visualizzarla qui
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sezione 4: Test Servizi -->
+        <div class="test-section">
+            <h2 class="section-title">🔧 Test 4: Servizi Frontend</h2>
+            <div class="grid grid-3">
+                <div class="demo-card">
+                    <div class="demo-title">SaveInstanceService</div>
+                    <div class="controls">
+                        <button class="btn" onclick="testSaveInstanceService()">🧪 Test Service</button>
+                    </div>
+                    <div id="save-service-status">
+                        <span class="status-badge" id="save-service-badge">Non testato</span>
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <div class="demo-title">attribute-editor Component</div>
+                    <div class="controls">
+                        <button class="btn" onclick="testAttributeEditor()">🧪 Test Editor</button>
+                    </div>
+                    <div id="editor-test-container">
+                        <!-- Qui verranno inseriti attribute-editor di test -->
+                    </div>
+                </div>
+
+                <div class="demo-card">
+                    <div class="demo-title">EntityService Updates</div>
+                    <div class="controls">
+                        <button class="btn" onclick="testEntityUpdates()">🧪 Test Updates</button>
+                    </div>
+                    <div id="entity-service-status">
+                        <span class="status-badge" id="entity-service-badge">Non testato</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs -->
+        <div class="test-section">
+            <h2 class="section-title">📋 Event Logs</h2>
+            <div class="controls">
+                <button class="btn" onclick="clearLogs()">🗑️ Clear Logs</button>
+                <button class="btn" onclick="exportLogs()">📄 Export Logs</button>
+            </div>
+            <div class="logs" id="logs-container">
+                <div class="log-entry info">🚀 Sistema Phase 2 Test inizializzato</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include servizi e componenti -->
+    <script src="../services/ModuleDefinitionService.js"></script>
+    <script src="../services/SchemaService.js"></script>
+    <script src="../services/EntityService.js"></script>
+    <script src="../services/WebSocketService.js"></script>
+    <script src="../services/SaveInstanceService.js"></script>
+    
+    <script src="../components/ssot-input.js"></script>
+    <script src="../components/attribute-display.js"></script>
+    <script src="../components/attribute-editor.js"></script>
+    <script src="../components/template-module-renderer.js"></script>
+    <script src="../components/saved-module-instance.js"></script>
+
+    <script>
+        // Stato globale test
+        let testState = {
+            instances: [],
+            selectedInstanceId: null,
+            logCount: 0
+        };
+
+        // Utilità logging
+        function log(message, type = 'info') {
+            const logsContainer = document.getElementById('logs-container');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+            testState.logCount++;
+        }
+
+        function clearLogs() {
+            document.getElementById('logs-container').innerHTML = '';
+            testState.logCount = 0;
+            log('📋 Logs cleared');
+        }
+
+        function exportLogs() {
+            const logs = Array.from(document.querySelectorAll('.log-entry'))
+                .map(entry => entry.textContent).join('\n');
+            
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `phase2-test-logs-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            log('📄 Logs esportati', 'success');
+        }
+
+        // Test Functions - Editing
+        function toggleEditMode(rendererId) {
+            const renderer = document.getElementById(rendererId);
+            const currentMode = renderer.getAttribute('edit-mode') === 'true';
+            renderer.setAttribute('edit-mode', (!currentMode).toString());
+            log(`🔄 Toggle edit mode per ${rendererId}: ${!currentMode}`, 'info');
+        }
+
+        function refreshRenderer(rendererId) {
+            const renderer = document.getElementById(rendererId);
+            renderer.refreshData();
+            log(`🔄 Refresh renderer ${rendererId}`, 'info');
+        }
+
+        function saveAllChanges(rendererId) {
+            const renderer = document.getElementById(rendererId);
+            renderer.handleSaveChanges();
+            log(`💾 Save all changes per ${rendererId}`, 'success');
+        }
+
+        function cancelAllChanges(rendererId) {
+            const renderer = document.getElementById(rendererId);
+            renderer.handleCancelEdit();
+            log(`❌ Cancel all changes per ${rendererId}`, 'warning');
+        }
+
+        // Test Functions - Instances
+        async function createTestInstance() {
+            try {
+                const instanceData = {
+                    instanceName: 'Test Mario Vista Custom',
+                    templateModuleId: 'StandardContactCard',
+                    targetEntityId: '11ef8b2e-91ae-4db3-9bed-eca44ffb763a',
+                    targetEntityType: 'Contact',
+                    ownerUserId: 'test-user',
+                    instanceConfigOverrides: {
+                        viewMode: 'compactCard',
+                        showTitle: true,
+                        customTitle: 'Vista Personalizzata'
+                    },
+                    description: 'Istanza di test creata dalla pagina Phase 2 Test'
+                };
+
+                const createdInstance = await window.saveInstanceService.createInstance(instanceData);
+                log(`✅ Istanza creata: ${createdInstance.id}`, 'success');
+                
+                // Refresh lista
+                await listInstances();
+                
+            } catch (error) {
+                log(`❌ Errore creazione istanza: ${error.message}`, 'error');
+            }
+        }
+
+        async function listInstances() {
+            try {
+                const result = await window.saveInstanceService.listInstances({
+                    templateModuleId: 'StandardContactCard',
+                    limit: 20
+                });
+
+                testState.instances = result.instances || [];
+                renderInstancesList();
+                log(`📋 Caricate ${testState.instances.length} istanze`, 'success');
+
+            } catch (error) {
+                log(`❌ Errore caricamento istanze: ${error.message}`, 'error');
+            }
+        }
+
+        function renderInstancesList() {
+            const container = document.getElementById('instances-list');
+            
+            if (testState.instances.length === 0) {
+                container.innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: #6b7280;">
+                        Nessuna istanza trovata
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = testState.instances.map(instance => `
+                <div class="instance-item">
+                    <div class="instance-info">
+                        <div class="instance-name">${instance.instanceName}</div>
+                        <div class="instance-meta">
+                            Template: ${instance.templateModuleId} | 
+                            Target: ${instance.targetEntityId} |
+                            Created: ${new Date(instance.createdAt).toLocaleDateString()}
+                        </div>
+                    </div>
+                    <div class="instance-actions">
+                        <button class="btn" onclick="loadInstance('${instance.id}')">👁️</button>
+                        <button class="btn warning" onclick="deleteInstance('${instance.id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadInstance(instanceId) {
+            try {
+                testState.selectedInstanceId = instanceId;
+                
+                const container = document.getElementById('saved-instance-container');
+                container.innerHTML = `
+                    <saved-module-instance
+                        instance-id="${instanceId}"
+                        show-instance-actions="true"
+                        show-title="true">
+                    </saved-module-instance>
+                `;
+                
+                log(`👁️ Caricata istanza: ${instanceId}`, 'success');
+                
+            } catch (error) {
+                log(`❌ Errore caricamento istanza: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteInstance(instanceId) {
+            try {
+                await window.saveInstanceService.deleteInstance(instanceId);
+                log(`🗑️ Istanza eliminata: ${instanceId}`, 'warning');
+                
+                // Refresh lista
+                await listInstances();
+                
+                // Clear container se era selezionata
+                if (testState.selectedInstanceId === instanceId) {
+                    document.getElementById('saved-instance-container').innerHTML = `
+                        <div style="padding: 2rem; text-align: center; color: #6b7280;">
+                            Istanza eliminata
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                log(`❌ Errore eliminazione istanza: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearInstances() {
+            try {
+                for (const instance of testState.instances) {
+                    await window.saveInstanceService.deleteInstance(instance.id);
+                }
+                
+                testState.instances = [];
+                renderInstancesList();
+                
+                document.getElementById('saved-instance-container').innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: #6b7280;">
+                        Tutte le istanze eliminate
+                    </div>
+                `;
+                
+                log('🗑️ Tutte le istanze eliminate', 'warning');
+                
+            } catch (error) {
+                log(`❌ Errore eliminazione istanze: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadSampleInstance() {
+            try {
+                // Crea istanza esempio se non esiste
+                if (testState.instances.length === 0) {
+                    await createTestInstance();
+                    await listInstances();
+                }
+                
+                if (testState.instances.length > 0) {
+                    await loadInstance(testState.instances[0].id);
+                }
+                
+            } catch (error) {
+                log(`❌ Errore caricamento istanza esempio: ${error.message}`, 'error');
+            }
+        }
+
+        // Test Functions - Services
+        async function testSaveInstanceService() {
+            const badge = document.getElementById('save-service-badge');
+            
+            try {
+                // Test basic functionality
+                const stats = window.saveInstanceService.getCacheStats();
+                
+                badge.textContent = '✅ Attivo';
+                badge.className = 'status-badge success';
+                
+                log(`🧪 SaveInstanceService test OK - Cache: ${stats.totalEntries} entries`, 'success');
+                
+            } catch (error) {
+                badge.textContent = '❌ Errore';
+                badge.className = 'status-badge error';
+                
+                log(`❌ SaveInstanceService test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAttributeEditor() {
+            const container = document.getElementById('editor-test-container');
+            
+            container.innerHTML = `
+                <div style="margin-top: 1rem;">
+                    <attribute-editor
+                        attribute-name="nome"
+                        value="Test Value"
+                        entity-id="11ef8b2e-91ae-4db3-9bed-eca44ffb763a"
+                        entity-type="Contact"
+                        show-actions="true">
+                    </attribute-editor>
+                </div>
+            `;
+            
+            log('🧪 attribute-editor test component creato', 'success');
+        }
+
+        async function testEntityUpdates() {
+            const badge = document.getElementById('entity-service-badge');
+            
+            try {
+                // Test update via EntityService
+                const testValue = `Mario - ${Date.now()}`;
+                log(`🔄 Aggiornando nome a: ${testValue}`, 'info');
+                
+                await window.entityService.updateEntityAttribute('11ef8b2e-91ae-4db3-9bed-eca44ffb763a', 'nome', testValue);
+                log('✅ Attributo aggiornato via API', 'success');
+                
+                badge.textContent = '✅ Attivo';
+                badge.className = 'status-badge success';
+                
+            } catch (error) {
+                badge.textContent = '❌ Errore';
+                badge.className = 'status-badge error';
+                
+                log(`❌ EntityService test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Event Listeners globali
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Phase 2 Test Page caricata', 'success');
+            
+            // Setup event listeners per componenti
+            document.addEventListener('instance-saved', function(event) {
+                log(`💾 Istanza salvata: ${event.detail.instance.instanceName}`, 'success');
+                listInstances(); // Refresh lista
+            });
+            
+            document.addEventListener('instance-deleted', function(event) {
+                log(`🗑️ Istanza eliminata: ${event.detail.instanceId}`, 'warning');
+                listInstances(); // Refresh lista
+            });
+            
+            document.addEventListener('value-saved', function(event) {
+                log(`💾 Attributo salvato: ${event.detail.attributeName}`, 'success');
+            });
+            
+            document.addEventListener('module-action', function(event) {
+                log(`🎬 Azione modulo: ${event.detail.actionId}`, 'info');
+            });
+        });
+
+        // Verifica servizi all'avvio
+        setTimeout(() => {
+            const services = [
+                'moduleDefinitionService',
+                'schemaService', 
+                'entityService',
+                'webSocketService',
+                'saveInstanceService'
+            ];
+            
+            services.forEach(service => {
+                if (window[service]) {
+                    log(`✅ ${service} caricato`, 'success');
+                } else {
+                    log(`❌ ${service} non disponibile`, 'error');
+                }
+            });
+        }, 1000);
+    </script>
+</body>
+</html> 

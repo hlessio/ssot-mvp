@@ -175,4 +175,4 @@ class ModuleDefinitionService {
 // Esporta istanza singleton
 window.moduleDefinitionService = new ModuleDefinitionService();
 
-export default window.moduleDefinitionService; 
+console.log('✅ [ModuleDefinitionService] Servizio registrato globalmente'); 

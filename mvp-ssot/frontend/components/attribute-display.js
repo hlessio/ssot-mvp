@@ -461,4 +461,4 @@ class AttributeDisplay extends HTMLElement {
 // Registra il Web Component
 customElements.define('attribute-display', AttributeDisplay);
 
-export default AttributeDisplay; 
+console.log('✅ [attribute-display] Web Component registrato'); 

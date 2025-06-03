@@ -1,8 +1,8 @@
 {
   "moduleId": "StandardContactCard",
-  "moduleVersion": "1.0.0",
+  "moduleVersion": "2.0.0",
   "targetEntityType": ["Contact", "Contatto"],
-  "description": "Scheda contatto completa con sezioni",
+  "description": "Scheda contatto completa con sezioni (✨ Fase 2)",
   "defaultView": {
     "renderer": "StandardCardRenderer",
     "layout": [
@@ -25,22 +25,63 @@
       "renderer": "StandardCardRenderer",
       "attributesToDisplay": ["nome", "cognome", "email", "telefono", "indirizzo", "citta"],
       "editable": true
+    },
+    "minimalCard": {
+      "renderer": "CompactCardRenderer",
+      "attributesToDisplay": ["nome", "email"]
+    },
+    "fullDetails": {
+      "renderer": "StandardCardRenderer",
+      "layout": [
+        {
+          "sectionTitle": "Anagrafica",
+          "attributes": ["nome", "cognome"]
+        },
+        {
+          "sectionTitle": "Contatti",
+          "attributes": ["email", "telefono"]
+        },
+        {
+          "sectionTitle": "Indirizzo",
+          "attributes": ["indirizzo", "citta"]
+        }
+      ]
     }
   },
   "instanceConfigurableFields": [
+    "viewMode",
     "attributesToDisplay",
-    "layout"
+    "layout",
+    "showTitle",
+    "showActions",
+    "sortOrder",
+    "customTitle"
   ],
   "actions": [
     {
       "actionId": "refresh",
-      "label": "Aggiorna",
-      "handler": "handleRefresh"
+      "label": "🔄 Aggiorna",
+      "handler": "handleRefresh",
+      "category": "data"
     },
     {
       "actionId": "edit",
-      "label": "Modifica",
-      "handler": "handleEdit"
+      "label": "✏️ Modifica",
+      "handler": "handleEdit",
+      "category": "editing"
+    },
+    {
+      "actionId": "duplicate",
+      "label": "📋 Duplica",
+      "handler": "handleDuplicate",
+      "category": "actions"
     }
-  ]
+  ],
+  "metadata": {
+    "author": "Sistema SSOT Dinamico",
+    "createdAt": "2025-01-03",
+    "phase": "Fase 2 - Editing & Instances",
+    "compatibleEntityTypes": ["Contact", "Contatto", "Persona"],
+    "tags": ["contatti", "anagrafica", "base"]
+  }
 } 

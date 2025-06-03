@@ -23,7 +23,39 @@
 - ✅ Validazione attributi con SchemaService integration
 - ✅ Component focus management e user experience
 
-**Prossimo:** Fase 2 - Editing, Azioni Base e Introduzione Concetto di Istanza
+### ✅ FASE 2 COMPLETATA - Editing, Azioni Base e Introduzione Concetto di Istanza
+**Data Completamento:** 03 Giugno 2025
+**Status:** ✅ Implementato e Testato con Successo
+
+**Componenti Implementati:**
+- ✅ **attribute-editor.js** (640 righe): Editor schema-aware con validazione real-time, debounce 300ms, keyboard shortcuts
+- ✅ **SaveInstanceService.js** (396 righe): CRUD ModuleInstance con cache intelligente, validazione, deduplicazione richieste
+- ✅ **saved-module-instance.js** (550 righe): Rendering istanze salvate con configurazioni override e metadati
+- ✅ **template-module-renderer.js EVOLUTO**: Editing mode, batch save/cancel, azioni configurabili, "Salva Vista Come..."
+- ✅ **Backend API /api/module-instances**: CRUD completo con WebSocket notifications
+- ✅ **StandardContactCard v2.0.0**: Template evoluto con viste multiple, azioni categorizzate, configurazioni estese
+
+**Funzionalità Validate:**
+- ✅ Editing in-place con validazione schema-aware e salvataggio batch
+- ✅ Sistema ModuleInstance per configurazioni personalizzate salvabili
+- ✅ Template evoluti con azioni configurabili (🔄 Aggiorna, ✏️ Modifica, 📋 Duplica)
+- ✅ "Salva Vista Come..." per creare istanze da configurazioni correnti
+- ✅ Rendering istanze salvate con override configurazioni template
+- ✅ WebSocket real-time per sincronizzazione istanze e modifiche
+- ✅ Gestione errori robusta con normalizzazione tipi entità
+- ✅ API backend completa con validazione e metadati sistema
+
+**Risoluzione Problemi:**
+- ✅ Errore HTTP 500 instanceConfigOverrides: Serializzazione JSON corretta
+- ✅ Errore schema "Contact,Contatto": Normalizzazione array entityType
+- ✅ Errore logMessage undefined: Correzione riferimenti pagina test
+
+**Database Status:**
+- ✅ **10+ ModuleInstance** create con successo nel database
+- ✅ **Schema ModuleInstance** completo con attributi: instanceName, templateModuleId, targetEntityId, instanceConfigOverrides, etc.
+- ✅ **WebSocket notifications** per operazioni CRUD istanze
+
+**Prossimo:** Fase 3 - Relazioni, Sub-moduli e Riutilizzo Avanzato
 
 ## 1. Introduzione
 
@@ -280,43 +312,14 @@ Contemporaneamente allo sviluppo frontend della Fase 1, il backend dovrà:
 2.  **EntityEngine Evoluto (Già in gran parte completato):**
     *   Azione Immediata: Essere pronto a gestire `ModuleInstance` e `ModuleTemplateDefinition` (se persistiti) come tipi di entità generiche, anche se il CRUD completo via API arriverà dopo.
 
-## 7. FASE 2: Editing, Azioni Base e Introduzione Concetto di Istanza (Sviluppo Successivo)
+## 7. FASE 3: Relazioni, Sub-moduli e Riutilizzo Avanzato (Sviluppo Successivo)
 
-### 7.1. Obiettivi Fase 2
-*   Introdurre capacità di editing nei moduli.
-*   Permettere la personalizzazione e il salvataggio di istanze di moduli.
-*   Implementare il backend per la gestione delle `ModuleInstance`.
-
-### 7.2. Azioni Frontend
-1.  **Web Components di Editing:**
-    *   `<attribute-editor>`: Sviluppare componente per input editabile con validazione, basato su schema.
-    *   Aggiornare `<template-module-renderer>` (o il suo wrapper per istanze) per usare `<attribute-editor>` se il contesto/definizione lo richiede.
-2.  **Evoluzione Definizione dei Moduli (Template):**
-    *   Estendere il JSON dei template per includere:
-        *   Configurazioni per viste multiple (es. `views: { "compactCard": ..., "editableForm": ... }`).
-        *   Definizione di azioni base (es. `"actions": [{ "actionId": "save", ...}]`) e i loro gestori.
-        *   `instanceConfigurableFields`: Array che definisce cosa un'istanza può personalizzare (es. `["attributesToDisplay", "sortOrder"]`).
-3.  **UI per Salvare Istanze:**
-    *   `SaveInstanceService.js` (o integrare in `EntityService.js`): Sviluppare servizio.
-    *   Aggiungere azione "Salva Vista Come..." (o simile) a `<template-module-renderer>` (o suo wrapper).
-    *   Al click: raccoglie `templateModuleId`, `targetEntityId`, permette personalizzazione dei campi in `instanceConfigurableFields` (diventano `instanceConfigOverrides`), chiede un nome, chiama `SaveInstanceService.createInstance()`.
-4.  **Web Component `<saved-module-instance>`:**
-    *   Creare componente che accetta `instance-id`.
-    *   Recupera dati istanza, carica definizione template, applica `instanceConfigOverrides`, renderizza il modulo.
-
-### 7.3. Azioni Backend
-1.  **CRUD per ModuleInstance:**
-    *   Implementare completamente endpoint API per `ModuleInstance` (POST, GET `/:id`, PUT `/:id`, DELETE `/:id`) in `server_evolved.js`.
-    *   Implementare la logica in `EntityEngine` evoluto per gestire le entità `ModuleInstance` (creazione, aggiornamento, recupero, persistenza).
-
-## 8. FASE 3: Relazioni, Sub-moduli e Riutilizzo Avanzato (Sviluppo Successivo)
-
-### 8.1. Obiettivi Fase 3
+### 7.1. Obiettivi Fase 3
 *   Integrare la visualizzazione e gestione delle relazioni nei moduli.
 *   Supportare la composizione di moduli tramite sub-moduli.
 *   Introdurre la capacità di creare documenti/dashboard dinamici.
 
-### 8.2. Azioni Frontend
+### 7.2. Azioni Frontend
 1.  **Potenziamento `RelationService.js`:**
     *   Interagire con il `RelationEngine` del backend.
 2.  **Web Components per Relazioni:**
@@ -330,7 +333,7 @@ Contemporaneamente allo sviluppo frontend della Fase 1, il backend dovrà:
     *   UI per cercare e aggiungere `<saved-module-instance>` a un `DynamicDocument`.
     *   `<document-renderer>`: Carica un `DynamicDocument` e renderizza le istanze embeddate.
 
-### 8.3. Azioni Backend
+### 7.3. Azioni Backend
 1.  **RelationEngine e Schemi di Relazione (Come da `doc_tecnico_evoluzione_core_v1.md`):**
     *   Assicurarsi che il `RelationEngine` sia completamente operativo e che la persistenza/gestione degli schemi di relazione sia robusta.
 2.  **Definizione Entità `DynamicDocument`:**

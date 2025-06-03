@@ -366,4 +366,4 @@ class EntityService {
 // Esporta istanza singleton
 window.entityService = new EntityService();
 
-export default window.entityService; 
+console.log('✅ [EntityService] Servizio registrato globalmente'); 

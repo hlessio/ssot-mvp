@@ -54,80 +54,7 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 *   [x] Aggiornamento di `doc_tecnico_evoluzione_core_v1.md` per riflettere la nuova direzione architetturale, dettagliando le modifiche a SchemaManager, EntityEngine, RelationEngine, DAO, e API, inclusa l'integrazione con il frontend per moduli schema-aware.
 *   [x] Aggiornamento di `full-ssot.md` per integrare la filosofia della "Nota Evolutiva" (granularità semantica, crescita organica della conoscenza, moduli UI come interfacce di modellazione contestuale).
 *   [x] Aggiornamento di `architettura_mvp.md` e `manuale_sviluppo_mvp.md` per contestualizzarli come documenti storici dell'MVP iniziale e indirizzare alla documentazione evoluta.
-
-### ✨ **FASE 9 COMPLETATA - MVP EVOLUTO CON SCHEMA MANAGEMENT AVANZATO**:
-
-#### **9.1 - Backend Core Engine Evoluto** (SchemaManager Evoluto, DAO Evoluto, Server Evoluto):
-*   [x] **SchemaManager Evoluto (`backend/core/schemaManager_evolved.js`)**: Persistenza, API evoluzione, additive-only, strict/flexible, versioning.
-*   [x] **DAO Evoluto (`backend/dao/neo4j_dao_evolved.js`)**: Query ottimizzate, CRUD schemi, `addAttributeToSchema` sicuro.
-*   [x] **Server Evoluto (`backend/server_evolved.js`)**: Endpoint API schema, backward compatibility, WebSocket per schema changes.
-
-#### **9.2 - Frontend Schema-Aware Evoluto**:
-*   [x] **TabularModule Evoluto**: `entityType` da URL, API evolute con fallback, UI evoluzione schema, notifica cross-window.
-*   [x] **Cross-Window Schema Synchronization**: Eventi 'schema-update', re-rendering tabelle.
-*   [x] **App Controllers Evoluti**: Gestione eventi schema, passaggio `entityType`.
-
-#### **9.3 - Modello Dati Neo4j per Schemi**:
-*   [x] **Strutture Schema Complete**: Nodi `:SchemaEntityType`, `:SchemaRelationType`, `:AttributeDefinition`.
-*   [x] **Test Schemi Precaricati**: 'Cliente', 'Persona', 'TestEvoluzione', 'Conosce', 'HaCliente'.
-
-#### **9.4 - Funzionalità End-to-End Testate (Schema Management)**:
-*   [x] Schema Evolution Real-time, Multi-Entity Type Support, Backward Compatibility MVP.
-
-### ✨ **FASE 10 (Core Engine - Fase 2) COMPLETATA - RELATIONENGINE E COMPATIBILITÀ SISTEMA**:
-
-#### **10.1 - RelationEngine Completo (`backend/core/relationEngine.js`)**:
-*   [x] **Classe RelationEngine Implementata**: Gestione relazioni come entità, validazione schemi, API complete, pattern matching, attributi relazionali, statistiche, persistenza.
-*   [x] **Modello Dati Neo4j per Relazioni**: Nodi `:Relation`, relazioni `:HAS_RELATION`, `:TO_ENTITY`.
-
-#### **10.2 - Risoluzione Problema Compatibilità Sistema**:
-*   [x] **Compatibilità SchemaManager Evoluto/EntityEngine_MVP**: Metodi bridge, logging `🔄 [COMPATIBILITÀ MVP]`.
-
-#### **10.3 - Test RelationEngine End-to-End**:
-*   [x] Scenari di Test validati: Creazione schemi, relazioni tipizzate, validazione, ricerca, navigazione, aggiornamento attributi, statistiche, persistenza.
-
-### 🚀 **FASE 3 (Core Engine - Fase 3) COMPLETATA - EntityEngine Evoluto**:
-
-#### **3.1 - EntityEngine Evoluto (`backend/core/entityEngine_evolved.js`)**:
-*   [x] **Refactoring Completo**: EntityEngine_MVP evoluto in EntityEngine.
-*   [x] **Integrazione Schema Avanzata**: Caricamento dinamico e caching degli schemi da SchemaManager evoluto.
-*   [x] **Lazy Loading**: Implementato per attributi normali e reference, con opzioni per `includeReferences`.
-*   [x] **Gestione Attributi Reference**: Integrazione completa con RelationEngine per creare, aggiornare e risolvere relazioni per attributi di tipo 'reference'.
-*   [x] **Validazione Avanzata**: Validazione entità basata su schema (modalità 'strict' e 'flexible') e validazione attributi singoli.
-*   [x] **Applicazione Default**: Applicazione automatica dei valori di default definiti nello schema, con fallback a definizioni originali registrate per robustezza.
-*   [x] **Caching Intelligente**: Cache per entità, schemi e reference risolte per ottimizzare performance.
-*   [x] **Invalidazione Cache**: Meccanismi per invalidare cache per singola entità o globalmente.
-*   [x] **API Complete**: Metodi `createEntity`, `getEntity`, `setEntityAttribute`, `getAllEntities`, `resolveEntityReferences`, `getOrCreateSchema`, `validateEntity`, `extractReferenceAttributes`.
-*   [x] **Statistiche e Monitoring**: Esposizione statistiche su cache e configurazione.
-*   [x] **Notifiche AttributeSpace**: Corretta integrazione con AttributeSpace_MVP per notificare cambiamenti.
-
-#### **3.2 - Test e Validazione (`test_entityengine_evolved.js`)**:
-*   [x] **Script di Test Completo**: Creato `test_entityengine_evolved.js` per validare tutte le funzionalità dell'EntityEngine evoluto.
-*   [x] **Scenari di Test**: Copertura di integrazione schema, validazione, defaults, reference attributes, cache, schema evolution, invalidazione cache.
-*   [x] **Successo dei Test**: Tutti i test (6/6) superati, confermando la corretta implementazione e risoluzione dei problemi di memoria.
-
-#### **3.3 - DAO e SchemaManager (Impatto e Supporto)**:
-*   [x] **`neo4j_dao.js`**: Ottimizzazioni `saveAttributeDefinitionSeparateTransaction` e `saveEntitySchema`.
-*   [x] **`schemaManager_evolved.js`**: Mantenimento metodi di compatibilità MVP.
-
-### ✨ **FASE 4 (Core Engine - Fase 4) COMPLETATA - AttributeSpace Evoluto**:
-
-#### **4.1 - AttributeSpace Evoluto (`backend/core/attributeSpace_evolved.js`)**:
-*   [x] **Pattern Matching Avanzato**: Sottoscrizioni granulari con pattern `entityType`, `attributeNamePattern`, `custom functions`.
-*   [x] **Gestione Eventi Multi-Tipo**: Eventi entità, relazioni, schema con propagazione differenziata.
-*   [x] **Batching Intelligente**: Raggruppamento notifiche per performance, configurabile `batchDelay`.
-*   [x] **Loop Detection**: Protezione da loop infiniti con `maxLoopDetection`.
-*   [x] **Configurazione Server-Optimized**: Impostazioni ottimizzate per ambiente server (batching enabled, logging).
-
-#### **4.2 - Server Evoluto Integrazione AttributeSpace**:
-*   [x] **WebSocket Pattern-Based**: Sottoscrizioni avanzate per client WebSocket (attributeChange, relationChange, schemaChange).
-*   [x] **Audit Logging**: Pattern matching per attributi sensibili (es. `*password*`).
-*   [x] **Performance Monitoring**: Sottoscrizioni custom per batch elevati e campi computati.
-
-#### **4.3 - Test AttributeSpace End-to-End**:
-*   [x] Scenari di Test validati: Pattern matching, batching, loop detection, performance monitoring, propagazione WebSocket.
-
-### 🚀 **FASE 1 FRONTEND EVOLUTO COMPLETATA - Webmodules Template-Driven Schema-Aware**:
+*   [x] **Fase 1 FRONTEND EVOLUTO COMPLETATA - Webmodules Template-Driven Schema-Aware**:
 
 #### **1.1 - Servizi Frontend Core (4 servizi)**:
 *   [x] **ModuleDefinitionService.js**: Gestione template JSON, cache, validazione, compatibilità multi-entityType, fallback graceful.
@@ -161,9 +88,43 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 *   [x] **Performance Optimization**: Caching intelligente (30s timeout), debounce validation (300ms), lazy loading attribute info, deduplicazione richieste parallele.
 *   [x] **User Experience**: Focus management corretto in Web Components, validazione real-time senza perdita focus, indicatori visivi stato validazione, responsive design.
 
+### ✨ **FASE 2 FRONTEND EVOLUTO COMPLETATA - Editing, Azioni e ModuleInstance Salvabili**:
+
+#### **2.1 - Web Components di Editing (1 componente)**:
+*   [x] **attribute-editor.js** (640 righe): Editor schema-aware completo con validazione real-time, debounce 300ms, keyboard shortcuts (Enter=save, Esc=cancel), eventi personalizzati (value-changing, value-saved, save-error), stili CSS responsive, gestione focus corretta.
+
+#### **2.2 - Gestione ModuleInstance (2 componenti)**:
+*   [x] **SaveInstanceService.js** (396 righe): CRUD ModuleInstance completo, cache intelligente (30s timeout), deduplicazione richieste parallele, validazione struttura dati, metodi: createInstance, getInstance, updateInstance, deleteInstance, listInstances, duplicateInstance, extractSavableConfig.
+*   [x] **saved-module-instance.js** (550 righe): Rendering istanze salvate, carica istanza + template + entità target, merge configurazioni template + overrides, delega rendering a template-module-renderer, azioni istanza (modifica, duplica, elimina), header con metadati.
+
+#### **2.3 - Evoluzione Template e Componenti Core**:
+*   [x] **template-module-renderer.js EVOLUTO**: Supporto modalità editing (isEditMode, dirtyAttributes tracking), integrazione attribute-editor, azione "Salva Vista Come...", gestione azioni configurabili, metodi: handleToggleEdit, handleSaveChanges, handleCancelEdit, handleSaveAs, batch operations, API pubbliche estese.
+*   [x] **StandardContactCard v2.0.0**: Versione evoluta con viste multiple (minimalCard, fullDetails), campi configurabili estesi, azioni categorizzate con emoji (🔄 Aggiorna, ✏️ Modifica, 📋 Duplica), metadati completi (author, phase, tags).
+
+#### **2.4 - Backend API ModuleInstance**:
+*   [x] **Endpoint API completi** in `server_evolved.js`: POST/GET/PUT/DELETE `/api/module-instances`, validazione campi richiesti, integrazione EntityEngine per persistenza, WebSocket notifications per sincronizzazione, filtri e paginazione per lista istanze.
+*   [x] **Schema ModuleInstance** completo: Attributi instanceName, templateModuleId, targetEntityId, targetEntityType, ownerUserId, instanceConfigOverrides (JSON), description, version, createdAt, updatedAt.
+
+#### **2.5 - Risoluzione Problemi Critical**:
+*   [x] **Errore HTTP 500 instanceConfigOverrides**: Serializzazione JSON corretta in handleSaveAs (`typeof currentConfig === 'object' ? JSON.stringify(currentConfig) : currentConfig`).
+*   [x] **Errore schema "Contact,Contatto"**: Normalizzazione array entityType con `normalizeEntityType()` in SchemaService e template-module-renderer.
+*   [x] **Errore logMessage undefined**: Correzione riferimenti da `logMessage()` a `log()` in phase2-test.html.
+
+#### **2.6 - Database e Testing**:
+*   [x] **10+ ModuleInstance** create con successo nel database Neo4j.
+*   [x] **Pagina test Fase 2** (`views/phase2-test.html`): Interface testing completa per editing, istanze salvate, servizi, logging real-time.
+*   [x] **API Testing**: Validazione endpoint via curl, creazione/recupero/aggiornamento istanze funzionali.
+
+#### **2.7 - Funzionalità End-to-End Validate**:
+*   [x] **Editing Completo**: Modalità editing con attribute-editor, validazione schema-aware, salvataggio batch, keyboard shortcuts.
+*   [x] **Sistema Istanze**: "Salva Vista Come...", configurazioni personalizzate salvabili, override template, rendering istanze.
+*   [x] **Template Evoluti**: Azioni configurabili, viste multiple, metadati sistema, versioning.
+*   [x] **WebSocket Real-time**: Sincronizzazione istanze, modifiche attributi, notifiche sistema.
+*   [x] **Gestione Errori**: Robusta con fallback, logging italiano con emoji, normalizzazione tipi.
+
 ### Task in Corso:
 
-*   [ ] **Documentazione Completa**: Aggiornamento finale documenti per riflettere MVP Evoluto + RelationEngine + EntityEngine Evoluto.
+
 
 ### Decisioni Prese Recenti:
 
@@ -193,10 +154,6 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 
 ### Prossimi Passi (Roadmap Evoluzione Core Engine):
 
-*   [ ] **🚀 FASE 4: AttributeSpace Potenziato** (prossimo focus):
-    *   [ ] Pattern matching avanzato per sottoscrizioni.
-    *   [ ] Gestione propagazione eventi relazioni oltre entità.
-    *   [ ] Batching e ottimizzazioni performance per grandi volumi.
 
 **Status MVP Originale**: ✅🚀 **MVP COMPLETATO E DIMOSTRATO CON SUCCESSO!** 🚀✅
 **Status Estensione Cross-Window**: ✅🎯 **ESTENSIONE CROSS-WINDOW COMPLETATA!** 🎯✅ 
@@ -205,7 +162,8 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 **Status Fase 3 EntityEngine**: ✅🧠 **ENTITYENGINE EVOLUTO COMPLETATO E TESTATO!** 🧠✅
 **Status Fase 4 AttributeSpace**: ✅⚡ **ATTRIBUTESPACE EVOLUTO CON PATTERN MATCHING COMPLETATO!** ⚡✅
 **Status Fase 1 Frontend Evoluto**: ✅🎨 **FRONTEND WEBMODULES TEMPLATE-DRIVEN COMPLETATO!** 🎨✅
-**Status Complessivo**: 🚀 **SISTEMA SSOT DINAMICO CON CORE ENGINE EVOLUTO + FRONTEND SCHEMA-AWARE OPERATIVO** 🚀
+**Status Fase 2 Frontend Evoluto**: ✅✏️ **FRONTEND EDITING & MODULE INSTANCES COMPLETATO!** ✏️✅
+**Status Complessivo**: 🚀 **SISTEMA SSOT DINAMICO COMPLETO CON EDITING & ISTANZE SALVABILI OPERATIVO** 🚀
 
 ### 🌟 Architettura Finale Core Engine Evoluto:
 
@@ -217,12 +175,14 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 *   ✅ DAO evoluto: query ottimizzate, operazioni additive-only.
 *   ✅ WebSocket evoluto: propagazione dati + schema changes.
 
-**🎨 Frontend Schema-Aware:**
+**🎨 Frontend Schema-Aware Evoluto:**
 *   ✅ Moduli UI dinamici basati su schema.
 *   ✅ Evoluzione schema real-time via UI.
 *   ✅ Sincronizzazione cross-window dati + struttura.
 *   ✅ URL parameters per entity types multipli.
-*   ⏳ UI relazioni (prossima implementazione).
+*   ✅ **Fase 1**: Template-driven rendering con Web Components, servizi core, WebSocket real-time.
+*   ✅ **Fase 2**: Editing completo con attribute-editor, ModuleInstance salvabili, azioni configurabili.
+*   ⏳ **Fase 3**: UI relazioni e composizione documenti (prossima implementazione).
 
 **💾 Database Neo4j Evoluto:**
 *   ✅ Persistenza schema completa (:SchemaEntityType, :SchemaRelationType).
