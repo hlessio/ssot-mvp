@@ -9,12 +9,12 @@ const neo4jConnector = require('./neo4j_connector');
 const neo4jDAO = require('./dao/neo4j_dao');
 const SchemaManager_MVP = require('./core/schemaManager');
 const EntityEngine_MVP = require('./core/entityEngine');
-const AttributeSpace_MVP = require('./core/attributeSpace');
 
 // Import dei nuovi moduli evoluti
 const SchemaManager = require('./core/schemaManager_evolved');
 const RelationEngine = require('./core/relationEngine');
 const EntityEngine = require('./core/entityEngine_evolved');
+const AttributeSpace = require('./core/attributeSpace_evolved');
 
 class EvolvedServer {
     constructor() {
@@ -26,10 +26,18 @@ class EvolvedServer {
         // Inizializzazione dei moduli core
         // Manteniamo i moduli MVP esistenti per compatibilità
         this.schemaManager_MVP = new SchemaManager_MVP();
-        this.attributeSpace = new AttributeSpace_MVP();
+        
+        // ✨ NUOVO: AttributeSpace evoluto con configurazione ottimizzata per server
+        this.attributeSpace = new AttributeSpace({
+            enableBatching: true,
+            batchDelay: 30, // Ridotto per UI più responsiva
+            maxLoopDetection: 5,
+            enableLogging: true
+        });
+        
         this.entityEngine_MVP = new EntityEngine_MVP(neo4jDAO, this.schemaManager_MVP, this.attributeSpace);
         
-        // ✨ Inizializzazione dei moduli evoluti (Fase 3)
+        // ✨ Inizializzazione dei moduli evoluti (Fase 4 - AttributeSpace Evoluto)
         this.schemaManager = new SchemaManager(neo4jDAO);
         this.relationEngine = new RelationEngine(this.entityEngine_MVP, this.schemaManager, neo4jDAO);
         this.entityEngine = new EntityEngine(neo4jDAO, this.schemaManager, this.relationEngine, this.attributeSpace);
@@ -110,8 +118,13 @@ class EvolvedServer {
     }
 
     setupAttributeSpaceNotifications() {
-        // Integrazione con AttributeSpace per propagare le notifiche via WebSocket
-        this.attributeSpace.subscribe((changeNotification) => {
+        // ✨ NUOVO: Integrazione AttributeSpace Evoluto con pattern matching avanzato
+        
+        // Sottoscrizione 1: Tutte le modifiche entità per WebSocket (compatibilità MVP)
+        this.attributeSpace.subscribe({
+            type: 'entity', // Solo eventi entità
+            changeType: '*' // Tutti i tipi di cambiamento
+        }, (changeNotification) => {
             const message = JSON.stringify({
                 type: 'attributeChange',
                 data: changeNotification,
@@ -125,8 +138,93 @@ class EvolvedServer {
                 }
             });
             
-            console.log('Notifica propagata a', this.clients.size, 'client:', changeNotification);
+            console.log('🔄 Notifica entità propagata a', this.clients.size, 'client:', {
+                entityId: changeNotification.entityId,
+                attributeName: changeNotification.attributeName,
+                changeType: changeNotification.changeType
+            });
         });
+
+        // Sottoscrizione 2: Eventi relazioni per WebSocket
+        this.attributeSpace.subscribe({
+            type: 'relation', // Solo eventi relazioni
+            changeType: '*'
+        }, (changeNotification) => {
+            const message = JSON.stringify({
+                type: 'relationChange',
+                data: changeNotification,
+                timestamp: new Date().toISOString()
+            });
+            
+            this.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(message);
+                }
+            });
+            
+            console.log('🔗 Notifica relazione propagata a', this.clients.size, 'client:', {
+                relationType: changeNotification.relationType,
+                sourceEntityId: changeNotification.sourceEntityId,
+                targetEntityId: changeNotification.targetEntityId,
+                changeType: changeNotification.changeType
+            });
+        });
+
+        // Sottoscrizione 3: Eventi schema per sincronizzazione struttura
+        this.attributeSpace.subscribe({
+            type: 'schema',
+            changeType: '*'
+        }, (changeNotification) => {
+            const message = JSON.stringify({
+                type: 'schemaChange',
+                data: changeNotification,
+                timestamp: new Date().toISOString()
+            });
+            
+            this.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(message);
+                }
+            });
+            
+            console.log('📋 Notifica schema propagata a', this.clients.size, 'client:', {
+                entityType: changeNotification.entityType,
+                schemaChange: changeNotification.attributeName,
+                changeType: changeNotification.changeType
+            });
+        });
+
+        // Sottoscrizione 4: Audit log per attributi critici (esempio di pattern avanzato)
+        this.attributeSpace.subscribe({
+            attributeNamePattern: '*password*', // Tutti gli attributi con "password" nel nome
+            changeType: '*'
+        }, (changeNotification) => {
+            console.log('🔒 AUDIT: Modifica campo sensibile rilevata:', {
+                entityId: changeNotification.entityId,
+                attributeName: changeNotification.attributeName,
+                changeType: changeNotification.changeType,
+                timestamp: changeNotification.timestamp
+            });
+            // Qui si potrebbe integrare con sistema di audit/logging esterno
+        });
+
+        // Sottoscrizione 5: Monitoraggio performance (pattern custom)
+        this.attributeSpace.subscribe({
+            custom: (details) => {
+                // Monitora solo modifiche che potrebbero impattare performance
+                return details.batchCount > 5 || 
+                       (details.attributeName && details.attributeName.startsWith('computed_'));
+            }
+        }, (changeNotification) => {
+            console.log('⚡ PERFORMANCE: Batch elevato o campo computato modificato:', {
+                entityId: changeNotification.entityId,
+                attributeName: changeNotification.attributeName,
+                batchCount: changeNotification.batchCount || 1,
+                timestamp: changeNotification.timestamp
+            });
+        });
+
+        console.log('✅ AttributeSpace Evoluto configurato con 5 sottoscrizioni pattern-based');
     }
 
     setupRoutes() {
@@ -819,20 +917,24 @@ class EvolvedServer {
      */
     async start(port = 3000) {
         try {
-            // Prima inizializza i componenti evoluti
+            // 🔧 Prima connetti Neo4j
+            console.log('🔌 Connessione a Neo4j...');
+            await neo4jConnector.connect();
+            
+            // Poi inizializza i componenti evoluti
             await this.initializeEvolvedComponents();
             
-            // Poi avvia il server
+            // Infine avvia il server HTTP
             return new Promise((resolve, reject) => {
                 this.server.listen(port, (err) => {
                     if (err) {
                         console.error('❌ Errore avvio server:', err);
                         reject(err);
                     } else {
-                        console.log(`🚀 Server SSOT Dinamico Evoluto (Fase 3) avviato su porta ${port}`);
+                        console.log(`🚀 Server SSOT Dinamico Evoluto (Fase 4 - AttributeSpace) avviato su porta ${port}`);
                         console.log(`📱 Dashboard: http://localhost:${port}/`);
                         console.log(`🔌 WebSocket: ws://localhost:${port}/`);
-                        console.log(`🧠 Componenti attivi: EntityEngine Evoluto, RelationEngine, SchemaManager Evoluto`);
+                        console.log(`🧠 Componenti attivi: AttributeSpace Evoluto, EntityEngine Evoluto, RelationEngine, SchemaManager Evoluto`);
                         resolve();
                     }
                 });
@@ -847,12 +949,32 @@ class EvolvedServer {
      * Ferma il server
      */
     async stop() {
-        return new Promise((resolve) => {
-            this.server.close(() => {
-                console.log('🛑 Server arrestato');
-                resolve();
+        try {
+            // Chiudi connessioni WebSocket
+            this.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.close();
+                }
             });
-        });
+            
+            // Ferma il server HTTP
+            await new Promise((resolve) => {
+                this.server.close(() => {
+                    console.log('🛑 Server HTTP arrestato');
+                    resolve();
+                });
+            });
+            
+            // 🔧 Disconnetti Neo4j
+            console.log('🔌 Disconnessione da Neo4j...');
+            await neo4jConnector.close();
+            
+            console.log('✅ Server completamente arrestato');
+            
+        } catch (error) {
+            console.error('❌ Errore durante arresto server:', error);
+            throw error;
+        }
     }
 }
 
