@@ -93,19 +93,19 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 - **Soluzione**:
     - Migliorati i metodi `getDisplayName(entity)` e `getSecondareName(entity)` in `entity-autocomplete.js` per cercare in modo più intelligente il nome/titolo/ragione sociale da visualizzare.
     - Aggiornato il rendering dell'entità selezionata e dei risultati di ricerca per utilizzare questi metodi.
-- **File Modificato**: `mvp-ssot/frontend/components/entity-autocomplete.js`.
+ - **File Modificato**: `src/frontend/components/entity-autocomplete.js`.
 
 #### **2. Creazione Entità Persona Fallita (Errore 500)**
 - **Problema**: La creazione di entità di tipo `Persona` (e potenzialmente altre con schemi strict) falliva con un errore 500 dal server. Console log: `EntityService.js:204 POST http://localhost:3000/api/entities 500 (Internal Server Error)`.
 - **Causa**: Il server (`server_evolved.js`) si aspettava i dati della nuova entità all'interno di un oggetto `initialData` nel corpo della richiesta (`req.body.initialData`). Tuttavia, il frontend (`EntityService.js` e la logica di creazione in `autocomplete-demo.html`) inviava i dati direttamente nel corpo della richiesta (es. `{ "entityType": "Persona", "nome": "Mario", "cognome": "Test" }`). Questo portava il server a interpretare `initialData` come `{}` (oggetto vuoto), causando fallimenti di validazione per attributi richiesti come `nome` e `cognome`.
 - **Soluzione**:
-    - Modificato `mvp-ssot/backend/server_evolved.js` nell'endpoint `POST /api/entities`. Ora il server estrae i dati in modo più flessibile:
+    - Modificato `src/backend/server_evolved.js` nell'endpoint `POST /api/entities`. Ora il server estrae i dati in modo più flessibile:
       ```javascript
       const { entityType, initialData, ...directData } = req.body;
       const entityData = initialData || directData;
       ```
       Questo permette al server di usare `directData` (dati inviati direttamente nel body) se `initialData` non è presente.
-- **File Modificati**: `mvp-ssot/backend/server_evolved.js`.
+ - **File Modificati**: `src/backend/server_evolved.js`.
 
 #### **3. Autocomplete Non Trova Entità Appena Create**
 - **Problema**: Dopo aver creato una nuova entità tramite un modulo con opzione di creazione, l'autocomplete in un altro modulo (specialmente uno "senza creazione") non trovava immediatamente la nuova entità.
@@ -116,7 +116,7 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
     - **Pulsante Refresh Manuale**: Aggiunto un pulsante "🔄" (refresh) accanto al campo di input dell'autocomplete. Questo permette all'utente di forzare un aggiornamento della lista di entità.
     - **CSS e Gestione Eventi**: Aggiunti stili CSS per il pulsante e la logica nell' `setupEventListeners()` per gestire il click sul pulsante refresh.
     - **Cleanup Listeners**: Implementato `disconnectedCallback()` per rimuovere i listener WebSocket quando il componente viene distrutto, prevenendo memory leak.
-- **File Modificati**: `mvp-ssot/frontend/components/entity-autocomplete.js`.
+ - **File Modificati**: `src/frontend/components/entity-autocomplete.js`.
 
 ### Task in Corso:
 *   Nessuno - In attesa di nuovi task.
@@ -293,7 +293,7 @@ Questo mi aiuterà a mantenere il focus sugli obiettivi dell'MVP e a documentare
 **✅ Soluzione Implementata - Supporto Wildcard "*":**
 
 **1. Modifica RelationSchema.validateRelation():**
-- **File**: `mvp-ssot/backend/core/relationSchema.js` (righe 53-59)
+ - **File**: `src/backend/core/relationSchema.js` (righe 53-59)
 - **Cambiamento**: Aggiunto controllo `!this.sourceTypes.includes('*')` e `!this.targetTypes.includes('*')`
 - **Effetto**: Schema con wildcard "*" permettono relazioni tra qualsiasi tipo di entità
 

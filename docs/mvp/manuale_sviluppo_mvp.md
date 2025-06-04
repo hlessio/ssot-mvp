@@ -76,7 +76,7 @@ L'MVP sarà considerato un successo se dimostrerà in modo convincente che modif
     *   Installa le dipendenze base: `neo4j-driver`, `uuid` (per ID univoci). Se vuoi un server web: `express`, `ws` (per WebSocket).
 2.  **Struttura Progetto (Suggerimento):**
     ```
-    /mvp-ssot
+    /src
     |-- /backend
     |   |-- /core                 # EntityEngine, AttributeSpace, SchemaManager (MVP versions)
     |   |-- /dao                  # Neo4j Data Access Object

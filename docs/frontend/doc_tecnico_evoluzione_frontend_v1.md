@@ -129,8 +129,8 @@ Questa sezione documenta importanti fix e miglioramenti apportati al componente 
    - **Impatto**: L'autocomplete ora fornisce un'esperienza utente più fluida e real-time, mostrando le entità appena create quasi istantaneamente.
 
 **File Modificati Principalmente:**
-- `mvp-ssot/frontend/components/entity-autocomplete.js` (logica display, WebSocket, refresh button)
-- `mvp-ssot/backend/server_evolved.js` (gestione dati `POST /api/entities`)
+- `src/frontend/components/entity-autocomplete.js` (logica display, WebSocket, refresh button)
+- `src/backend/server_evolved.js` (gestione dati `POST /api/entities`)
 
 Questi interventi hanno reso il componente `entity-autocomplete` più robusto, user-friendly e meglio integrato con il flusso di dati real-time del sistema SSOT.
 
@@ -175,7 +175,7 @@ Il frontend sfrutterà le API e le capacità avanzate del backend evoluto per la
 *   Alternative Considerabili (per fasi future o moduli specifici): Svelte, Vue.
 
 ### 2.2. Struttura Progetto Frontend
-Si propone la seguente struttura di directory all'interno di `mvp-ssot/frontend/`:
+Si propone la seguente struttura di directory all'interno di `src/frontend/`:
 ```
 /frontend
 |-- /components         # Web Components riutilizzabili (es. ssot-input, attribute-display)
