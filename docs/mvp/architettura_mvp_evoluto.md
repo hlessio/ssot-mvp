@@ -33,7 +33,7 @@ L'MVP Evoluto utilizza il seguente stack tecnologico:
 ## 3. Struttura del Progetto Evoluto
 
 ```
-/mvp-ssot
+/src
 |-- /backend
 |   |-- /core                 # Core Engine Evoluto
 |   |   |-- attributeSpace.js          # MVP version (mantenuta)

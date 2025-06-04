@@ -43,7 +43,7 @@ L'MVP utilizza il seguente stack tecnologico minimale:
 ## 3. Struttura del Progetto
 
 ```
-/mvp-ssot
+/src
 |-- /backend
 |   |-- /core                 # Logica di business: EntityEngine, AttributeSpace, SchemaManager
 |   |   |-- attributeSpace.js

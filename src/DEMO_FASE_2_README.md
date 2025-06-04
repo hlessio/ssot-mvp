@@ -47,7 +47,7 @@ npm --version   # Deve essere >= 6.x
 
 ```bash
 # Naviga nella directory backend
-cd mvp-ssot/backend
+cd src/backend
 
 # Installa dipendenze (se non fatto)
 npm install
@@ -191,7 +191,7 @@ curl http://localhost:3000/api/schema/entities
 ### **Problema: Servizi Fase 2 non disponibili**
 ```bash
 # Verifica che i file servizi esistano:
-ls mvp-ssot/frontend/services/
+ls src/frontend/services/
 # Dovrebbe mostrare: SaveInstanceService.js, SchemaService.js, etc.
 ```
 
