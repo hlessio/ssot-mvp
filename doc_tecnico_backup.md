@@ -16,8 +16,8 @@ L'obiettivo è trasformare i componenti `_MVP` attuali in un'architettura più s
 
 1. ✅ **Evoluzione del Schema Manager**: Da `SchemaManager_MVP` a `SchemaManager` evoluto con persistenza completa, evoluzione dinamica e versionamento - **COMPLETATO**
 2. ✅ **Introduzione del Relation Engine**: Implementazione di un nuovo componente che gestisce le relazioni come entità di prima classe - **COMPLETATO**
-3. ✅ **Evoluzione dell'Entity Engine**: Da `EntityEngine_MVP` a un `EntityEngine` completo con lazy loading e integrazione schema avanzata - **COMPLETATO**
-4. ✅ **Potenziamento dell'AttributeSpace**: Miglioramenti nella gestione delle sottoscrizioni e propagazione dei cambiamenti - **COMPLETATO**
+3. ⏳ **Evoluzione dell'Entity Engine**: Da `EntityEngine_MVP` a un `EntityEngine` completo con lazy loading e integrazione schema avanzata - **PROSSIMO**
+4. ⏳ **Potenziamento dell'AttributeSpace**: Miglioramenti nella gestione delle sottoscrizioni e propagazione dei cambiamenti - **PROSSIMO**
 
 ### 1.3. Allineamento con la Visione Strategica SSOT (Rif. `full-ssot.md`)
 
@@ -157,7 +157,7 @@ L'obiettivo è trasformare i componenti `_MVP` attuali in un'architettura più s
 - ✅ Validazione e modalità flessibili (strict/flexible)
 - ✅ API complete per gestione lifecycle schema
 
-**DAO Evoluto** (`backend/dao/neo4j_dao.js`):
+**DAO Evoluto** (`backend/dao/neo4j_dao_evolved.js`):
 - ✅ Query Cypher ottimizzate per performance
 - ✅ Operazioni additive-only per sicurezza dati
 - ✅ Gestione completa CRUD schemi entità e relazioni
@@ -174,26 +174,17 @@ L'obiettivo è trasformare i componenti `_MVP` attuali in un'architettura più s
 
 ### 3.2. Capacità Attuali del Sistema Evoluto
 
-**✅ FUNZIONALITÀ OPERATIVE COMPLETE**:
+**✅ FUNZIONALITÀ OPERATIVE**:
 - ✅ Schema evolution real-time con UI intuitiva
 - ✅ Persistenza permanente configurazioni schema
 - ✅ Multi-window synchronization per dati e struttura
 - ✅ API backward-compatible per migrazione graduale
 - ✅ Operazioni additive-only per integrità dati
-- ✅ **Relazioni tipizzate come entità di prima classe** (RelationEngine)
-- ✅ **Entity management completo** con lazy loading e validazioni avanzate (EntityEngine Evoluto)
-- ✅ **Sistema nervoso informativo avanzato** con pattern matching e batching (AttributeSpace Evoluto)
 
-**✅ LIMITAZIONI PRECEDENTI RISOLTE**:
-1. ~~**Mancanza di Relazioni Strutturate**~~ → ✅ **RelationEngine implementato** con relazioni tipizzate complete
-2. ~~**EntityEngine Basilare**~~ → ✅ **EntityEngine Evoluto implementato** con lazy loading e reference management
-3. ~~**AttributeSpace Semplificato**~~ → ✅ **AttributeSpace Evoluto implementato** con pattern matching avanzato e gestione ottimizzata
-
-**🚀 SISTEMA CORE ENGINE COMPLETO**:
-- ✅ **SchemaManager Evoluto**: Gestione schema dinamica con persistenza
-- ✅ **RelationEngine**: Relazioni tipizzate come entità di prima classe  
-- ✅ **EntityEngine Evoluto**: Gestione entità con lazy loading e reference
-- ✅ **AttributeSpace Evoluto**: Sistema nervoso informativo con pattern matching avanzato
+**⏳ LIMITAZIONI IDENTIFICATE** (per prossime fasi):
+1. **Mancanza di Relazioni Strutturate**: Le relazioni non sono ancora gestite come entità di prima classe
+2. **EntityEngine Basilare**: Manca lazy loading, validazioni avanzate e gestione del ciclo di vita completa
+3. **AttributeSpace Semplificato**: Mancano pattern matching avanzati e gestione ottimizzata della propagazione
 
 ## 4. Fasi Implementate e Prossime
 
@@ -202,11 +193,7 @@ L'obiettivo è trasformare i componenti `_MVP` attuali in un'architettura più s
 **✅ IMPLEMENTAZIONE COMPLETATA**:
 - **✅ Task 2.1**: Modello Dati Relazioni - Implementato con nodi `:Relation` su Neo4j
 - **✅ Task 2.2**: RelationEngine Implementation - Classe completa con tutte le funzionalità core
-- **✅ Task 2.3**: API Server per Relazioni e Compatibilità Sistema:
-    - ✅ Endpoint API `/api/relations/*` implementati e testati nel `server_evolved.js`
-    - ✅ Gestione completa CRUD per relazioni via API RESTful
-    - ✅ Notifiche WebSocket per `relation-created`, `relation-updated`, `relation-deleted`
-    - ✅ Metodi di compatibilità con EntityEngine_MVP implementati e testati
+- **✅ Task 2.3**: Compatibilità Sistema - Metodi di compatibilità con EntityEngine_MVP implementati
 
 **Funzionalità RelationEngine Implementate**:
 - ✅ Creazione relazioni tipizzate con attributi custom
@@ -224,102 +211,40 @@ L'obiettivo è trasformare i componenti `_MVP` attuali in un'architettura più s
 - ✅ Validazione schema (corretto rifiuto relazioni non conformi)
 - ✅ Gestione attributi relazionali (dataInizio, ruolo, stipendio, dataIncontro, luogo)
 - ✅ Compatibilità con EntityEngine_MVP tramite metodi bridge
-- ✅ Test API RESTful per relazioni (GET, POST, PUT, DELETE) con `curl` e script di test
-- ✅ Propagazione WebSocket per eventi relazioni verificata
 
-### 4.2. ✅ FASE 3: EntityEngine Evoluto (Settimane 3-4) - **COMPLETATO**
+### 4.2. ⏳ FASE 3: EntityEngine Evoluto (Settimane 3-4) - **PROSSIMO**
 
 **Obiettivi Fase 3**:
-- ✅ Evoluzione EntityEngine_MVP verso EntityEngine completo
-- ✅ Lazy loading e schema integration
-- ✅ Gestione attributi di tipo 'reference' via RelationEngine
+- Evoluzione EntityEngine_MVP verso EntityEngine completo
+- Lazy loading e schema integration
+- Gestione attributi di tipo 'reference' via RelationEngine
 
 **Task 3.1: EntityEngine Evolution**
-- [x] Refactoring `EntityEngine_MVP` verso `EntityEngine`
-- [x] Implementare lazy loading e schema integration
-- [x] Integrazione con RelationEngine per attributi reference
+- [ ] Refactoring `EntityEngine_MVP` verso `EntityEngine`
+- [ ] Implementare lazy loading e schema integration
+- [ ] Integrazione con RelationEngine per attributi reference
 
 **Task 3.2: Reference Attributes Support**
-- [x] Implementare `resolveEntityReferences()` per attributi referenziati
-- [x] UI per gestione dropdown/autocomplete attributi reference (UI sarà in fase Frontend)
-- [x] Test end-to-end reference management (completati con `test_entityengine_evolved.js`)
+- [ ] Implementare `resolveEntityReferences()` per attributi referenziati
+- [ ] UI per gestione dropdown/autocomplete attributi reference
+- [ ] Test end-to-end reference management
 
-### 4.3. ✅ FASE 4: AttributeSpace Potenziato (Settimane 5-6) - **COMPLETATO**
+### 4.3. ⏳ FASE 4: AttributeSpace Potenziato (Settimane 5-6)
 
-**✅ IMPLEMENTAZIONE COMPLETATA**:
-- **✅ Task 4.1**: AttributeSpace Enhancement - Evoluzione completa da AttributeSpace_MVP a AttributeSpace evoluto
-- **✅ Task 4.2**: Advanced Propagation - Pattern matching avanzato, batching e gestione eventi relazioni implementati
+**Obiettivi Fase 4**:
+- Pattern matching avanzato per sottoscrizioni
+- Batching e ottimizzazioni performance
+- Gestione propagazione per relazioni
 
-**Funzionalità AttributeSpace Evoluto Implementate**:
-- ✅ **Pattern Matching Avanzato**: Sottoscrizioni con pattern object per filtraggio granulare
-- ✅ **Wildcard Pattern Matching**: Supporto per pattern come `'indirizzo_*'`, `'*password*'` 
-- ✅ **Custom Pattern Functions**: Funzioni JavaScript personalizzate per logiche di matching complesse
-- ✅ **Batching delle Notifiche**: Raggruppamento automatico di notifiche multiple per performance ottimizzate
-- ✅ **Gestione Eventi Relazioni**: Supporto completo per eventi `type: 'relation'` oltre alle entità
-- ✅ **Gestione Eventi Schema**: Propagazione cambiamenti strutturali con `type: 'schema'`
-- ✅ **Prevenzione Loop Infiniti**: Detection automatico e scarto notifiche cicliche
-- ✅ **Audit Logging Automatico**: Pattern matching per campi sensibili con logging automatico
-- ✅ **Performance Monitoring**: Tracking batch elevati e campi computati
-- ✅ **Compatibilità Backward**: Metodo `subscribeLegacy()` per API MVP esistenti
+**Task 4.1: AttributeSpace Enhancement**
+- [ ] Evoluzione `AttributeSpace_MVP` verso `AttributeSpace`
+- [ ] Implementare pattern matching avanzato
+- [ ] Aggiungere batching e ottimizzazioni
 
-**Architettura AttributeSpace Evoluto**:
-```javascript
-// Esempio configurazione server con 5 sottoscrizioni pattern-based
-attributeSpace = new AttributeSpace({
-    enableBatching: true,
-    batchDelay: 30,           // ms per UI responsiva
-    maxLoopDetection: 5,      // Soglia detection loop
-    enableLogging: true
-});
-
-// Sottoscrizione 1: Eventi entità per WebSocket
-attributeSpace.subscribe({
-    type: 'entity',
-    changeType: '*'
-}, callback);
-
-// Sottoscrizione 2: Eventi relazioni per WebSocket  
-attributeSpace.subscribe({
-    type: 'relation',
-    changeType: '*'
-}, callback);
-
-// Sottoscrizione 3: Eventi schema per sincronizzazione
-attributeSpace.subscribe({
-    type: 'schema',
-    changeType: '*'
-}, callback);
-
-// Sottoscrizione 4: Audit automatico per campi sensibili
-attributeSpace.subscribe({
-    attributeNamePattern: '*password*'
-}, auditCallback);
-
-// Sottoscrizione 5: Performance monitoring con custom function
-attributeSpace.subscribe({
-    custom: (details) => details.batchCount > 5 || 
-                        details.attributeName?.startsWith('computed_')
-}, performanceCallback);
-```
-
-**Test End-to-End Validati**:
-- ✅ **9/9 test unitari superati** (`test_attributespace_evolved.js`)
-- ✅ **3/4 test integrazione server superati** (`test_attributespace_integration.js`)
-- ✅ Pattern matching per entityType, attributeName, changeType verificato
-- ✅ Wildcard matching ('indirizzo_*', 'contatto_*') funzionante
-- ✅ Batching con riduzione 5→1 messaggi per performance optimized
-- ✅ Gestione eventi relazioni con propagazione WebSocket corretta
-- ✅ Custom pattern matching per validazione valori complessi
-- ✅ Prevenzione loop infiniti con scarto notifiche cicliche
-- ✅ Compatibilità backward con API MVP mantenuta
-- ✅ Statistiche e monitoring operativi (`getStats()`, `getActiveSubscriptions()`)
-
-**Integrazione Server Evoluto**:
-- ✅ **5 sottoscrizioni server automaticamente configurate** per gestione completa eventi
-- ✅ **Connessione Neo4j risolta** con sequenza corretta inizializzazione
-- ✅ **Propagazione WebSocket evoluta** per attributeChange, relationChange, schemaChange
-- ✅ **Audit logging automatico** per campi sensibili pattern-based
-- ✅ **Performance monitoring** integrato nel server con logging dettagliato
+**Task 4.2: Advanced Propagation**
+- [ ] Gestione eventi relazioni oltre entità
+- [ ] Prevenzione loop infiniti
+- [ ] Performance tuning per grandi volumi
 
 ## 5. ✅ Architettura Attuale Consolidata (Post Fase 1)
 
@@ -420,81 +345,16 @@ PUT    /api/entity/:entityId/attribute   // Aggiorna attributo
 
 ---
 
-## ✅ Conclusioni Finali - Piano Evolutivo Core Engine Completato
+## ✅ Conclusioni
 
-### ✅ **TUTTE LE 4 FASI DEL PIANO EVOLUTIVO COMPLETATE CON SUCCESSO**
+La **Fase 1 del piano di evoluzione** è stata **completata con successo**, implementando un sistema di Schema Management avanzato che fornisce:
 
-Il **Piano Evolutivo del Core Engine SSOT Dinamico** è stato **completamente implementato e testato**, trasformando il sistema MVP iniziale in un'architettura robusta, sofisticata e completamente allineata con la visione SSOT Dinamico descritta in `full-ssot.md`.
+- **Persistenza Completa**: Tutti gli schemi salvati permanentemente su Neo4j
+- **Evoluzione Dinamica**: Modifiche schema real-time senza restart
+- **Sicurezza Dati**: Operazioni additive-only per integrità garantita
+- **Backward Compatibility**: Coesistenza pacifica con componenti MVP
+- **UI Schema-Aware**: Frontend che si adatta dinamicamente agli schemi
 
-### 🎯 **Obiettivi Primari Raggiunti**:
+Il sistema **MVP SSOT Dinamico Evoluto** è ora operativo e testato, fornendo una base architettonica solida per implementare le fasi successive del piano evolutivo verso la visione completa descritta in `full-ssot.md`.
 
-1. ✅ **SchemaManager Evoluto**: Persistenza completa, evoluzione dinamica, versioning e modalità flessibili
-2. ✅ **RelationEngine**: Relazioni tipizzate come entità di prima classe con attributi personalizzati  
-3. ✅ **EntityEngine Evoluto**: Lazy loading, reference management, validazioni avanzate
-4. ✅ **AttributeSpace Evoluto**: Pattern matching avanzato, batching, gestione eventi eterogenei
-
-### 🚀 **Sistema Core Engine Finale**:
-
-**Backend Evoluto Completo**:
-- ✅ **SchemaManager Evoluto**: Gestione schema dinamica con persistenza Neo4j e evoluzione real-time
-- ✅ **RelationEngine**: Gestione completa relazioni tipizzate con validazione e persistenza  
-- ✅ **EntityEngine Evoluto**: CRUD entità avanzato con lazy loading e reference attributes
-- ✅ **AttributeSpace Evoluto**: Sistema nervoso informativo con pattern matching e propagazione intelligente
-- ✅ **Server Evoluto**: API RESTful complete + WebSocket real-time + connessione Neo4j gestita
-- ✅ **DAO Evoluto**: Query Cypher ottimizzate con operazioni additive-only sicure
-
-**Frontend Schema-Aware**:
-- ✅ **UI Dinamica**: Interfacce che si adattano automaticamente all'evoluzione degli schemi
-- ✅ **Cross-Window Sync**: Sincronizzazione real-time sia dati che struttura tra finestre multiple
-- ✅ **Schema Evolution UI**: Modifiche strutturali live senza perdita dati
-
-**Database Neo4j Evoluto**:
-- ✅ **Persistenza Schema Completa**: SchemaEntityType, SchemaRelationType, AttributeDefinition
-- ✅ **Relazioni Tipizzate**: Nodi :Relation con attributi personalizzati e validazione
-- ✅ **Operazioni Sicure**: Solo operazioni additive-only per integrità garantita
-- ✅ **Versioning**: Audit trail completo di tutte le modifiche strutturali
-
-### 📊 **Risultati di Test Validati**:
-
-- ✅ **Fase 1**: Schema evolution real-time testato end-to-end
-- ✅ **Fase 2**: RelationEngine con API complete testate (POST, GET, PUT, DELETE)
-- ✅ **Fase 3**: EntityEngine evoluto con 6/6 test superati (lazy loading, reference, cache)
-- ✅ **Fase 4**: AttributeSpace evoluto con 9/9 test unitari + 3/4 test integrazione superati
-
-### 🌟 **Caratteristiche Distintive Implementate**:
-
-1. **Pattern Matching Evoluto**: Sottoscrizioni granulari con wildcard e funzioni custom
-2. **Batching Intelligente**: Ottimizzazione automatica delle notifiche per performance
-3. **Gestione Eventi Eterogenei**: Supporto unificato per eventi entità, relazioni e schemi
-4. **Audit Automatico**: Logging automatico basato su pattern per compliance
-5. **Prevenzione Loop**: Detection e gestione automatica di cicli infiniti
-6. **Backward Compatibility**: Coesistenza completa con componenti MVP originali
-
-### 🎯 **Allineamento con Visione SSOT Dinamico**:
-
-- ✅ **Schema Evolution**: Capacità di evolversi dinamicamente formalizzando attributi scoperti
-- ✅ **Entità e Relazioni come Fondamenta**: Relazioni gestite come entità di prima classe
-- ✅ **Reattività Pervasiva**: Sistema nervoso informativo completo per propagazione intelligente
-- ✅ **Crescita Organica**: Sistema capace di crescere e adattarsi attraverso l'uso
-- ✅ **Persistenza Intelligente**: Memorizzazione ottimizzata con operazioni sicure
-
-### 📋 **Documentazione Aggiornata e Completa**:
-
-- ✅ `doc_tecnico_evoluzione_core_v1.md`: Piano evolutivo completato e documentato
-- ✅ `architettura_mvp_evoluto.md`: Architettura sistema evoluto consolidata
-- ✅ `context.md`: Diario di bordo aggiornato con tutte le 4 fasi completate
-- ✅ Test end-to-end documentati per ogni fase con risultati validati
-
----
-
-## 🚀 **IL CORE ENGINE SSOT DINAMICO È COMPLETO E OPERATIVO**
-
-Il sistema **MVP SSOT Dinamico Evoluto** rappresenta ora una **base architettonica solida e completa** per:
-
-- **Gestione Schema Dinamica** con evoluzione real-time
-- **Relazioni Tipizzate Avanzate** con attributi personalizzati  
-- **Entity Management Completo** con lazy loading e reference
-- **Sistema Nervoso Informativo Intelligente** con pattern matching avanzato
-- **Propagazione Real-time Multi-Canal** per sincronizzazione pervasiva
-
-La **visione completa del SSOT Dinamico** descritta in `full-ssot.md` è ora **tecnicamente realizzabile** con questa base solida implementata e testata.
+La **documentazione è aggiornata** e allineata con l'implementazione attuale in `architettura_mvp_evoluto.md` e `context.md`.

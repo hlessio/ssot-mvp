@@ -1,0 +1,978 @@
+Nuovo listener sottoscritto. Totale listeners: 1
+Connessione a Neo4j in corso...
+✅ Connessione a Neo4j stabilita con successo
+✅ Connessione a Neo4j stabilita
+🔄 Inizializzazione SchemaManager evoluto...
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType)
+            RETURN s.entityType as entityType
+            ORDER BY s.entityType
+        
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'Cliente',
+  version: 2,
+  mode: 'flexible',
+  created: 1748902348854,
+  modified: '2025-06-02T22:12:29.603Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Nome del cliente',
+      name: 'nome',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: true,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Email del cliente',
+      name: 'email',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'email',
+      required: true,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Numero di telefono',
+      name: 'telefono',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Età del cliente',
+      name: 'età',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'number',
+      required: false,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Data di registrazione del cliente',
+      name: 'dataRegistrazione',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: '2025-06-02T22:12:29.554Z',
+      type: 'date',
+      required: false,
+      validationRules: '[]'
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'Contact',
+  version: 1,
+  mode: 'flexible',
+  created: 1748902885567,
+  modified: '2025-06-02T22:21:25.567Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Attributo cognome',
+      name: 'cognome',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Attributo nome',
+      name: 'nome',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Attributo telefono',
+      name: 'telefono',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Attributo email',
+      name: 'email',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Attributo celiachia',
+      name: 'celiachia',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Attributo gay',
+      name: 'gay',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: '[]'
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'Ordine',
+  version: 1,
+  mode: 'strict',
+  created: 1748902349184,
+  modified: '2025-06-02T22:12:29.184Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Numero ordine',
+      name: 'numero',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: true,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: 'Cliente',
+      displayAttributeFromReferencedEntity: 'nome',
+      description: "Cliente che ha effettuato l'ordine",
+      name: 'cliente',
+      relationTypeForReference: 'HaCliente',
+      cardinalityForReference: 'N:1',
+      defaultValue: null,
+      type: 'reference',
+      required: true,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: "Importo totale dell'ordine",
+      name: 'importo',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'number',
+      required: true,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: "Stato dell'ordine",
+      name: 'stato',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: 'Pending',
+      type: 'select',
+      required: true,
+      validationRules: '[]'
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'Persona',
+  version: 1,
+  mode: 'flexible',
+  created: 1748902429838,
+  modified: '2025-06-02T22:13:49.839Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Nome della persona',
+      name: 'nome',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: true,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Email della persona',
+      name: 'email',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'email',
+      required: true,
+      validationRules: '[]'
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Età della persona',
+      name: 'età',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'number',
+      required: false,
+      validationRules: '[]'
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'TestEvoluzione',
+  version: 1,
+  mode: 'flexible',
+  created: 1748903100102,
+  modified: '2025-06-02T22:25:00.102Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Nome del test',
+      name: 'nome',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: true,
+      validationRules: '[]'
+    }
+  ]
+}
+✅ Trovati 5 schemi entità
+✅ Schema entità caricato: Cliente
+✅ Schema entità caricato: Contact
+✅ Schema entità caricato: Ordine
+✅ Schema entità caricato: Persona
+✅ Schema entità caricato: TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (s:SchemaRelationType)
+            RETURN s.relationType as relationType
+            ORDER BY s.relationType
+        
+🔍 Esecuzione query: 
+            MATCH (s:SchemaRelationType {relationType: $relationType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s,
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description
+                   } END) as attributes
+        
+✅ Schema relazione caricato: {
+  relationType: 'Conosce',
+  version: 1,
+  cardinality: 'N:M',
+  sourceTypes: [ 'Persona' ],
+  targetTypes: [ 'Persona' ],
+  created: 1748902445238,
+  modified: '2025-06-02T22:14:05.238Z',
+  constraints: [],
+  attributes: [
+    {
+      description: 'Data primo incontro',
+      name: 'dataIncontro',
+      defaultValue: null,
+      type: 'date',
+      required: true,
+      validationRules: '[]'
+    },
+    {
+      description: 'Luogo incontro',
+      name: 'luogo',
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: '[]'
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaRelationType {relationType: $relationType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s,
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description
+                   } END) as attributes
+        
+✅ Schema relazione caricato: {
+  relationType: 'HaCliente',
+  version: 1,
+  cardinality: 'N:1',
+  sourceTypes: [ 'Ordine' ],
+  targetTypes: [ 'Cliente' ],
+  created: 1748902349470,
+  modified: '2025-06-02T22:12:29.470Z',
+  constraints: [],
+  attributes: [
+    {
+      description: 'Data di creazione della relazione',
+      name: 'dataCreazione',
+      defaultValue: null,
+      type: 'date',
+      required: true,
+      validationRules: '[]'
+    },
+    {
+      description: 'Note aggiuntive',
+      name: 'note',
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: '[]'
+    }
+  ]
+}
+✅ Trovati 2 schemi relazione
+✅ Schema relazione caricato: Conosce
+✅ Schema relazione caricato: HaCliente
+✅ SchemaManager inizializzato con 5 schemi entità e 2 schemi relazione
+✅ SchemaManager evoluto inizializzato
+🚀 Server SSOT Dinamico Evoluto in esecuzione su http://localhost:3000
+📡 WebSocket server attivo
+📊 Dashboard disponibile su http://localhost:3000
+🔧 Endpoint schemi disponibili su /api/schema/*
+2025-06-02T22:29:49.935Z - GET /api/health
+2025-06-02T22:29:58.793Z - PUT /api/schema/entity/TestEvoluzione
+🔄 Evoluzione schema per TestEvoluzione: {
+  addAttributes: {
+    telefono: {
+      type: 'string',
+      required: false,
+      description: 'Numero di telefono'
+    }
+  }
+}
+🔧 Aggiunta attributo telefono a schema TestEvoluzione
+🔍 Esecuzione query: 
+                MATCH (s:SchemaEntityType {entityType: $entityType})
+                MERGE (a:AttributeDefinition {name: $attributeName, schemaId: $schemaId})
+                ON CREATE SET 
+                    a.type = $type,
+                    a.required = $required,
+                    a.defaultValue = $defaultValue,
+                    a.validationRules = $validationRules,
+                    a.description = $description,
+                    a.referencesEntityType = $referencesEntityType,
+                    a.relationTypeForReference = $relationTypeForReference,
+                    a.displayAttributeFromReferencedEntity = $displayAttributeFromReferencedEntity,
+                    a.cardinalityForReference = $cardinalityForReference
+                MERGE (s)-[:HAS_ATTRIBUTE]->(a)
+                RETURN a, 
+                       CASE WHEN a.type IS NULL THEN 'created' ELSE 'existed' END as status
+            
+ℹ️ Attributo telefono già esistente in schema TestEvoluzione
+📝 Registrato cambiamento schema: evolved schema entity TestEvoluzione
+✅ Schema evoluto per TestEvoluzione
+2025-06-02T22:30:05.707Z - PUT /api/schema/entity/TestEvoluzione
+🔄 Evoluzione schema per TestEvoluzione: {
+  addAttributes: {
+    email: { type: 'email', required: true, description: 'Email di contatto' }
+  }
+}
+🔧 Aggiunta attributo email a schema TestEvoluzione
+🔍 Esecuzione query: 
+                MATCH (s:SchemaEntityType {entityType: $entityType})
+                MERGE (a:AttributeDefinition {name: $attributeName, schemaId: $schemaId})
+                ON CREATE SET 
+                    a.type = $type,
+                    a.required = $required,
+                    a.defaultValue = $defaultValue,
+                    a.validationRules = $validationRules,
+                    a.description = $description,
+                    a.referencesEntityType = $referencesEntityType,
+                    a.relationTypeForReference = $relationTypeForReference,
+                    a.displayAttributeFromReferencedEntity = $displayAttributeFromReferencedEntity,
+                    a.cardinalityForReference = $cardinalityForReference
+                MERGE (s)-[:HAS_ATTRIBUTE]->(a)
+                RETURN a, 
+                       CASE WHEN a.type IS NULL THEN 'created' ELSE 'existed' END as status
+            
+ℹ️ Attributo email già esistente in schema TestEvoluzione
+📝 Registrato cambiamento schema: evolved schema entity TestEvoluzione
+✅ Schema evoluto per TestEvoluzione
+2025-06-02T22:30:13.127Z - PUT /api/schema/entity/TestEvoluzione
+🔄 Evoluzione schema per TestEvoluzione: {
+  addAttributes: {
+    azienda: {
+      type: 'reference',
+      required: false,
+      description: 'Azienda di appartenenza',
+      referencesEntityType: 'Cliente',
+      relationTypeForReference: 'LAVORA_PER',
+      displayAttributeFromReferencedEntity: 'nome',
+      cardinalityForReference: 'N:1'
+    }
+  }
+}
+🔧 Aggiunta attributo azienda a schema TestEvoluzione
+🔍 Esecuzione query: 
+                MATCH (s:SchemaEntityType {entityType: $entityType})
+                MERGE (a:AttributeDefinition {name: $attributeName, schemaId: $schemaId})
+                ON CREATE SET 
+                    a.type = $type,
+                    a.required = $required,
+                    a.defaultValue = $defaultValue,
+                    a.validationRules = $validationRules,
+                    a.description = $description,
+                    a.referencesEntityType = $referencesEntityType,
+                    a.relationTypeForReference = $relationTypeForReference,
+                    a.displayAttributeFromReferencedEntity = $displayAttributeFromReferencedEntity,
+                    a.cardinalityForReference = $cardinalityForReference
+                MERGE (s)-[:HAS_ATTRIBUTE]->(a)
+                RETURN a, 
+                       CASE WHEN a.type IS NULL THEN 'created' ELSE 'existed' END as status
+            
+ℹ️ Attributo azienda già esistente in schema TestEvoluzione
+📝 Registrato cambiamento schema: evolved schema entity TestEvoluzione
+✅ Schema evoluto per TestEvoluzione
+2025-06-02T22:30:48.695Z - GET /api/health
+Nuovo client WebSocket connesso
+2025-06-02T22:30:56.901Z - GET /api/schema/entity/Contact
+2025-06-02T22:30:56.901Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 5 entità di tipo Contact
+2025-06-02T22:30:56.925Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 5 entità di tipo Contact
+2025-06-02T22:30:56.951Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:30:56.953Z - GET /api/schema/entity/Contact
+✅ Trovate 5 entità di tipo Contact
+2025-06-02T22:31:00.583Z - GET /api/schema/entity/Contact
+2025-06-02T22:31:03.759Z - PUT /api/entity/c6e572b4-4727-4330-a509-d6628caa6b03/attribute
+🔍 Esecuzione query: 
+            MATCH (e:Entity {id: $entityId})
+            SET e.`ciaoo!` = $value, e.updatedAt = $updatedAt
+            RETURN e
+        
+✅ Attributo ciaoo! aggiornato per entità c6e572b4-4727-4330-a509-d6628caa6b03
+AttributeSpace: Notificando cambiamento - Entità: c6e572b4-4727-4330-a509-d6628caa6b03, Attributo: ciaoo!, Nuovo valore: funzionaa
+Numero di listeners da notificare: 1
+Notifica propagata a 1 client: {
+  entityId: 'c6e572b4-4727-4330-a509-d6628caa6b03',
+  attributeName: 'ciaoo!',
+  newValue: 'funzionaa'
+}
+Attributo aggiornato - Entità: c6e572b4-4727-4330-a509-d6628caa6b03, Attributo: ciaoo!, Nuovo valore: funzionaa
+Nuovo client WebSocket connesso
+2025-06-02T22:31:09.461Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:31:09.461Z - GET /api/schema/entity/Contact
+✅ Trovate 5 entità di tipo Contact
+2025-06-02T22:31:14.737Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:31:14.739Z - GET /api/schema/entity/Contact
+✅ Trovate 5 entità di tipo Contact
+2025-06-02T22:31:19.592Z - PUT /api/entity/4256ff0c-676f-4db5-9983-d1b656cd113c/attribute
+🔍 Esecuzione query: 
+            MATCH (e:Entity {id: $entityId})
+            SET e.`gay` = $value, e.updatedAt = $updatedAt
+            RETURN e
+        
+✅ Attributo gay aggiornato per entità 4256ff0c-676f-4db5-9983-d1b656cd113c
+AttributeSpace: Notificando cambiamento - Entità: 4256ff0c-676f-4db5-9983-d1b656cd113c, Attributo: gay, Nuovo valore: no o si
+Numero di listeners da notificare: 1
+Notifica propagata a 2 client: {
+  entityId: '4256ff0c-676f-4db5-9983-d1b656cd113c',
+  attributeName: 'gay',
+  newValue: 'no o si'
+}
+Attributo aggiornato - Entità: 4256ff0c-676f-4db5-9983-d1b656cd113c, Attributo: gay, Nuovo valore: no o si
+Nuovo client WebSocket connesso
+2025-06-02T22:31:28.573Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 5 entità di tipo Contact
+Client WebSocket disconnesso
+2025-06-02T22:31:48.121Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 0 entità di tipo TestEvoluzione
+2025-06-02T22:31:58.439Z - POST /api/entities
+🔍 Esecuzione query: 
+            CREATE (e:Entity:`TestEvoluzione`)
+            SET e.id = $id, e.entityType = $entityType, e.createdAt = $createdAt, e.updatedAt = $updatedAt, e.`nome` = $attr0, e.`telefono` = $attr1, e.`email` = $attr2
+            RETURN e
+        
+✅ Entità creata: {
+  createdAt: '2025-06-02T22:31:58.440Z',
+  entityType: 'TestEvoluzione',
+  nome: 'Mario Rossi',
+  id: 'a8e8f528-c1a0-491e-b871-6922945f99ac',
+  telefono: '+39 123 456 789',
+  email: 'mario@example.com',
+  updatedAt: '2025-06-02T22:31:58.440Z'
+}
+Entità creata con ID: a8e8f528-c1a0-491e-b871-6922945f99ac, Tipo: TestEvoluzione
+Client WebSocket disconnesso
+Client WebSocket disconnesso
+Nuovo client WebSocket connesso
+2025-06-02T22:32:14.853Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:32:14.854Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:32:14.859Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 5 entità di tipo Contact
+✅ Trovate 1 entità di tipo TestEvoluzione
+2025-06-02T22:32:14.933Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:32:14.933Z - GET /api/schema/entity/TestEvoluzione
+✅ Trovate 1 entità di tipo TestEvoluzione
+2025-06-02T22:32:20.137Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:32:21.746Z - PUT /api/entity/a8e8f528-c1a0-491e-b871-6922945f99ac/attribute
+🔍 Esecuzione query: 
+            MATCH (e:Entity {id: $entityId})
+            SET e.`gay?` = $value, e.updatedAt = $updatedAt
+            RETURN e
+        
+✅ Attributo gay? aggiornato per entità a8e8f528-c1a0-491e-b871-6922945f99ac
+AttributeSpace: Notificando cambiamento - Entità: a8e8f528-c1a0-491e-b871-6922945f99ac, Attributo: gay?, Nuovo valore: si
+Numero di listeners da notificare: 1
+Notifica propagata a 1 client: {
+  entityId: 'a8e8f528-c1a0-491e-b871-6922945f99ac',
+  attributeName: 'gay?',
+  newValue: 'si'
+}
+Attributo aggiornato - Entità: a8e8f528-c1a0-491e-b871-6922945f99ac, Attributo: gay?, Nuovo valore: si
+2025-06-02T22:32:23.210Z - PUT /api/entity/a8e8f528-c1a0-491e-b871-6922945f99ac/attribute
+🔍 Esecuzione query: 
+            MATCH (e:Entity {id: $entityId})
+            SET e.`azienda` = $value, e.updatedAt = $updatedAt
+            RETURN e
+        
+✅ Attributo azienda aggiornato per entità a8e8f528-c1a0-491e-b871-6922945f99ac
+AttributeSpace: Notificando cambiamento - Entità: a8e8f528-c1a0-491e-b871-6922945f99ac, Attributo: azienda, Nuovo valore: no
+Numero di listeners da notificare: 1
+Notifica propagata a 1 client: {
+  entityId: 'a8e8f528-c1a0-491e-b871-6922945f99ac',
+  attributeName: 'azienda',
+  newValue: 'no'
+}
+Attributo aggiornato - Entità: a8e8f528-c1a0-491e-b871-6922945f99ac, Attributo: azienda, Nuovo valore: no
+2025-06-02T22:32:25.345Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+Nuovo client WebSocket connesso
+2025-06-02T22:32:25.349Z - GET /api/schema/entity/TestEvoluzione
+✅ Trovate 1 entità di tipo TestEvoluzione
+2025-06-02T22:32:31.594Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:32:33.265Z - PUT /api/entity/a8e8f528-c1a0-491e-b871-6922945f99ac/attribute
+🔍 Esecuzione query: 
+            MATCH (e:Entity {id: $entityId})
+            SET e.`gayyyyy` = $value, e.updatedAt = $updatedAt
+            RETURN e
+        
+✅ Attributo gayyyyy aggiornato per entità a8e8f528-c1a0-491e-b871-6922945f99ac
+AttributeSpace: Notificando cambiamento - Entità: a8e8f528-c1a0-491e-b871-6922945f99ac, Attributo: gayyyyy, Nuovo valore: si
+Numero di listeners da notificare: 1
+Notifica propagata a 2 client: {
+  entityId: 'a8e8f528-c1a0-491e-b871-6922945f99ac',
+  attributeName: 'gayyyyy',
+  newValue: 'si'
+}
+Attributo aggiornato - Entità: a8e8f528-c1a0-491e-b871-6922945f99ac, Attributo: gayyyyy, Nuovo valore: si
+Client WebSocket disconnesso
+Client WebSocket disconnesso
+Nuovo client WebSocket connesso
+Nuovo client WebSocket connesso
+2025-06-02T22:32:42.681Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:32:42.682Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 1 entità di tipo TestEvoluzione
+Client WebSocket disconnesso
+Client WebSocket disconnesso
+Nuovo client WebSocket connesso
+2025-06-02T22:33:53.226Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:33:53.226Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:33:53.227Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 1 entità di tipo TestEvoluzione
+✅ Trovate 5 entità di tipo Contact
+2025-06-02T22:33:53.255Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:33:53.255Z - GET /api/schema/entity/TestEvoluzione
+✅ Trovate 1 entità di tipo TestEvoluzione
+2025-06-02T22:33:57.063Z - GET /api/schema/entity/TestEvoluzione
+Nuovo client WebSocket connesso
+2025-06-02T22:33:59.250Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:33:59.251Z - GET /api/schema/entity/TestEvoluzione
+✅ Trovate 1 entità di tipo TestEvoluzione
+2025-06-02T22:34:03.200Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:34:05.712Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:34:05.713Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 1 entità di tipo TestEvoluzione
+2025-06-02T22:34:06.337Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:34:06.338Z - GET /api/schema/entity/TestEvoluzione
+✅ Trovate 1 entità di tipo TestEvoluzione
+Client WebSocket disconnesso
+Client WebSocket disconnesso
+Nuovo client WebSocket connesso
+2025-06-02T22:34:09.150Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:34:09.152Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:34:09.153Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 1 entità di tipo TestEvoluzione
+✅ Trovate 5 entità di tipo Contact
+2025-06-02T22:34:09.205Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:34:09.207Z - GET /api/schema/entity/TestEvoluzione
+✅ Trovate 1 entità di tipo TestEvoluzione
+Client WebSocket disconnesso
+Nuovo client WebSocket connesso
+2025-06-02T22:35:59.428Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:35:59.429Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:35:59.429Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 1 entità di tipo TestEvoluzione
+✅ Trovate 5 entità di tipo Contact
+2025-06-02T22:35:59.454Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:35:59.454Z - GET /api/schema/entity/TestEvoluzione
+✅ Trovate 1 entità di tipo TestEvoluzione
+2025-06-02T22:36:02.462Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:36:02.467Z - PUT /api/schema/entity/TestEvoluzione
+🔄 Evoluzione schema per TestEvoluzione: {
+  addAttributes: {
+    'gay?': { type: 'string', required: false, description: 'Attributo gay?' }
+  }
+}
+🔧 Aggiunta attributo gay? a schema TestEvoluzione
+🔍 Esecuzione query: 
+                MATCH (s:SchemaEntityType {entityType: $entityType})
+                MERGE (a:AttributeDefinition {name: $attributeName, schemaId: $schemaId})
+                ON CREATE SET 
+                    a.type = $type,
+                    a.required = $required,
+                    a.defaultValue = $defaultValue,
+                    a.validationRules = $validationRules,
+                    a.description = $description,
+                    a.referencesEntityType = $referencesEntityType,
+                    a.relationTypeForReference = $relationTypeForReference,
+                    a.displayAttributeFromReferencedEntity = $displayAttributeFromReferencedEntity,
+                    a.cardinalityForReference = $cardinalityForReference
+                MERGE (s)-[:HAS_ATTRIBUTE]->(a)
+                RETURN a, 
+                       CASE WHEN a.type IS NULL THEN 'created' ELSE 'existed' END as status
+            
+ℹ️ Attributo gay? già esistente in schema TestEvoluzione
+📝 Registrato cambiamento schema: evolved schema entity TestEvoluzione
+✅ Schema evoluto per TestEvoluzione
+Nuovo client WebSocket connesso
+2025-06-02T22:36:04.816Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:36:04.816Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 1 entità di tipo TestEvoluzione
+2025-06-02T22:36:07.093Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:36:07.095Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 1 entità di tipo TestEvoluzione
+Client WebSocket disconnesso
+Client WebSocket disconnesso
+Nuovo client WebSocket connesso
+2025-06-02T22:36:08.794Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:36:08.795Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T22:36:08.795Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 1 entità di tipo TestEvoluzione
+✅ Trovate 5 entità di tipo Contact
+2025-06-02T22:36:08.819Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T22:36:08.820Z - GET /api/schema/entity/TestEvoluzione
+✅ Trovate 1 entità di tipo TestEvoluzione
+Nuovo client WebSocket connesso
+2025-06-02T23:15:46.179Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T23:15:46.181Z - GET /api/schema/entity/TestEvoluzione
+✅ Trovate 1 entità di tipo TestEvoluzione
+Client WebSocket disconnesso
+Client WebSocket disconnesso
+Nuovo client WebSocket connesso
+2025-06-02T23:15:51.498Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T23:15:51.509Z - GET /api/schema/entity/TestEvoluzione
+2025-06-02T23:15:51.510Z - GET /api/entities/Contact
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`Contact`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+✅ Trovate 1 entità di tipo TestEvoluzione
+✅ Trovate 5 entità di tipo Contact
+2025-06-02T23:15:51.558Z - GET /api/entities/TestEvoluzione
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestEvoluzione`)
+            RETURN e
+            ORDER BY e.createdAt
+        
+2025-06-02T23:15:51.560Z - GET /api/schema/entity/TestEvoluzione
+✅ Trovate 1 entità di tipo TestEvoluzione

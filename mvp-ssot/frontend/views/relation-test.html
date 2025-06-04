@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Fase 3: Relazioni & Sub-moduli - SSOT Dinamico</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .status {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #f0f0f0;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .log-section {
+            grid-column: 1 / -1;
+        }
+
+        .log-output {
+            background: #1e1e1e;
+            color: #f8f8f2;
+            padding: 16px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .entity-selector {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .entity-info {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 16px;
+        }
+
+        .entity-name {
+            font-weight: 500;
+            color: #007bff;
+        }
+
+        .entity-type {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .relations-container {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            min-height: 300px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 768px) {
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .entity-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 Test Fase 3: Relazioni & Sub-moduli</h1>
+            <p>Interfaccia di testing per RelationService, relation-list e relation-editor components</p>
+            <span class="status">✨ Fase 3 - Relazioni, Sub-moduli e Riutilizzo Avanzato</span>
+        </div>
+
+        <div class="test-grid">
+            <!-- RelationService Testing -->
+            <div class="test-section">
+                <h2>🔧 RelationService Testing</h2>
+                
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="initializeServices()">🚀 Inizializza Servizi</button>
+                    <button class="btn" onclick="testRelationStats()">📊 Statistiche</button>
+                    <button class="btn" onclick="clearRelationCache()">🗑️ Pulisci Cache</button>
+                </div>
+
+                <div class="stats-grid" id="statsGrid">
+                    <!-- Le statistiche verranno inserite qui -->
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Ricerca Relazioni</label>
+                    <input type="text" class="form-input" id="searchPattern" 
+                           placeholder='{"sourceEntityId": "entity-id"}' 
+                           value='{"relationType": "Conosce"}'>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-success" onclick="searchRelations()">🔍 Cerca Relazioni</button>
+                    <button class="btn" onclick="getAllRelations()">📋 Tutte le Relazioni</button>
+                </div>
+            </div>
+
+            <!-- Entity Selection -->
+            <div class="test-section">
+                <h2>👤 Selezione Entità</h2>
+                
+                <div class="entity-selector">
+                    <select class="form-select" id="entityTypeSelect">
+                        <option value="Contact">Contact</option>
+                        <option value="Persona">Persona</option>
+                        <option value="Cliente">Cliente</option>
+                    </select>
+                    <button class="btn" onclick="loadEntities()">🔄 Carica Entità</button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Entità Disponibili</label>
+                    <select class="form-select" id="entitySelect" onchange="selectEntity()">
+                        <option value="">Seleziona un'entità...</option>
+                    </select>
+                </div>
+
+                <div id="selectedEntityInfo" class="entity-info" style="display: none;">
+                    <div class="entity-name" id="selectedEntityName"></div>
+                    <div class="entity-type" id="selectedEntityType"></div>
+                    <div style="margin-top: 8px;">
+                        <small>ID: <span id="selectedEntityId"></span></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Relation List Component Testing -->
+            <div class="test-section">
+                <h2>📋 relation-list Component</h2>
+                
+                <div class="controls">
+                    <input type="text" class="form-input" id="relationTypeFilter" 
+                           placeholder="Tipo relazione (vuoto = tutti)" style="width: 200px;">
+                    <select class="form-select" id="directionSelect" style="width: 120px;">
+                        <option value="both">Both</option>
+                        <option value="out">Out</option>
+                        <option value="in">In</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="createRelationList()">🔗 Mostra Relazioni</button>
+                </div>
+
+                <div class="relations-container" id="relationListContainer">
+                    <div style="padding: 20px; text-align: center; color: #666;">
+                        Seleziona un'entità e clicca "Mostra Relazioni"
+                    </div>
+                </div>
+            </div>
+
+            <!-- Relation Editor Testing -->
+            <div class="test-section">
+                <h2>✏️ relation-editor Component</h2>
+                
+                <div class="controls">
+                    <button class="btn btn-success" onclick="openRelationEditor('create')">➕ Crea Relazione</button>
+                    <button class="btn" onclick="openRelationEditor('edit')">✏️ Modifica Relazione</button>
+                    <button class="btn btn-danger" onclick="closeRelationEditor()">❌ Chiudi Editor</button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Configurazione Editor</label>
+                    <label><input type="checkbox" id="showAdvanced"> Mostra opzioni avanzate</label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tipi relazione consentiti (separati da virgola)</label>
+                    <input type="text" class="form-input" id="allowedRelationTypes" 
+                           placeholder="Conosce,HaCliente,Lavora_Per" 
+                           value="Correlato,Conosce,È_Connesso_A,Ha_Relazione_Con,È_Associato_A">
+                </div>
+
+                <div id="editorContainer">
+                    <!-- L'editor verrà inserito qui -->
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="test-section">
+                <h2>⚡ Azioni Rapide</h2>
+                
+                <div class="controls">
+                    <button class="btn btn-success" onclick="createTestRelation()">➕ Crea Relazione Test</button>
+                    <button class="btn btn-primary" onclick="loadSampleData()">📦 Carica Dati Test</button>
+                    <button class="btn" onclick="testWebSocketEvents()">🔄 Test WebSocket</button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Azione Rapida Relazione</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="form-input" id="quickSourceId" placeholder="Source Entity ID" style="flex: 1;">
+                        <input type="text" class="form-input" id="quickTargetId" placeholder="Target Entity ID" style="flex: 1;">
+                        <select class="form-select" id="quickRelationType" style="width: 150px;">
+                            <option value="Correlato">Correlato</option>
+                            <option value="Conosce">Conosce</option>
+                            <option value="È_Connesso_A">È_Connesso_A</option>
+                            <option value="Ha_Relazione_Con">Ha_Relazione_Con</option>
+                            <option value="È_Associato_A">È_Associato_A</option>
+                        </select>
+                        <button class="btn btn-success" onclick="quickCreateRelation()">Crea</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Template Integration -->
+            <div class="test-section">
+                <h2>🎨 Integrazione Template</h2>
+                
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="testTemplateWithRelations()">🔗 Template con Relazioni</button>
+                    <button class="btn" onclick="testSubModules()">📋 Test Sub-moduli</button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Template Module con Relazioni</label>
+                    <select class="form-select" id="templateSelect">
+                        <option value="StandardContactCard">StandardContactCard v3.0.0</option>
+                        <option value="CompactContactCard">CompactContactCard</option>
+                    </select>
+                </div>
+
+                <div id="templateContainer" style="border: 1px solid #e0e0e0; border-radius: 4px; min-height: 200px;">
+                    <!-- I template verranno renderizzati qui -->
+                </div>
+            </div>
+
+            <!-- Log Output -->
+            <div class="test-section log-section">
+                <h2>📋 Log Output</h2>
+                <div class="controls">
+                    <button class="btn" onclick="clearLog()">🗑️ Pulisci Log</button>
+                    <button class="btn" onclick="exportLog()">💾 Esporta Log</button>
+                    <label><input type="checkbox" id="autoScroll" checked> Auto-scroll</label>
+                </div>
+                <div class="log-output" id="logOutput">
+                    Inizializzando sistema di test per Fase 3...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include all necessary services and components -->
+    <script src="../services/WebSocketService.js"></script>
+    <script src="../services/SchemaService.js"></script>
+    <script src="../services/EntityService.js"></script>
+    <script src="../services/ModuleDefinitionService.js"></script>
+    <script src="../services/SaveInstanceService.js"></script>
+    <script src="../services/RelationService.js"></script>
+    
+    <script src="../components/ssot-input.js"></script>
+    <script src="../components/attribute-display.js"></script>
+    <script src="../components/attribute-editor.js"></script>
+    <script src="../components/template-module-renderer.js"></script>
+    <script src="../components/saved-module-instance.js"></script>
+    <script src="../components/entity-autocomplete.js"></script>
+    <script src="../components/relation-list.js"></script>
+    <script src="../components/relation-editor.js"></script>
+
+    <script>
+        // Stato globale dell'applicazione di test
+        const testApp = {
+            selectedEntity: null,
+            relationService: null,
+            entityService: null,
+            webSocketService: null,
+            moduleDefinitionService: null,  // Aggiunto per template-module-renderer
+            schemaService: null,            // Aggiunto per template-module-renderer
+            saveInstanceService: null,      // Aggiunto per template-module-renderer
+            currentEditor: null,
+            currentRelationList: null,
+            initialized: false
+        };
+
+        // Configurazione test
+        const testConfig = {
+            defaultEntityType: 'Contact', // Ripristinato a 'Contact' 
+            testRelationType: 'Correlato', // Cambiato a tipo universale
+            maxLogEntries: 100,
+            
+            // Entità di test note per diversi tipi
+            knownEntities: {
+                'Contact': [
+                    '11ef8b2e-91ae-4db3-9bed-eca44ffb763a' // Mario Rossi (Contact)
+                ],
+                'Persona': [
+                    'f4a5ecbf-145c-4fa6-9c4f-adbf9be7de0c', // Mario Rossi (Persona)
+                    'de206ea3-4fd9-47ce-805c-95572c974ff0', // Luigi Verdi  
+                    'e5962ade-e5c4-4201-9edb-6d54e63e105b'  // Annetta Carrubba
+                ]
+            }
+        };
+
+        // Attende che tutti i servizi siano caricati
+        function waitForServices() {
+            return new Promise((resolve) => {
+                const checkServices = () => {
+                    if (window.RelationService && 
+                        window.EntityService && 
+                        window.WebSocketService &&
+                        window.ModuleDefinitionService &&
+                        window.SchemaService &&
+                        window.SaveInstanceService) {
+                        
+                        testApp.relationService = window.RelationService;
+                        testApp.entityService = window.EntityService;
+                        testApp.webSocketService = window.WebSocketService;
+                        testApp.moduleDefinitionService = window.ModuleDefinitionService;
+                        testApp.schemaService = window.SchemaService;
+                        testApp.saveInstanceService = window.SaveInstanceService;
+                        
+                        // Espone i servizi con i nomi corretti per template-module-renderer
+                        window.moduleDefinitionService = window.ModuleDefinitionService;  // lowercase
+                        window.schemaService = window.SchemaService;                      // lowercase
+                        window.entityService = window.EntityService;                     // lowercase
+                        window.webSocketService = window.WebSocketService;               // lowercase
+                        window.saveInstanceService = window.SaveInstanceService;         // lowercase
+                        
+                        resolve();
+                    } else {
+                        setTimeout(checkServices, 100);
+                    }
+                };
+                checkServices();
+            });
+        }
+
+        // Logging system
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('it-IT');
+            const logOutput = document.getElementById('logOutput');
+            const logLine = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            
+            logOutput.textContent += logLine;
+            
+            // Auto-scroll se abilitato
+            if (document.getElementById('autoScroll').checked) {
+                logOutput.scrollTop = logOutput.scrollHeight;
+            }
+            
+            // Console log per debugging
+            console.log(logLine);
+        }
+
+        function clearLog() {
+            document.getElementById('logOutput').textContent = '';
+            log('Log pulito', 'system');
+        }
+
+        function exportLog() {
+            const logContent = document.getElementById('logOutput').textContent;
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relation-test-log-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Service initialization
+        async function initializeServices() {
+            try {
+                log('Inizializzazione servizi...', 'info');
+                
+                // Verifica che i servizi siano disponibili
+                if (!testApp.webSocketService) {
+                    throw new Error('WebSocketService non disponibile');
+                }
+                
+                if (!testApp.relationService) {
+                    throw new Error('RelationService non disponibile');
+                }
+                
+                if (!testApp.entityService) {
+                    throw new Error('EntityService non disponibile');
+                }
+                
+                // Verifica servizi aggiuntivi per template-module-renderer
+                if (!testApp.moduleDefinitionService) {
+                    throw new Error('ModuleDefinitionService non disponibile');
+                }
+                
+                if (!testApp.schemaService) {
+                    throw new Error('SchemaService non disponibile');
+                }
+                
+                if (!testApp.saveInstanceService) {
+                    throw new Error('SaveInstanceService non disponibile');
+                }
+                
+                // Inizializza WebSocket
+                await testApp.webSocketService.connect();
+                log('✅ WebSocket connesso', 'success');
+                
+                // Inizializza RelationService con WebSocket
+                testApp.relationService.initialize(testApp.webSocketService);
+                log('✅ RelationService inizializzato', 'success');
+                
+                // Log conferma servizi aggiuntivi
+                log('✅ ModuleDefinitionService disponibile', 'success');
+                log('✅ SchemaService disponibile', 'success');
+                log('✅ SaveInstanceService disponibile', 'success');
+                
+                // Test connessione API
+                const stats = await testApp.relationService.getRelationStats();
+                log(`✅ API funzionanti. Statistiche: ${JSON.stringify(stats)}`, 'success');
+                
+                updateStatsDisplay(stats);
+                testApp.initialized = true;
+                
+            } catch (error) {
+                log(`❌ Errore inizializzazione: ${error.message}`, 'error');
+                // Retry dopo 2 secondi
+                setTimeout(() => {
+                    log('🔄 Tentativo di reinizializzazione...', 'info');
+                    initializeServices();
+                }, 2000);
+            }
+        }
+
+        function updateStatsDisplay(stats) {
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalRelations || 0}</div>
+                    <div class="stat-label">Relazioni Totali</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.entitiesWithRelations || 0}</div>
+                    <div class="stat-label">Entità Collegate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${Object.keys(stats.relationsByType || {}).length}</div>
+                    <div class="stat-label">Tipi Relazione</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${testApp.relationService ? testApp.relationService.getCacheInfo().size : 0}</div>
+                    <div class="stat-label">Cache Entries</div>
+                </div>
+            `;
+        }
+
+        async function testRelationStats() {
+            try {
+                if (!testApp.relationService) {
+                    throw new Error('RelationService non inizializzato');
+                }
+                log('Recupero statistiche relazioni...', 'info');
+                const stats = await testApp.relationService.getRelationStats();
+                log(`📊 Statistiche: ${JSON.stringify(stats, null, 2)}`, 'data');
+                updateStatsDisplay(stats);
+            } catch (error) {
+                log(`❌ Errore statistiche: ${error.message}`, 'error');
+            }
+        }
+
+        function clearRelationCache() {
+            if (!testApp.relationService) {
+                log('❌ RelationService non inizializzato', 'error');
+                return;
+            }
+            testApp.relationService.clearCache();
+            log('🗑️ Cache RelationService pulita', 'system');
+            updateStatsDisplay({ totalRelations: 0, entitiesWithRelations: 0, relationsByType: {} });
+        }
+
+        // Entity loading and selection
+        async function loadEntities() {
+            try {
+                if (!testApp.entityService) {
+                    throw new Error('EntityService non inizializzato');
+                }
+                
+                const entityType = document.getElementById('entityTypeSelect').value;
+                log(`Caricamento entità tipo: ${entityType}`, 'info');
+                
+                const entities = await testApp.entityService.getEntities(entityType);
+                const entitySelect = document.getElementById('entitySelect');
+                
+                entitySelect.innerHTML = '<option value="">Seleziona un\'entità...</option>';
+                
+                entities.forEach(entity => {
+                    const option = document.createElement('option');
+                    option.value = entity.id;
+                    const displayName = entity.nome || entity.name || entity.title || entity.id;
+                    option.textContent = `${displayName} (${entity.id})`;
+                    option.dataset.entity = JSON.stringify(entity);
+                    entitySelect.appendChild(option);
+                });
+                
+                log(`✅ Caricate ${entities.length} entità di tipo ${entityType}`, 'success');
+                
+            } catch (error) {
+                log(`❌ Errore caricamento entità: ${error.message}`, 'error');
+            }
+        }
+
+        function selectEntity() {
+            const entitySelect = document.getElementById('entitySelect');
+            const selectedOption = entitySelect.selectedOptions[0];
+            
+            if (selectedOption && selectedOption.dataset.entity) {
+                testApp.selectedEntity = JSON.parse(selectedOption.dataset.entity);
+                
+                // Aggiorna UI
+                const entityInfo = document.getElementById('selectedEntityInfo');
+                document.getElementById('selectedEntityName').textContent = 
+                    testApp.selectedEntity.nome || testApp.selectedEntity.name || testApp.selectedEntity.id;
+                document.getElementById('selectedEntityType').textContent = testApp.selectedEntity.entityType;
+                document.getElementById('selectedEntityId').textContent = testApp.selectedEntity.id;
+                entityInfo.style.display = 'block';
+                
+                log(`👤 Entità selezionata: ${testApp.selectedEntity.id}`, 'info');
+                
+                // Auto-popolate quick relation fields
+                document.getElementById('quickSourceId').value = testApp.selectedEntity.id;
+                
+            } else {
+                testApp.selectedEntity = null;
+                document.getElementById('selectedEntityInfo').style.display = 'none';
+            }
+        }
+
+        // Relation searching
+        async function searchRelations() {
+            try {
+                if (!testApp.relationService) {
+                    throw new Error('RelationService non inizializzato');
+                }
+                
+                const patternStr = document.getElementById('searchPattern').value;
+                let pattern;
+                try {
+                    pattern = JSON.parse(patternStr);
+                } catch (e) {
+                    throw new Error(`JSON non valido: ${e.message}`);
+                }
+                
+                log(`🔍 Ricerca relazioni con pattern: ${JSON.stringify(pattern)}`, 'info');
+                
+                const relations = await testApp.relationService.findRelations(pattern);
+                log(`✅ Trovate ${relations.length} relazioni`, 'success');
+                
+                relations.forEach((rel, i) => {
+                    log(`  ${i+1}. ${rel.relationType}: ${rel.sourceEntityId} -> ${rel.targetEntityId}`, 'data');
+                });
+                
+            } catch (error) {
+                log(`❌ Errore ricerca relazioni: ${error.message}`, 'error');
+            }
+        }
+
+        async function getAllRelations() {
+            try {
+                if (!testApp.relationService) {
+                    throw new Error('RelationService non inizializzato');
+                }
+                
+                log('📋 Recupero tutte le relazioni...', 'info');
+                const relations = await testApp.relationService.findRelations({});
+                log(`✅ Trovate ${relations.length} relazioni totali`, 'success');
+                
+                // Raggruppa per tipo
+                const byType = {};
+                relations.forEach(rel => {
+                    byType[rel.relationType] = (byType[rel.relationType] || 0) + 1;
+                });
+                
+                log(`📊 Distribuzione per tipo: ${JSON.stringify(byType)}`, 'data');
+                
+            } catch (error) {
+                log(`❌ Errore recupero relazioni: ${error.message}`, 'error');
+            }
+        }
+
+        // Relation List Component
+        function createRelationList() {
+            if (!testApp.selectedEntity) {
+                log('❌ Seleziona prima un\'entità', 'error');
+                return;
+            }
+            
+            try {
+                const container = document.getElementById('relationListContainer');
+                
+                // Rimuovi componente esistente
+                if (testApp.currentRelationList) {
+                    testApp.currentRelationList.remove();
+                }
+                
+                // Crea nuovo componente
+                const relationList = document.createElement('relation-list');
+                relationList.setAttribute('source-entity-id', testApp.selectedEntity.id);
+                
+                const relationType = document.getElementById('relationTypeFilter').value;
+                if (relationType) {
+                    relationList.setAttribute('relation-type', relationType);
+                }
+                
+                const direction = document.getElementById('directionSelect').value;
+                relationList.setAttribute('direction', direction);
+                
+                relationList.setAttribute('show-actions', 'true');
+                relationList.setAttribute('allow-create', 'true');
+                relationList.setAttribute('allow-delete', 'true');
+                
+                // Event listeners
+                relationList.addEventListener('relation-created', (e) => {
+                    log(`✅ Relazione creata: ${JSON.stringify(e.detail)}`, 'success');
+                });
+                
+                relationList.addEventListener('relation-deleted', (e) => {
+                    log(`🗑️ Relazione eliminata: ${e.detail.relationId}`, 'info');
+                });
+                
+                relationList.addEventListener('entity-navigate', (e) => {
+                    log(`👁️ Navigazione a entità: ${e.detail.entityId}`, 'info');
+                });
+                
+                relationList.addEventListener('create-relation-request', (e) => {
+                    log(`➕ Richiesta creazione relazione: ${JSON.stringify(e.detail)}`, 'info');
+                    openRelationEditor('create');
+                });
+                
+                relationList.addEventListener('edit-relation-request', (e) => {
+                    log(`✏️ Richiesta modifica relazione: ${e.detail.relationId}`, 'info');
+                    openRelationEditor('edit', e.detail.relationId);
+                });
+                
+                container.innerHTML = '';
+                container.appendChild(relationList);
+                testApp.currentRelationList = relationList;
+                
+                log(`🔗 Componente relation-list creato per entità ${testApp.selectedEntity.id}`, 'success');
+                
+            } catch (error) {
+                log(`❌ Errore creazione relation-list: ${error.message}`, 'error');
+            }
+        }
+
+        // Relation Editor Component
+        function openRelationEditor(mode, relationId = null) {
+            try {
+                // Chiudi editor esistente
+                closeRelationEditor();
+                
+                const container = document.getElementById('editorContainer');
+                const editor = document.createElement('relation-editor');
+                
+                editor.setAttribute('mode', mode);
+                
+                if (mode === 'create' && testApp.selectedEntity) {
+                    editor.setAttribute('source-entity-id', testApp.selectedEntity.id);
+                } else if (mode === 'edit' && relationId) {
+                    editor.setAttribute('relation-id', relationId);
+                }
+                
+                const showAdvanced = document.getElementById('showAdvanced').checked;
+                if (showAdvanced) {
+                    editor.setAttribute('show-advanced', 'true');
+                }
+                
+                const allowedTypes = document.getElementById('allowedRelationTypes').value;
+                if (allowedTypes) {
+                    editor.setAttribute('allowed-relation-types', allowedTypes);
+                }
+                
+                // Event listeners
+                editor.addEventListener('relation-created', (e) => {
+                    log(`✅ Editor: Relazione creata: ${JSON.stringify(e.detail)}`, 'success');
+                    if (testApp.currentRelationList) {
+                        testApp.currentRelationList.loadRelatedEntities();
+                    }
+                });
+                
+                editor.addEventListener('relation-updated', (e) => {
+                    log(`✅ Editor: Relazione aggiornata: ${JSON.stringify(e.detail)}`, 'success');
+                    if (testApp.currentRelationList) {
+                        testApp.currentRelationList.loadRelatedEntities();
+                    }
+                });
+                
+                editor.addEventListener('editor-close', () => {
+                    log('❌ Editor chiuso', 'info');
+                    closeRelationEditor();
+                });
+                
+                container.appendChild(editor);
+                testApp.currentEditor = editor;
+                
+                log(`✏️ Editor relazioni aperto in modalità: ${mode}`, 'success');
+                
+            } catch (error) {
+                log(`❌ Errore apertura editor: ${error.message}`, 'error');
+            }
+        }
+
+        function closeRelationEditor() {
+            if (testApp.currentEditor) {
+                testApp.currentEditor.remove();
+                testApp.currentEditor = null;
+                log('❌ Editor relazioni chiuso', 'info');
+            }
+        }
+
+        // Quick Actions
+        async function createTestRelation() {
+            try {
+                if (!testApp.selectedEntity) {
+                    log('❌ Seleziona prima un\'entità sorgente', 'error');
+                    return;
+                }
+                
+                if (!testApp.entityService || !testApp.relationService) {
+                    log('❌ Servizi non inizializzati', 'error');
+                    return;
+                }
+                
+                // Trova un'altra entità come target
+                const entityType = document.getElementById('entityTypeSelect').value;
+                const entities = await testApp.entityService.getEntities(entityType);
+                const targetEntity = entities.find(e => e.id !== testApp.selectedEntity.id);
+                
+                if (!targetEntity) {
+                    log('❌ Non trovata entità target per test', 'error');
+                    return;
+                }
+                
+                const relation = await testApp.relationService.createRelation(
+                    'Correlato',
+                    testApp.selectedEntity.id,
+                    targetEntity.id,
+                    { dataCreazione: new Date().toISOString(), test: true }
+                );
+                
+                log(`✅ Relazione test creata: ${JSON.stringify(relation)}`, 'success');
+                
+                if (testApp.currentRelationList) {
+                    testApp.currentRelationList.loadRelatedEntities();
+                }
+                
+            } catch (error) {
+                log(`❌ Errore creazione relazione test: ${error.message}`, 'error');
+            }
+        }
+
+        async function quickCreateRelation() {
+            try {
+                if (!testApp.relationService) {
+                    log('❌ RelationService non inizializzato', 'error');
+                    return;
+                }
+                
+                const sourceId = document.getElementById('quickSourceId').value;
+                const targetId = document.getElementById('quickTargetId').value;
+                const relationType = document.getElementById('quickRelationType').value;
+                
+                if (!sourceId || !targetId || !relationType) {
+                    log('❌ Compila tutti i campi per la creazione rapida', 'error');
+                    return;
+                }
+                
+                const relation = await testApp.relationService.createRelation(
+                    relationType,
+                    sourceId,
+                    targetId,
+                    { creazioneRapida: true, timestamp: Date.now() }
+                );
+                
+                log(`✅ Relazione rapida creata: ${relationType} tra ${sourceId} e ${targetId}`, 'success');
+                
+                if (testApp.currentRelationList) {
+                    testApp.currentRelationList.loadRelatedEntities();
+                }
+                
+            } catch (error) {
+                log(`❌ Errore creazione relazione rapida: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadSampleData() {
+            try {
+                if (!testApp.entityService || !testApp.relationService) {
+                    log('❌ Servizi non inizializzati', 'error');
+                    return;
+                }
+                
+                log('📦 Caricamento dati di test...', 'info');
+                
+                // Carica entità per tutti i tipi
+                await loadEntities();
+                
+                // Crea alcune relazioni di test se ci sono entità
+                const entityType = document.getElementById('entityTypeSelect').value;
+                const entities = await testApp.entityService.getEntities(entityType);
+                
+                if (entities.length >= 2) {
+                    // Crea relazioni tra le prime entità
+                    for (let i = 0; i < Math.min(3, entities.length - 1); i++) {
+                        const relation = await testApp.relationService.createRelation(
+                            i === 0 ? 'Conosce' : i === 1 ? 'È_Amico_Di' : 'Correlato',
+                            entities[i].id,
+                            entities[i + 1].id,
+                            { 
+                                sampleData: true, 
+                                createdAt: new Date().toISOString(),
+                                index: i
+                            }
+                        );
+                        log(`✅ Relazione campione ${i+1} creata`, 'success');
+                    }
+                    
+                    log('✅ Dati di test caricati con successo', 'success');
+                } else {
+                    log('⚠️ Non abbastanza entità per creare relazioni di test', 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ Errore caricamento dati test: ${error.message}`, 'error');
+            }
+        }
+
+        function testWebSocketEvents() {
+            if (!testApp.relationService) {
+                log('❌ RelationService non inizializzato', 'error');
+                return;
+            }
+            
+            log('🔄 Test eventi WebSocket...', 'info');
+            
+            // Simula eventi WebSocket
+            const events = [
+                { type: 'relation-created', data: { relationType: 'TestWS', sourceEntityId: 'test1', targetEntityId: 'test2' }},
+                { type: 'relation-updated', data: { relationId: 'test-rel-123' }},
+                { type: 'relation-deleted', data: { relationId: 'test-rel-456' }}
+            ];
+            
+            events.forEach((event, i) => {
+                setTimeout(() => {
+                    log(`📡 Evento WebSocket simulato: ${event.type}`, 'websocket');
+                    testApp.relationService.handleRelationEvent(event.type.replace('relation-', ''), { data: event.data });
+                }, i * 1000);
+            });
+        }
+
+        // Template Integration
+        async function testTemplateWithRelations() {
+            try {
+                if (!testApp.selectedEntity) {
+                    log('❌ Seleziona prima un\'entità', 'error');
+                    return;
+                }
+                
+                const container = document.getElementById('templateContainer');
+                const templateId = document.getElementById('templateSelect').value;
+                
+                const renderer = document.createElement('template-module-renderer');
+                renderer.setAttribute('module-id', templateId);
+                renderer.setAttribute('entity-id', testApp.selectedEntity.id);
+                renderer.setAttribute('view-mode', 'withRelations');
+                
+                container.innerHTML = '';
+                container.appendChild(renderer);
+                
+                log(`🎨 Template ${templateId} renderizzato con relazioni`, 'success');
+                
+            } catch (error) {
+                log(`❌ Errore template con relazioni: ${error.message}`, 'error');
+            }
+        }
+
+        function testSubModules() {
+            log('📋 Test sub-moduli in corso...', 'info');
+            // Placeholder per test sub-moduli specifici
+            log('⚠️ Test sub-moduli da implementare', 'warning');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            log('🚀 Pagina test Fase 3 caricata', 'system');
+            log('Componenti disponibili: RelationService, relation-list, relation-editor', 'info');
+            
+            try {
+                // Attende il caricamento dei servizi
+                await waitForServices();
+                log('✅ Servizi caricati', 'success');
+                
+                // Inizializza i servizi
+                await initializeServices();
+                
+                // Carica entità dopo l'inizializzazione
+                if (testApp.initialized) {
+                    await loadEntities();
+                    log('✅ Entità caricate', 'success');
+                }
+                
+                log('✅ Inizializzazione completa terminata', 'success');
+                
+            } catch (error) {
+                log(`❌ Errore inizializzazione: ${error.message}`, 'error');
+                log('🔄 Prova a ricaricare la pagina o inizializzare manualmente', 'info');
+            }
+        });
+    </script>
+</body>
+</html> 
