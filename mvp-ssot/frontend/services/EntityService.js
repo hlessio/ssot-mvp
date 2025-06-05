@@ -305,7 +305,11 @@ class EntityService {
             this.invalidateEntityCache(entityId);
 
             console.log(`✅ [EntityService] Entità ${entityId} eliminata`);
-            return result;
+            // Assuming a successful DELETE might return a body like { success: true } or just be ok.
+            // If response.json() is problematic for 204, adjust accordingly.
+            const result = await response.json().catch(() => ({ success: true })); // Default to success if no body
+            return result.success !== undefined ? result.success : true;
+
 
         } catch (error) {
             console.error(`❌ [EntityService] Errore eliminazione entità ${entityId}:`, error);

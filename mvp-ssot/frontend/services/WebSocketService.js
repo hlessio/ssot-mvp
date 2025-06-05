@@ -19,11 +19,20 @@ class WebSocketService {
         this.subscriptions = new Map();
         this.messageQueue = [];
         this.connectionListeners = [];
+        this.webSocketFactory = null; // For dependency injection in tests
         
         // Contatori per generare ID unici sottoscrizioni
         this.subscriptionCounter = 0;
         
         console.log('🔌 [WebSocketService] Inizializzato');
+    }
+
+    /**
+     * (For Testing) Sets a factory function to create WebSocket instances.
+     * @param {function} factory - A function that returns a WebSocket-like instance.
+     */
+    setWebSocketFactory(factory) {
+        this.webSocketFactory = factory;
     }
 
     /**
@@ -41,7 +50,11 @@ class WebSocketService {
             const wsUrl = url || this.buildWebSocketUrl();
             console.log(`🔌 [WebSocketService] Connessione a: ${wsUrl}`);
 
-            this.websocket = new WebSocket(wsUrl);
+            if (this.webSocketFactory) {
+                this.websocket = this.webSocketFactory(wsUrl);
+            } else {
+                this.websocket = new WebSocket(wsUrl);
+            }
             
             this.websocket.onopen = (event) => this.handleOpen(event);
             this.websocket.onmessage = (event) => this.handleMessage(event);

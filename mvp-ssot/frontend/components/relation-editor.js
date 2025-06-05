@@ -249,6 +249,7 @@ class RelationEditorComponent extends HTMLElement {
             }));
             
             this.searchResults = [...matchingResults, ...createOptions];
+            console.log('searchResults before updateSearchResults in searchEntities:', JSON.stringify(this.searchResults)); // Diagnostic log
             this.updateSearchResults();
             
         } catch (error) {
@@ -1092,13 +1093,14 @@ class RelationEditorComponent extends HTMLElement {
      * Renderizza la selezione dell'entità target
      */
     renderTargetEntitySelection() {
-        if (this.mode === 'edit' && this.targetEntity) {
-            // In modalità edit, mostra l'entità target esistente
+        // If a target entity is already selected (either in edit mode or after selection in create mode)
+        // display its information. Otherwise, show the autocomplete search.
+        if (this.targetEntity) {
             const displayName = this.targetEntity.nome || this.targetEntity.name || 
                               this.targetEntity.title || this.targetEntity.id;
             
             return `
-                <div class="form-group">
+                <div class="form-group target-entity-display"> {/* Added class for easier selection */}
                     <label class="form-label">Entità Target</label>
                     <div class="entity-info">
                         <div class="entity-name">${displayName}</div>
@@ -1108,6 +1110,7 @@ class RelationEditorComponent extends HTMLElement {
             `;
         }
         
+        // Only show autocomplete if no target entity is selected yet.
         return `
             <div class="form-group">
                 <label class="form-label" for="target-entity-autocomplete">Entità Target</label>
@@ -1181,6 +1184,7 @@ class RelationEditorComponent extends HTMLElement {
                     this.targetEntity = entity;
                     this.formData.targetEntityId = entity.id;
                     console.log('✅ Entità target selezionata:', entity);
+                    this.render(); // Use vanilla component render method
                 }
             });
             
