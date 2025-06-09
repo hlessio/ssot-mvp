@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sistema Organico SSOT</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        input, textarea, button { margin: 5px; padding: 8px; }
+        button { background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 3px; font-family: monospace; white-space: pre-wrap; }
+        .suggestions { background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 5px 0; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Test Sistema Organico SSOT</h1>
+        
+        <div class="section info">
+            <h3>Stato Sistema</h3>
+            <div id="systemStatus">Checking...</div>
+        </div>
+
+        <div class="section">
+            <h3>1. Test Creazione Entità Organica</h3>
+            <p>Crea entità senza schema predefinito - il sistema imparerà automaticamente!</p>
+            
+            <div>
+                <label>Tipo Entità:</label>
+                <input type="text" id="entityType" value="TestOrganico" placeholder="es. Persona, Progetto, Film">
+            </div>
+            
+            <div>
+                <label>Nome:</label>
+                <input type="text" id="nome" placeholder="Nome entità">
+            </div>
+            
+            <div>
+                <label>Email:</label>
+                <input type="text" id="email" placeholder="email@example.com">
+            </div>
+            
+            <div>
+                <label>Telefono:</label>
+                <input type="text" id="telefono" placeholder="+39 123 456 7890">
+            </div>
+            
+            <div>
+                <label>Sito Web:</label>
+                <input type="text" id="sito_web" placeholder="https://example.com">
+            </div>
+            
+            <div>
+                <label>Età:</label>
+                <input type="number" id="eta" placeholder="25">
+            </div>
+            
+            <div>
+                <label>Attivo:</label>
+                <select id="attivo">
+                    <option value="true">Sì</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+            
+            <button onclick="createEntity()">Crea Entità Organica</button>
+        </div>
+
+        <div class="section">
+            <h3>2. Test Validazione Gentile</h3>
+            <p>Testa la validazione che non fallisce mai ma fornisce suggerimenti intelligenti</p>
+            
+            <div>
+                <label>Tipo Entità:</label>
+                <input type="text" id="validateEntityType" value="TestOrganico">
+            </div>
+            
+            <div>
+                <label>Nome Attributo:</label>
+                <input type="text" id="validateAttributeName" value="budget" placeholder="budget, email, telefono">
+            </div>
+            
+            <div>
+                <label>Valore da Validare:</label>
+                <input type="text" id="validateValue" placeholder="valore_strano_123">
+            </div>
+            
+            <button onclick="testValidation()">Test Validazione Gentile</button>
+            
+            <div id="validationResults" class="suggestions" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h3>3. Test Schema Organico</h3>
+            <p>Visualizza gli schemi emergenti dall'uso</p>
+            
+            <button onclick="getOrganicSchemas()">Mostra Schemi Organici</button>
+            
+            <div id="schemaResults"></div>
+        </div>
+
+        <div class="section">
+            <h3>4. Test Entità Create</h3>
+            <button onclick="listEntities()">Lista Entità TestOrganico</button>
+            
+            <div id="entitiesList"></div>
+        </div>
+
+        <div class="section">
+            <h3>Log Sistema</h3>
+            <div id="systemLog" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        
+        // Verifica stato sistema all'avvio
+        window.onload = async () => {
+            await checkSystemStatus();
+        };
+
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/schema/entities`);
+                const result = await response.json();
+                
+                if (result.success && result.mode === 'organic') {
+                    document.getElementById('systemStatus').innerHTML = 
+                        `✅ Sistema Organico Attivo - ${result.count} schemi emergenti trovati`;
+                    document.getElementById('systemStatus').parentElement.className = 'section success';
+                } else {
+                    throw new Error('Sistema non in modalità organica');
+                }
+            } catch (error) {
+                document.getElementById('systemStatus').innerHTML = 
+                    `❌ Errore connessione sistema: ${error.message}`;
+                document.getElementById('systemStatus').parentElement.className = 'section error';
+            }
+        }
+
+        async function createEntity() {
+            const entityData = {
+                entityType: document.getElementById('entityType').value,
+                nome: document.getElementById('nome').value,
+                email: document.getElementById('email').value,
+                telefono: document.getElementById('telefono').value,
+                sito_web: document.getElementById('sito_web').value,
+                eta: parseInt(document.getElementById('eta').value) || undefined,
+                attivo: document.getElementById('attivo').value === 'true'
+            };
+
+            // Rimuovi campi vuoti
+            Object.keys(entityData).forEach(key => {
+                if (!entityData[key] && entityData[key] !== false && entityData[key] !== 0) {
+                    delete entityData[key];
+                }
+            });
+
+            logMessage(`🚀 Creando entità: ${JSON.stringify(entityData)}`);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/entities`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(entityData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    logMessage(`✅ Entità creata con successo: ${result.data.id}`);
+                    logMessage(`🌱 Modalità organica: ${result.organic ? 'ATTIVA' : 'non attiva'}`);
+                    
+                    // Mostra i dettagli dell'entità creata
+                    const entityDetails = Object.entries(result.data)
+                        .map(([key, value]) => `${key}: ${value}`)
+                        .join('\n');
+                    
+                    logMessage(`📊 Dettagli entità:\n${entityDetails}`);
+                } else {
+                    throw new Error(result.error || 'Errore sconosciuto');
+                }
+            } catch (error) {
+                logMessage(`❌ Errore creazione entità: ${error.message}`);
+            }
+        }
+
+        async function testValidation() {
+            const validationData = {
+                entityType: document.getElementById('validateEntityType').value,
+                attributeName: document.getElementById('validateAttributeName').value,
+                value: document.getElementById('validateValue').value,
+                context: { test: true }
+            };
+
+            logMessage(`🤖 Test validazione gentile: ${JSON.stringify(validationData)}`);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/organic/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(validationData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const validation = result.data;
+                    logMessage(`✅ Validazione completata - Accettato: ${validation.accepted}`);
+                    logMessage(`💡 Suggerimenti: ${validation.suggestions.length}`);
+                    logMessage(`🔧 Auto-correzioni: ${validation.autoCorrections.length}`);
+
+                    // Mostra risultati dettagliati
+                    const resultsDiv = document.getElementById('validationResults');
+                    resultsDiv.style.display = 'block';
+                    
+                    let html = `<h4>Risultati Validazione</h4>`;
+                    html += `<p><strong>Valore accettato:</strong> ${validation.accepted ? '✅ SÌ' : '❌ NO'}</p>`;
+                    html += `<p><strong>Confidenza:</strong> ${(validation.confidence * 100).toFixed(1)}%</p>`;
+                    
+                    if (validation.suggestions.length > 0) {
+                        html += `<h5>Suggerimenti:</h5><ul>`;
+                        validation.suggestions.forEach(sugg => {
+                            html += `<li><strong>${sugg.type}:</strong> ${sugg.message}</li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                    
+                    if (validation.autoCorrections.length > 0) {
+                        html += `<h5>Auto-correzioni:</h5><ul>`;
+                        validation.autoCorrections.forEach(corr => {
+                            html += `<li><strong>${corr.type}:</strong> "${corr.original}" → "${corr.corrected}" (${corr.reason})</li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    throw new Error(result.error || 'Errore validazione');
+                }
+            } catch (error) {
+                logMessage(`❌ Errore validazione: ${error.message}`);
+                document.getElementById('validationResults').style.display = 'none';
+            }
+        }
+
+        async function getOrganicSchemas() {
+            logMessage(`📋 Recuperando schemi organici...`);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/schema/entities`);
+                const result = await response.json();
+
+                if (result.success) {
+                    logMessage(`✅ Trovati ${result.count} schemi organici`);
+                    logMessage(`🌱 Modalità: ${result.mode}`);
+
+                    const resultsDiv = document.getElementById('schemaResults');
+                    
+                    if (result.data.length === 0) {
+                        resultsDiv.innerHTML = '<p>Nessuno schema organico trovato. Crea alcune entità per vedere gli schemi emergere!</p>';
+                        return;
+                    }
+
+                    let html = '<h4>Schemi Organici Emergenti</h4>';
+                    
+                    result.data.forEach(schema => {
+                        html += `<div class="section">`;
+                        html += `<h5>${schema.entityType} (${schema.instanceCount} istanze)</h5>`;
+                        html += `<p><strong>Modalità:</strong> ${schema.mode}</p>`;
+                        
+                        if (schema.attributes && schema.attributes.length > 0) {
+                            html += `<h6>Attributi Scoperti:</h6><ul>`;
+                            schema.attributes.forEach(attr => {
+                                const confidence = (attr.confidence * 100).toFixed(1);
+                                html += `<li><strong>${attr.name}</strong> (${attr.type}) - Confidenza: ${confidence}% - Usi: ${attr.usageCount}</li>`;
+                            });
+                            html += `</ul>`;
+                        }
+                        
+                        if (schema.emergence) {
+                            html += `<p><strong>Emergenza:</strong> ${schema.emergence.highConfidence} attributi consolidati, ${schema.emergence.emergingPatterns} emergenti</p>`;
+                        }
+                        
+                        html += `</div>`;
+                    });
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    throw new Error(result.error || 'Errore recupero schemi');
+                }
+            } catch (error) {
+                logMessage(`❌ Errore recupero schemi: ${error.message}`);
+            }
+        }
+
+        async function listEntities() {
+            const entityType = document.getElementById('entityType').value;
+            logMessage(`📄 Recuperando entità tipo: ${entityType}`);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/entities/${entityType}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    logMessage(`✅ Trovate ${result.count} entità di tipo ${entityType}`);
+
+                    const resultsDiv = document.getElementById('entitiesList');
+                    
+                    if (result.data.length === 0) {
+                        resultsDiv.innerHTML = '<p>Nessuna entità trovata. Crea alcune entità per vederle qui!</p>';
+                        return;
+                    }
+
+                    let html = `<h4>Entità ${entityType} (${result.count})</h4>`;
+                    
+                    result.data.forEach((entity, index) => {
+                        html += `<div class="section">`;
+                        html += `<h5>Entità #${index + 1} (ID: ${entity.id.substring(0, 8)}...)</h5>`;
+                        html += `<ul>`;
+                        
+                        Object.entries(entity).forEach(([key, value]) => {
+                            if (key !== 'id') {
+                                html += `<li><strong>${key}:</strong> ${value}</li>`;
+                            }
+                        });
+                        
+                        html += `</ul>`;
+                        html += `</div>`;
+                    });
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    throw new Error(result.error || 'Errore recupero entità');
+                }
+            } catch (error) {
+                logMessage(`❌ Errore recupero entità: ${error.message}`);
+            }
+        }
+
+        function logMessage(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('systemLog');
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>

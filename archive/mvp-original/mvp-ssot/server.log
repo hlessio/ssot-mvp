@@ -1,0 +1,22 @@
+Nuovo listener sottoscritto. Totale listeners: 1
+Connessione a Neo4j in corso...
+❌ Errore durante la connessione a Neo4j: Failed to connect to server. Please ensure that your database is listening on the correct host and port and that you have compatible encryption settings both on Neo4j server and driver. Note that the default encryption setting has changed in Neo4j 4.0.
+Errore nell'avvio del server: Neo4jError: Failed to connect to server. Please ensure that your database is listening on the correct host and port and that you have compatible encryption settings both on Neo4j server and driver. Note that the default encryption setting has changed in Neo4j 4.0.
+    at Neo4jError.GQLError [as constructor] (/Users/hlessio/Desktop/Lavoro/SSOT-3005 claude code/node_modules/neo4j-driver-core/lib/error.js:117:24)
+    at new Neo4jError (/Users/hlessio/Desktop/Lavoro/SSOT-3005 claude code/node_modules/neo4j-driver-core/lib/error.js:204:28)
+    at newError (/Users/hlessio/Desktop/Lavoro/SSOT-3005 claude code/node_modules/neo4j-driver-core/lib/error.js:246:12)
+    at NodeChannel._handleConnectionError (/Users/hlessio/Desktop/Lavoro/SSOT-3005 claude code/node_modules/neo4j-driver-bolt-connection/lib/channel/node/node-channel.js:239:56)
+    at Socket.emit (node:events:507:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  constructor: [Function: Neo4jError] { isRetriable: [Function (anonymous)] },
+  cause: undefined,
+  gqlStatus: '50N42',
+  gqlStatusDescription: 'error: general processing exception - unexpected error. Failed to connect to server. Please ensure that your database is listening on the correct host and port and that you have compatible encryption settings both on Neo4j server and driver. Note that the default encryption setting has changed in Neo4j 4.0.',
+  diagnosticRecord: { OPERATION: '', OPERATION_CODE: '0', CURRENT_SCHEMA: '/' },
+  classification: 'UNKNOWN',
+  rawClassification: undefined,
+  code: 'ServiceUnavailable',
+  retriable: true
+}

@@ -1,0 +1,168 @@
+{
+  "moduleId": "DynamicTableModule",
+  "moduleVersion": "2.0.0",
+  "targetEntityType": "*",
+  "description": "Modulo tabellare dinamico per visualizzare, modificare e gestire entità con supporto per aggiunta di righe e colonne in tempo reale.",
+  "author": "SSOT Dinamico Team",
+  "phase": "demo-fase-2",
+  "tags": ["tabellare", "dinamico", "editing", "schema-evolution"],
+  "lastModified": "2024-12-19",
+  
+  "defaultView": {
+    "renderer": "TabularRenderer",
+    "layout": "table",
+    "features": [
+      "add-entity",
+      "add-attribute", 
+      "inline-editing",
+      "schema-evolution",
+      "real-time-sync"
+    ],
+    "displayOptions": {
+      "showEntityId": true,
+      "idColumnFormat": "short",
+      "editableMode": "inline",
+      "validationMode": "real-time"
+    }
+  },
+  
+  "views": {
+    "compactTable": {
+      "renderer": "TabularRenderer",
+      "displayOptions": {
+        "showEntityId": false,
+        "maxColumnsVisible": 5,
+        "editableMode": "click-to-edit"
+      }
+    },
+    "readOnlyTable": {
+      "renderer": "TabularRenderer", 
+      "displayOptions": {
+        "editableMode": "disabled",
+        "showActions": false
+      }
+    }
+  },
+  
+  "actions": [
+    {
+      "actionId": "addEntity",
+      "label": "Aggiungi Riga",
+      "icon": "➕",
+      "handler": "handleAddEntity",
+      "category": "entity-management",
+      "hotkey": "Ctrl+R"
+    },
+    {
+      "actionId": "addAttribute", 
+      "label": "Aggiungi Colonna",
+      "icon": "📋",
+      "handler": "handleAddAttribute",
+      "category": "schema-management",
+      "hotkey": "Ctrl+C"
+    },
+    {
+      "actionId": "refreshData",
+      "label": "Aggiorna Dati",
+      "icon": "🔄", 
+      "handler": "handleRefreshData",
+      "category": "data-management",
+      "hotkey": "F5"
+    },
+    {
+      "actionId": "saveInstance",
+      "label": "Salva Vista Come...",
+      "icon": "💾",
+      "handler": "handleSaveInstance", 
+      "category": "instance-management",
+      "hotkey": "Ctrl+S"
+    },
+    {
+      "actionId": "exportData",
+      "label": "Esporta Dati",
+      "icon": "📤",
+      "handler": "handleExportData",
+      "category": "data-management", 
+      "hotkey": "Ctrl+E",
+      "enabled": false
+    }
+  ],
+  
+  "instanceConfigurableFields": [
+    "visibleAttributes",
+    "attributeOrder", 
+    "sortConfig",
+    "filterCriteria",
+    "displayOptions",
+    "customActions"
+  ],
+  
+  "schemaAwareness": {
+    "supportsAttributeTypes": [
+      "string", 
+      "integer", 
+      "boolean", 
+      "date", 
+      "email", 
+      "url", 
+      "phone",
+      "reference"
+    ],
+    "validationMode": "schema-driven",
+    "autoDiscoverSchema": true,
+    "allowSchemaEvolution": true
+  },
+  
+  "synchronization": {
+    "realTimeUpdates": true,
+    "crossWindowSync": true,
+    "conflictResolution": "last-write-wins",
+    "batchOperations": true
+  },
+  
+  "ui": {
+    "responsive": true,
+    "theme": "default",
+    "customCSS": null,
+    "accessibilityLevel": "AA"
+  },
+  
+  "performance": {
+    "virtualScrolling": false,
+    "lazyLoading": false,
+    "maxEntitiesPerPage": 100,
+    "debounceEditMs": 300
+  },
+  
+  "compatibility": {
+    "minBrowserVersion": {
+      "chrome": "70",
+      "firefox": "65", 
+      "safari": "12",
+      "edge": "79"
+    },
+    "requiredFeatures": [
+      "WebSocket",
+      "BroadcastChannel",
+      "Fetch API"
+    ]
+  },
+  
+  "metadata": {
+    "version": "2.0.0",
+    "createdAt": "2024-12-19T10:00:00Z",
+    "documentation": "Modulo per gestione tabellare dinamica con supporto completo per schema evolution e editing real-time.",
+    "examples": [
+      {
+        "name": "Gestione Contatti",
+        "description": "Tabella per gestire contatti con attributi nome, email, telefono",
+        "targetEntityType": "Contatto"
+      },
+      {
+        "name": "Task Management",
+        "description": "Tabella per gestire task con stato, priorità, assegnatario",
+        "targetEntityType": "Task"
+      }
+    ]
+  }
+} 

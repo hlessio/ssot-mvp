@@ -1,0 +1,499 @@
+
+> ssot-3005@1.0.0 start
+> node src/backend/server.js
+
+🎯 Avvio Server SSOT Dinamico Evoluto - Fase 1 Frontend
+============================================================
+[AttributeSpace] AttributeSpace Evoluto inizializzato {
+  enableBatching: true,
+  batchDelay: 30,
+  maxLoopDetection: 5,
+  enableLogging: true
+}
+🌱 AttributeDiscoveryManager inizializzato - Schema Organico
+🔗 ImplicitRelationManager inizializzato - Relazioni Organiche
+🤖 SoftValidationEngine inizializzato - Validazione Intelligente
+🔗 RelationEngine inizializzato
+🚀 EntityEngine Evoluto inizializzato
+[AttributeSpace] Nuova sottoscrizione registrata: sub_1 {
+  type: 'entity',
+  entityType: '*',
+  entityId: '*',
+  attributeName: '*',
+  attributeNamePattern: undefined,
+  attributeType: undefined,
+  changeType: '*',
+  relationType: '*',
+  sourceEntityType: undefined,
+  targetEntityType: undefined,
+  custom: undefined
+}
+[AttributeSpace] Nuova sottoscrizione registrata: sub_2 {
+  type: 'relation',
+  entityType: '*',
+  entityId: '*',
+  attributeName: '*',
+  attributeNamePattern: undefined,
+  attributeType: undefined,
+  changeType: '*',
+  relationType: '*',
+  sourceEntityType: undefined,
+  targetEntityType: undefined,
+  custom: undefined
+}
+[AttributeSpace] Nuova sottoscrizione registrata: sub_3 {
+  type: 'schema',
+  entityType: '*',
+  entityId: '*',
+  attributeName: '*',
+  attributeNamePattern: undefined,
+  attributeType: undefined,
+  changeType: '*',
+  relationType: '*',
+  sourceEntityType: undefined,
+  targetEntityType: undefined,
+  custom: undefined
+}
+[AttributeSpace] Nuova sottoscrizione registrata: sub_4 {
+  type: 'entity',
+  entityType: '*',
+  entityId: '*',
+  attributeName: '*',
+  attributeNamePattern: '*password*',
+  attributeType: undefined,
+  changeType: '*',
+  relationType: '*',
+  sourceEntityType: undefined,
+  targetEntityType: undefined,
+  custom: undefined
+}
+[AttributeSpace] Nuova sottoscrizione registrata: sub_5 {
+  type: 'entity',
+  entityType: '*',
+  entityId: '*',
+  attributeName: '*',
+  attributeNamePattern: undefined,
+  attributeType: undefined,
+  changeType: '*',
+  relationType: '*',
+  sourceEntityType: undefined,
+  targetEntityType: undefined,
+  custom: [Function: custom]
+}
+✅ AttributeSpace Evoluto configurato con 5 sottoscrizioni pattern-based
+🔌 Connessione a Neo4j...
+Connessione a Neo4j in corso...
+✅ Connessione a Neo4j stabilita con successo (Pool: 10 connections)
+🚀 Inizializzazione componenti evoluti...
+🔄 Inizializzazione SchemaManager evoluto...
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType)
+            RETURN s.entityType as entityType
+            ORDER BY s.entityType
+        
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: ' Giannino',
+  version: 1,
+  mode: 'flexible',
+  created: 1749507773348,
+  modified: '2025-06-09T22:22:53.349Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: eta',
+      name: 'eta',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'integer',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: attivo',
+      name: 'attivo',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'boolean',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: sito_web',
+      name: 'sito_web',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: telefono',
+      name: 'telefono',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: email',
+      name: 'email',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'email',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: nome',
+      name: 'nome',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'FilmProject',
+  version: 1,
+  mode: 'flexible',
+  created: 1749507549685,
+  modified: '2025-06-09T22:19:09.685Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: budget',
+      name: 'budget',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'integer',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: anno',
+      name: 'anno',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'integer',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: regista',
+      name: 'regista',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: nome',
+      name: 'nome',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'ModuleInstance',
+  version: 1,
+  mode: 'flexible',
+  created: 1749507550328,
+  modified: '2025-06-09T22:19:10.328Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: version',
+      name: 'version',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'integer',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: description',
+      name: 'description',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: targetEntityId',
+      name: 'targetEntityId',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: targetEntityType',
+      name: 'targetEntityType',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: templateModuleId',
+      name: 'templateModuleId',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: instanceName',
+      name: 'instanceName',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'TestDiscovery',
+  version: 1,
+  mode: 'flexible',
+  created: 1749507550668,
+  modified: '2025-06-09T22:19:10.668Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: attivo',
+      name: 'attivo',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'boolean',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: telefono',
+      name: 'telefono',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: email',
+      name: 'email',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'email',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: nome',
+      name: 'nome',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    }
+  ]
+}
+✅ Trovati 4 schemi entità
+✅ Schema entità caricato:  Giannino
+✅ Schema entità caricato: FilmProject
+✅ Schema entità caricato: ModuleInstance
+✅ Schema entità caricato: TestDiscovery
+🔍 Esecuzione query: 
+            MATCH (s:SchemaRelationType)
+            RETURN s.relationType as relationType
+            ORDER BY s.relationType
+        
+✅ Trovati 0 schemi relazione
+✅ SchemaManager inizializzato con 4 schemi entità e 0 schemi relazione
+✅ SchemaManager evoluto inizializzato
+🔍 Esecuzione query: 
+                MATCH (source:Entity)-[:HAS_RELATION]->(r:Relation)-[:TO_ENTITY]->(target:Entity)
+                RETURN r, source, target
+                ORDER BY r.created
+            
+✅ Caricate 0 relazioni dal database
+✅ RelationEngine caricato con relazioni esistenti
+🎯 Tutti i componenti evoluti inizializzati con successo
+🚀 Server SSOT Dinamico Evoluto (Fase 4 - AttributeSpace) avviato su porta 3000
+📱 Dashboard: http://localhost:3000/
+🔌 WebSocket: ws://localhost:3000/
+🧠 Componenti attivi: AttributeSpace Evoluto, EntityEngine Evoluto, RelationEngine, SchemaManager Evoluto
+✅ Server pronto per frontend evoluto Fase 1
+📋 Servizi disponibili:
+   - API MVP compatibili per fallback
+   - API evolute per SchemaService
+   - File statici frontend da /frontend/
+   - WebSocket per real-time updates
+   - Template test page: http://localhost:3000/views/template-test.html
+============================================================
+2025-06-09T23:07:26.937Z - GET /api/entities/TestOrganico
+🔍 Recupero tutte le entità di tipo: TestOrganico
+🚨 FIX LIMIT APPLIED: limit=1000 -> 1000, offset=0 -> 0
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`TestOrganico`)
+            RETURN e
+            ORDER BY e.createdAt
+            SKIP 0
+            LIMIT 1000
+        
+✅ Trovate 0 entità di tipo TestOrganico
+✅ Recuperate 0 entità di tipo TestOrganico
+2025-06-09T23:07:42.306Z - GET /api/entities/FilmProject
+🔍 Recupero tutte le entità di tipo: FilmProject
+🚨 FIX LIMIT APPLIED: limit=1000 -> 1000, offset=0 -> 0
+🔍 Esecuzione query: 
+            MATCH (e:Entity:`FilmProject`)
+            RETURN e
+            ORDER BY e.createdAt
+            SKIP 0
+            LIMIT 1000
+        
+✅ Trovate 6 entità di tipo FilmProject
+✅ Recuperate 6 entità di tipo FilmProject
+2025-06-09T23:07:57.035Z - GET /src/frontend/test-organic.html

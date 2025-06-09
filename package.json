@@ -1,0 +1,27 @@
+{
+  "name": "ssot-3005",
+  "version": "1.0.0",
+  "main": "src/backend/server.js",
+  "scripts": {
+    "start": "node src/backend/server.js",
+    "dev": "node src/backend/server.js",
+    "test": "node tests/test-runner.js unit",
+    "test:unit": "node tests/test-runner.js unit",
+    "test:integration": "node tests/test-runner.js integration",
+    "test:all": "node tests/test-runner.js all",
+    "test:verbose": "node tests/test-runner.js all --verbose",
+    "test:legacy": "node tests/backend/test_core_engine.js",
+    "test:practical": "node tests/practical-client-test.js"
+  },
+  "keywords": ["ssot", "dynamic", "real-time", "neo4j"],
+  "author": "",
+  "license": "ISC",
+  "description": "Dynamic Single Source of Truth system with real-time schema evolution",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "neo4j-driver": "^5.28.1",
+    "uuid": "^11.1.0",
+    "ws": "^8.18.2"
+  }
+}

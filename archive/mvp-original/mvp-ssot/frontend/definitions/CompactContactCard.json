@@ -1,0 +1,63 @@
+{
+  "moduleId": "CompactContactCard",
+  "moduleVersion": "1.0.0",
+  "targetEntityType": "*",
+  "description": "Card compatta per sub-moduli e liste di relazioni (✨ Fase 3)",
+  "defaultView": {
+    "renderer": "CompactCardRenderer",
+    "attributesToDisplay": ["nome", "cognome", "email"],
+    "compact": true,
+    "showBorder": true,
+    "showActions": false
+  },
+  "views": {
+    "minimal": {
+      "renderer": "CompactCardRenderer",
+      "attributesToDisplay": ["nome", "email"],
+      "compact": true,
+      "showBorder": false
+    },
+    "withPhone": {
+      "renderer": "CompactCardRenderer",
+      "attributesToDisplay": ["nome", "cognome", "email", "telefono"],
+      "compact": true,
+      "showBorder": true
+    },
+    "nameOnly": {
+      "renderer": "CompactCardRenderer",
+      "attributesToDisplay": ["nome", "cognome"],
+      "compact": true,
+      "showBorder": false,
+      "inline": true
+    }
+  },
+  "instanceConfigurableFields": [
+    "attributesToDisplay",
+    "compact",
+    "showBorder",
+    "showActions",
+    "inline"
+  ],
+  "actions": [
+    {
+      "actionId": "navigate",
+      "label": "👁️ Visualizza",
+      "handler": "handleNavigate",
+      "category": "navigation",
+      "icon": "👁️"
+    }
+  ],
+  "metadata": {
+    "author": "Sistema SSOT Dinamico",
+    "createdAt": "2025-01-03",
+    "phase": "Fase 3 - Sub-moduli",
+    "compatibleEntityTypes": "*",
+    "tags": ["compact", "submodule", "relations", "lista"],
+    "features": [
+      "compact-rendering",
+      "sub-module",
+      "universal"
+    ],
+    "purpose": "sub-module"
+  }
+} 

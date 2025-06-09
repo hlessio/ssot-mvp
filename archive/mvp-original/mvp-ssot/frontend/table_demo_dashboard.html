@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Fase 2 - Moduli Tabellari Dinamici | SSOT Dinamico</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .section h2 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .instances-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .instance-item {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s ease;
+        }
+
+        .instance-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .instance-item:last-child {
+            border-bottom: none;
+        }
+
+        .instance-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .instance-name {
+            font-weight: 600;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .instance-meta {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .instance-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .instance-actions .btn {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .connection-status.connected {
+            background: #28a745;
+        }
+
+        .connection-status.disconnected {
+            background: #dc3545;
+        }
+
+        .debug-panel {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+
+        .debug-messages {
+            background: #212529;
+            color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .debug-message {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .debug-message.info {
+            color: #17a2b8;
+        }
+
+        .debug-message.success {
+            color: #28a745;
+        }
+
+        .debug-message.error {
+            color: #dc3545;
+        }
+
+        .debug-message.warning {
+            color: #ffc107;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3em;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🚀 Demo Fase 2 - Moduli Tabellari Dinamici</h1>
+            <p>Gestisci moduli tabellari, crea istanze personalizzate e testa la sincronizzazione SSOT in tempo reale</p>
+        </header>
+
+        <div class="connection-status" id="connection-status">
+            🔄 Connessione in corso...
+        </div>
+
+        <div class="main-content">
+            <!-- Sezione Creazione Nuovo Modulo -->
+            <div class="section">
+                <h2>📊 Nuovo Modulo Tabellare</h2>
+                
+                <div class="form-group">
+                    <label for="entity-type-select">Tipo di Entità:</label>
+                    <select id="entity-type-select">
+                        <option value="">-- Seleziona Tipo Entità --</option>
+                        <option value="Contatto">Contatto</option>
+                        <option value="Persona">Persona</option>
+                        <option value="Azienda">Azienda</option>
+                        <option value="Task">Task</option>
+                        <option value="TestEvoluzione">TestEvoluzione</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="custom-entity-type">Oppure inserisci nuovo tipo:</label>
+                    <input type="text" id="custom-entity-type" placeholder="es. Progetto, Cliente, Prodotto...">
+                </div>
+
+                <button class="btn" id="btn-open-new-table">
+                    🚀 Apri Nuovo Modulo Tabellare
+                </button>
+
+                <button class="btn btn-secondary" id="btn-refresh-schemas">
+                    🔄 Aggiorna Schemi Disponibili
+                </button>
+            </div>
+
+            <!-- Sezione Gestione Istanze -->
+            <div class="section">
+                <h2>💾 Istanze Modulo Salvate</h2>
+                
+                <div class="form-group">
+                    <button class="btn btn-secondary" id="btn-refresh-instances">
+                        🔄 Aggiorna Lista Istanze
+                    </button>
+                </div>
+
+                <div id="instances-container">
+                    <div class="instances-list" id="instances-list">
+                        <div class="empty-state">
+                            <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.5;">📋</div>
+                            <p>Nessuna istanza salvata</p>
+                            <p style="font-size: 0.9em; margin-top: 10px;">Crea e salva viste personalizzate dai moduli tabellari aperti</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debug Panel -->
+            <div class="section debug-panel">
+                <h2>🐛 Log Debug</h2>
+                
+                <div style="margin-bottom: 10px;">
+                    <button class="btn btn-secondary" id="btn-clear-debug">
+                        🗑️ Pulisci Log
+                    </button>
+                    <button class="btn btn-secondary" id="btn-test-connection">
+                        🔗 Test Connessione
+                    </button>
+                </div>
+
+                <div class="debug-messages" id="debug-messages">
+                    <div class="debug-message info">
+                        <strong>[INFO]</strong> Dashboard caricata - In attesa di inizializzazione...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Dependencies -->
+    <script src="services/ModuleDefinitionService.js"></script>
+    <script src="services/SchemaService.js"></script>
+    <script src="services/EntityService.js"></script>
+    <script src="services/WebSocketService.js"></script>
+    <script src="services/SaveInstanceService.js"></script>
+    <script src="table_demo_dashboard.js"></script>
+
+    <script>
+        // Inizializza la dashboard quando il DOM è pronto
+        document.addEventListener('DOMContentLoaded', () => {
+            window.demoApp = new TableDemoDashboard();
+        });
+    </script>
+</body>
+</html> 
