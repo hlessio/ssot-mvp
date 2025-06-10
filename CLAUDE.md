@@ -123,6 +123,7 @@ Stores:
   - :AttributeDefinition nodes for attribute definitions
   - :HAS_ATTRIBUTE relationships connecting schemas to their attributes
 - **Module Instances:** :ModuleInstance nodes storing saved UI module configurations
+- **✨ NEW - Hierarchical Relations:** :MEMBER_OF relationships between entities and ModuleInstance with contextual attributes (fee, ruolo, date), :BELONGS_TO relationships linking ModuleInstance to projects
 
 ## Key Development Guidelines
 
@@ -259,11 +260,12 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - Soft validation with intelligent suggestions
 - **Result**: Too complex, didn't match user mental model
 
-**Phase 4**: Dynamic UI System (Current)
-- User-driven modeling through visual interface
-- ModuleInstance as semantic container
-- Contextual relationship attributes
-- Bidirectional queries and operations
+**Phase 4**: Dynamic UI System (Current - Fase 1 Backend Completata ✅)
+- **ModuleRelationService**: Implementa modello gerarchico Progetto → ModuleInstance → Entità
+- **Attributi Relazionali**: Fee, ruoli, date memorizzati sulle relazioni MEMBER_OF
+- **Query Bidirezionali**: Entità→progetti e progetti→entità con attributi contestuali
+- **API REST Complete**: CRUD per membri modulo con aggregati automatici
+- **Test Coverage**: 100% con integrazione Neo4j verificata
 
 ## Common Development Tasks
 
@@ -288,6 +290,13 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - Smart inputs with contextual autocomplete
 - Relational attributes on entity-module relationships
 - Bidirectional queries (entity→projects, project→entities)
+
+### Working with ModuleRelationService (New ✅)
+- **Hierarchical Model**: `Project → ModuleInstance → Entity` with contextual attributes
+- **API Endpoints**: `/api/modules/:moduleId/members` for CRUD operations
+- **Contextual Attributes**: Store fee, role, dates on MEMBER_OF relationships
+- **Aggregates**: Calculate totals, averages, member counts per module
+- **Bidirectional Queries**: `/api/entities/:entityId/projects` for entity's project history
 
 This system prevents duplication by centralizing schema definitions and providing schema-aware, reusable UI components that adapt to any entity type.
 

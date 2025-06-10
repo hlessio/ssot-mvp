@@ -21,6 +21,9 @@ const AttributeDiscoveryManager = require('./core/attributeDiscovery');
 const ImplicitRelationManager = require('./core/implicitRelationManager');
 const SoftValidationEngine = require('./core/softValidationEngine');
 
+// ✨ FASE 1 UI DINAMICA: Import ModuleRelationService
+const ModuleRelationService = require('./services/ModuleRelationService');
+
 class EvolvedServer {
     constructor() {
         this.app = express();
@@ -51,6 +54,9 @@ class EvolvedServer {
         this.schemaManager = new SchemaManager(neo4jDAO);
         this.relationEngine = new RelationEngine(this.entityEngine_MVP, this.schemaManager, neo4jDAO);
         this.entityEngine = new EntityEngine(neo4jDAO, this.schemaManager, this.relationEngine, this.attributeSpace);
+        
+        // ✨ FASE 1 UI DINAMICA: Inizializzazione ModuleRelationService
+        this.moduleRelationService = new ModuleRelationService(neo4jDAO, this.attributeSpace);
         
         // Flag per modalità evoluta e organica
         this.enableEvolvedFeatures = true;
@@ -1321,6 +1327,192 @@ class EvolvedServer {
                 });
             } catch (error) {
                 console.error('❌ Errore statistiche relazioni:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // ============================================
+        // ENDPOINT MODULE RELATION SERVICE (Fase 1 UI Dinamica)
+        // ============================================
+
+        // POST /api/modules/:moduleId/members - Aggiunge un membro al modulo con attributi
+        this.app.post('/api/modules/:moduleId/members', async (req, res) => {
+            try {
+                const { moduleId } = req.params;
+                const { entityId, relationAttributes } = req.body;
+                
+                if (!entityId) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'entityId è richiesto'
+                    });
+                }
+                
+                const result = await this.moduleRelationService.addEntityToModule(
+                    entityId, 
+                    moduleId, 
+                    relationAttributes || {}
+                );
+                
+                res.status(201).json({
+                    success: true,
+                    data: result
+                });
+            } catch (error) {
+                console.error('❌ Errore aggiunta membro al modulo:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // PUT /api/modules/:moduleId/members/:entityId/attributes - Aggiorna attributi relazione
+        this.app.put('/api/modules/:moduleId/members/:entityId/attributes', async (req, res) => {
+            try {
+                const { moduleId, entityId } = req.params;
+                const { attributes } = req.body;
+                
+                if (!attributes || typeof attributes !== 'object') {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'attributes è richiesto e deve essere un oggetto'
+                    });
+                }
+                
+                const result = await this.moduleRelationService.updateMembershipAttributes(
+                    entityId, 
+                    moduleId, 
+                    attributes
+                );
+                
+                res.json({
+                    success: true,
+                    data: result
+                });
+            } catch (error) {
+                console.error('❌ Errore aggiornamento attributi membro:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/modules/:moduleId/members - Recupera membri del modulo con attributi
+        this.app.get('/api/modules/:moduleId/members', async (req, res) => {
+            try {
+                const { moduleId } = req.params;
+                const options = {
+                    limit: parseInt(req.query.limit) || 100,
+                    offset: parseInt(req.query.offset) || 0,
+                    orderBy: req.query.orderBy || 'addedAt'
+                };
+                
+                const members = await this.moduleRelationService.getModuleMembers(moduleId, options);
+                
+                res.json({
+                    success: true,
+                    data: members,
+                    count: members.length,
+                    moduleId: moduleId
+                });
+            } catch (error) {
+                console.error('❌ Errore recupero membri modulo:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // DELETE /api/modules/:moduleId/members/:entityId - Rimuove membro dal modulo
+        this.app.delete('/api/modules/:moduleId/members/:entityId', async (req, res) => {
+            try {
+                const { moduleId, entityId } = req.params;
+                
+                await this.moduleRelationService.removeEntityFromModule(entityId, moduleId);
+                
+                res.json({
+                    success: true,
+                    message: `Entità ${entityId} rimossa dal modulo ${moduleId}`
+                });
+            } catch (error) {
+                console.error('❌ Errore rimozione membro dal modulo:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/entities/:entityId/projects - Recupera progetti di un'entità
+        this.app.get('/api/entities/:entityId/projects', async (req, res) => {
+            try {
+                const { entityId } = req.params;
+                const options = {
+                    includeModuleDetails: req.query.includeModuleDetails !== 'false'
+                };
+                
+                const projects = await this.moduleRelationService.getEntityProjects(entityId, options);
+                
+                res.json({
+                    success: true,
+                    data: projects,
+                    count: projects.length,
+                    entityId: entityId
+                });
+            } catch (error) {
+                console.error('❌ Errore recupero progetti entità:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/modules/:moduleId/aggregates - Calcola aggregati del modulo
+        this.app.get('/api/modules/:moduleId/aggregates', async (req, res) => {
+            try {
+                const { moduleId } = req.params;
+                const aggregateField = req.query.field || 'fee';
+                
+                const aggregates = await this.moduleRelationService.getModuleAggregates(
+                    moduleId, 
+                    aggregateField
+                );
+                
+                res.json({
+                    success: true,
+                    data: aggregates,
+                    moduleId: moduleId,
+                    field: aggregateField
+                });
+            } catch (error) {
+                console.error('❌ Errore calcolo aggregati modulo:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // POST /api/projects/:projectId/modules/:moduleId/link - Collega modulo a progetto
+        this.app.post('/api/projects/:projectId/modules/:moduleId/link', async (req, res) => {
+            try {
+                const { projectId, moduleId } = req.params;
+                
+                const result = await this.moduleRelationService.linkModuleToProject(projectId, moduleId);
+                
+                res.status(201).json({
+                    success: true,
+                    data: result
+                });
+            } catch (error) {
+                console.error('❌ Errore collegamento modulo a progetto:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
