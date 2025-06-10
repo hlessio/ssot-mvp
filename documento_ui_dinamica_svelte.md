@@ -335,9 +335,8 @@ app.get('/api/entities/:entityId/projects', async (req, res) => {
 **Stato Corrente**: Documento creato, definizione modello concettuale completa
 
 **Prossimi Passi**: 
-1. Fix errore Neo4j LIMIT (critico)
-2. Implementazione ModuleRelationService
-3. Setup ambiente Svelte
+1. Implementazione ModuleRelationService
+2. Setup ambiente Svelte
 
 **Da Aggiornare Dopo Ogni Fase**: Questo documento deve essere aggiornato ad ogni completamento di fase per tracciare il progresso e le modifiche.
 

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 SSOT UI Dinamica - Svelte Test</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    
+    <!-- Svelte CSS bundle -->
+    <link rel="stylesheet" href="/dist/bundle.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #667eea;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+        
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .debug-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-family: monospace;
+            max-width: 300px;
+            display: none;
+        }
+        
+        .debug-info.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="spinner"></div>
+        <h2>🎯 Caricamento UI Dinamica Svelte</h2>
+        <p>Inizializzazione componenti...</p>
+    </div>
+    
+    <!-- Error message -->
+    <div id="error-message" class="error-message">
+        <strong>❌ Errore:</strong> <span id="error-text"></span>
+    </div>
+    
+    <!-- Debug info -->
+    <div id="debug-info" class="debug-info">
+        <div><strong>Backend:</strong> <span id="backend-status">🔄 Verifica...</span></div>
+        <div><strong>WebSocket:</strong> <span id="ws-status">🔄 Connessione...</span></div>
+        <div><strong>Svelte:</strong> <span id="svelte-status">🔄 Inizializzazione...</span></div>
+        <div><strong>ModuleID:</strong> <span id="current-module">-</span></div>
+        <div><strong>ProjectID:</strong> <span id="current-project">-</span></div>
+    </div>
+    
+    <!-- Svelte app will mount here -->
+    <!-- Il componente App di Svelte si monterà nel body -->
+    
+    <!-- Svelte JS bundle -->
+    <script src="/dist/bundle.js"></script>
+    
+    <script>
+        // Debug e inizializzazione
+        let debugMode = new URLSearchParams(window.location.search).get('debug') === 'true';
+        
+        if (debugMode) {
+            document.getElementById('debug-info').classList.add('visible');
+        }
+        
+        // Funzioni di utilità per debug
+        function updateDebugStatus(element, status, icon = '✅') {
+            document.getElementById(element).innerHTML = `${icon} ${status}`;
+        }
+        
+        function showError(message) {
+            document.getElementById('error-text').textContent = message;
+            document.getElementById('error-message').style.display = 'block';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading-screen').classList.add('hidden');
+        }
+        
+        // Verifica stato backend
+        async function checkBackendStatus() {
+            try {
+                const response = await fetch('/api/schema/entities');
+                if (response.ok) {
+                    updateDebugStatus('backend-status', 'Connesso');
+                    return true;
+                } else {
+                    updateDebugStatus('backend-status', 'Errore HTTP', '❌');
+                    return false;
+                }
+            } catch (error) {
+                updateDebugStatus('backend-status', 'Non raggiungibile', '❌');
+                showError('Backend non raggiungibile. Assicurati che il server sia avviato.');
+                return false;
+            }
+        }
+        
+        // Verifica WebSocket
+        function checkWebSocketConnection() {
+            try {
+                const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${wsProtocol}//${window.location.host}`;
+                const ws = new WebSocket(wsUrl);
+                
+                ws.onopen = () => {
+                    updateDebugStatus('ws-status', 'Connesso');
+                    ws.close();
+                };
+                
+                ws.onerror = () => {
+                    updateDebugStatus('ws-status', 'Errore connessione', '❌');
+                };
+                
+            } catch (error) {
+                updateDebugStatus('ws-status', 'Non disponibile', '❌');
+            }
+        }
+        
+        // Inizializzazione
+        async function initializeApp() {
+            console.log('🚀 Inizializzazione app Svelte UI Dinamica');
+            
+            // Verifica backend
+            const backendOk = await checkBackendStatus();
+            
+            // Verifica WebSocket
+            checkWebSocketConnection();
+            
+            // Aggiorna URL params per debug
+            const urlParams = new URLSearchParams(window.location.search);
+            const moduleId = urlParams.get('moduleId') || 'demo_module_1';
+            const projectId = urlParams.get('projectId') || 'demo_project_1';
+            
+            updateDebugStatus('current-module', moduleId);
+            updateDebugStatus('current-project', projectId);
+            
+            // Simula caricamento e nasconde schermata loading
+            setTimeout(() => {
+                updateDebugStatus('svelte-status', 'Inizializzato');
+                hideLoading();
+                
+                if (!backendOk) {
+                    console.warn('⚠️ Backend non disponibile, modalità demo offline');
+                }
+            }, 1500);
+        }
+        
+        // Gestione errori globali
+        window.addEventListener('error', (event) => {
+            console.error('❌ Errore globale:', event.error);
+            showError(`Errore JavaScript: ${event.error.message}`);
+            hideLoading();
+        });
+        
+        // Avvia inizializzazione
+        document.addEventListener('DOMContentLoaded', initializeApp);
+        
+        // Esporta funzioni per debug
+        window.debugApp = {
+            updateStatus: updateDebugStatus,
+            showError,
+            hideLoading,
+            toggleDebug: () => {
+                document.getElementById('debug-info').classList.toggle('visible');
+            }
+        };
+    </script>
+</body>
+</html>
