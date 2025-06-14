@@ -112,6 +112,27 @@ class AttributeDefinition {
                 // Ulteriori validazioni potrebbero verificare l'esistenza dell'entità referenziata
                 break;
                 
+            case 'text':
+                // Text è come string ma per contenuti più lunghi
+                if (typeof value !== 'string') {
+                    return { valid: false, error: `${this.name} deve essere una stringa di testo` };
+                }
+                break;
+                
+            case 'json':
+                // JSON può essere un oggetto o array JavaScript
+                if (typeof value === 'string') {
+                    // Se è una stringa, verifica che sia JSON valido
+                    try {
+                        JSON.parse(value);
+                    } catch (e) {
+                        return { valid: false, error: `${this.name} deve essere un JSON valido` };
+                    }
+                } else if (typeof value !== 'object' || value === null) {
+                    return { valid: false, error: `${this.name} deve essere un oggetto o array JSON` };
+                }
+                break;
+                
             default:
                 // Tipo sconosciuto, accetta qualsiasi valore con warning
                 return { valid: true, warning: `Tipo di attributo sconosciuto: ${this.type}` };

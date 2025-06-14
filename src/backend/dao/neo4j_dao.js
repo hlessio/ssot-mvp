@@ -7,6 +7,57 @@ class Neo4jDAO {
     }
 
     /**
+     * Prepara i dati per Neo4j serializzando oggetti JSON come stringhe
+     * @param {object} data - Dati da preparare
+     * @returns {object} Dati preparati per Neo4j
+     */
+    prepareDataForNeo4j(data) {
+        const prepared = {};
+        for (const [key, value] of Object.entries(data)) {
+            if (value === null || value === undefined) {
+                prepared[key] = null;
+            } else if (typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+                // Serializza oggetti JSON come stringhe
+                prepared[key] = JSON.stringify(value);
+            } else if (value instanceof Date) {
+                // Converti Date in ISO string
+                prepared[key] = value.toISOString();
+            } else {
+                // Mantieni valori primitivi e array
+                prepared[key] = value;
+            }
+        }
+        return prepared;
+    }
+
+    /**
+     * Deserializza dati da Neo4j parsando stringhe JSON
+     * @param {object} data - Dati da Neo4j
+     * @param {object} schema - Schema opzionale per identificare campi JSON
+     * @returns {object} Dati deserializzati
+     */
+    parseDataFromNeo4j(data, schema = null) {
+        const parsed = {};
+        for (const [key, value] of Object.entries(data)) {
+            if (value === null || value === undefined) {
+                parsed[key] = value;
+            } else if (schema?.attributes?.[key]?.type === 'json' || 
+                      (typeof value === 'string' && (value.startsWith('{') || value.startsWith('[')))) {
+                // Tenta di parsare stringhe JSON
+                try {
+                    parsed[key] = JSON.parse(value);
+                } catch (e) {
+                    // Se fallisce, mantieni come stringa
+                    parsed[key] = value;
+                }
+            } else {
+                parsed[key] = value;
+            }
+        }
+        return parsed;
+    }
+
+    /**
      * Crea una nuova entità con tipo e attributi iniziali
      * @param {string} entityType - Il tipo dell'entità (es. "Contact")
      * @param {object} initialAttributes - Attributi iniziali dell'entità
@@ -17,20 +68,23 @@ class Neo4jDAO {
         const now = new Date().toISOString();
         
         // Costruisco la query per creare l'entità con proprietà dinamiche
-        let setClause = 'SET e.id = $id, e.entityType = $entityType, e.createdAt = $createdAt, e.updatedAt = $updatedAt';
+        let setClause = 'SET e.id = $id, e.entityType = $entityType, e.createdAt = $createdAt, e.modifiedAt = $modifiedAt';
         
         const parameters = {
             id: entityId,
             entityType: entityType,
             createdAt: now,
-            updatedAt: now
+            modifiedAt: now
         };
         
+        // Prepara gli attributi per Neo4j (serializza JSON)
+        const preparedAttributes = this.prepareDataForNeo4j(initialAttributes);
+        
         // Aggiungo gli attributi iniziali alla query
-        Object.keys(initialAttributes).forEach((key, index) => {
+        Object.keys(preparedAttributes).forEach((key, index) => {
             const paramName = `attr${index}`;
             setClause += `, e.\`${key}\` = $${paramName}`;
-            parameters[paramName] = initialAttributes[key];
+            parameters[paramName] = preparedAttributes[key];
         });
         
         const cypher = `
@@ -45,7 +99,8 @@ class Neo4jDAO {
             if (result.records.length > 0) {
                 const entity = result.records[0].get('e').properties;
                 console.log('✅ Entità creata:', entity);
-                return entity;
+                // Deserializza campi JSON
+                return this.parseDataFromNeo4j(entity);
             }
             
             throw new Error('Errore durante la creazione dell\'entità');
@@ -72,7 +127,8 @@ class Neo4jDAO {
             if (result.records.length > 0) {
                 const entity = result.records[0].get('e').properties;
                 console.log('✅ Entità trovata:', entity);
-                return entity;
+                // Deserializza campi JSON
+                return this.parseDataFromNeo4j(entity);
             }
             
             console.log('ℹ️ Entità non trovata per ID:', id);
@@ -95,14 +151,17 @@ class Neo4jDAO {
         
         const cypher = `
             MATCH (e:Entity {id: $entityId})
-            SET e.\`${attributeName}\` = $value, e.updatedAt = $updatedAt
+            SET e.\`${attributeName}\` = $value, e.modifiedAt = $modifiedAt
             RETURN e
         `;
         
+        // Prepara il valore per Neo4j (serializza se è un oggetto JSON)
+        const preparedData = this.prepareDataForNeo4j({ [attributeName]: attributeValue });
+        
         const parameters = {
             entityId: entityId,
-            value: attributeValue,
-            updatedAt: now
+            value: preparedData[attributeName],
+            modifiedAt: now
         };
         
         try {
@@ -111,12 +170,42 @@ class Neo4jDAO {
             if (result.records.length > 0) {
                 const entity = result.records[0].get('e').properties;
                 console.log(`✅ Attributo ${attributeName} aggiornato per entità ${entityId}`);
-                return entity;
+                // Deserializza campi JSON
+                return this.parseDataFromNeo4j(entity);
             }
             
             throw new Error(`Entità con ID ${entityId} non trovata`);
         } catch (error) {
             console.error('❌ Errore updateEntityAttribute:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Elimina un'entità per ID
+     * @param {string} entityId - L'ID dell'entità da eliminare
+     * @returns {Promise<boolean>} True se eliminata con successo
+     */
+    async deleteEntity(entityId) {
+        const cypher = `
+            MATCH (e:Entity {id: $entityId})
+            DETACH DELETE e
+            RETURN count(e) as deleted
+        `;
+        
+        try {
+            const result = await this.connector.executeQuery(cypher, { entityId });
+            const deleted = result.records[0].get('deleted');
+            
+            if ((deleted.low || deleted) > 0) {
+                console.log(`✅ Entità ${entityId} eliminata`);
+                return true;
+            }
+            
+            console.log(`⚠️ Entità ${entityId} non trovata per eliminazione`);
+            return false;
+        } catch (error) {
+            console.error('❌ Errore deleteEntity:', error.message);
             throw error;
         }
     }
@@ -156,7 +245,9 @@ class Neo4jDAO {
             const result = await this.connector.executeQuery(cypher, parameters);
             
             const entities = result.records.map(record => {
-                return record.get('e').properties;
+                const entityData = record.get('e').properties;
+                // Deserializza campi JSON per ogni entità
+                return this.parseDataFromNeo4j(entityData);
             });
             
             const displayLimit = limit === 1000 ? '' : ` (limit: ${limit})`;
@@ -263,6 +354,7 @@ class Neo4jDAO {
             }
             
             const savedSchema = result.records[0].get('s').properties;
+            // Non serve parseDataFromNeo4j qui perché è uno schema, non dati entità
             
             // Gestisci attributi sia come Object che come Map (correzione bug)
             let attributesToSave = [];
@@ -393,6 +485,7 @@ class Neo4jDAO {
             
             const saved = result.records[0].get('a').properties;
             console.log(`✅ Attributo ${attributeName} salvato per schema ${schemaId}`);
+            // Non serve parseDataFromNeo4j qui perché sono metadati di schema
             return saved;
             
         } catch (error) {
@@ -414,7 +507,12 @@ class Neo4jDAO {
         // Aggiungi solo proprietà che hanno valori reali
         if (attributeDefinition.defaultValue !== undefined && attributeDefinition.defaultValue !== null) {
             setClauses.push('a.defaultValue = $defaultValue');
-            parameters.defaultValue = attributeDefinition.defaultValue;
+            // Se il defaultValue è un oggetto o array, serializzalo come JSON
+            if (typeof attributeDefinition.defaultValue === 'object') {
+                parameters.defaultValue = JSON.stringify(attributeDefinition.defaultValue);
+            } else {
+                parameters.defaultValue = attributeDefinition.defaultValue;
+            }
         }
         
         if (attributeDefinition.validationRules && attributeDefinition.validationRules.length > 0) {
@@ -498,6 +596,18 @@ class Neo4jDAO {
             const schemaNode = record.get('s').properties;
             const attributesData = record.get('attributes').filter(a => a !== null);
             
+            // Deserializza i defaultValue JSON per attributi di tipo json
+            const processedAttributes = attributesData.map(attr => {
+                if (attr.type === 'json' && attr.defaultValue && typeof attr.defaultValue === 'string') {
+                    try {
+                        attr.defaultValue = JSON.parse(attr.defaultValue);
+                    } catch (e) {
+                        console.warn(`⚠️ Errore parsing defaultValue JSON per attributo ${attr.name}:`, e.message);
+                    }
+                }
+                return attr;
+            });
+            
             const schema = {
                 entityType: schemaNode.entityType,
                 version: schemaNode.version,
@@ -505,7 +615,7 @@ class Neo4jDAO {
                 created: schemaNode.created,
                 modified: schemaNode.modified,
                 constraints: JSON.parse(schemaNode.constraints || '[]'),
-                attributes: attributesData
+                attributes: processedAttributes
             };
             
             console.log('✅ Schema entità caricato:', schema);
@@ -583,13 +693,19 @@ class Neo4jDAO {
                        CASE WHEN a.type IS NULL THEN 'created' ELSE 'existed' END as status
             `;
             
+            // Prepara i parametri serializzando gli oggetti JSON
+            let defaultValue = attributeDefinition.defaultValue || null;
+            if (defaultValue !== null && typeof defaultValue === 'object') {
+                defaultValue = JSON.stringify(defaultValue);
+            }
+            
             const parameters = {
                 entityType: entityType,
                 schemaId: schemaId,
                 attributeName: attributeName,
                 type: attributeDefinition.type || 'string',
                 required: attributeDefinition.required || false,
-                defaultValue: attributeDefinition.defaultValue || null,
+                defaultValue: defaultValue,
                 validationRules: JSON.stringify(attributeDefinition.validationRules || []),
                 description: attributeDefinition.description || '',
                 referencesEntityType: attributeDefinition.referencesEntityType || null,
@@ -604,6 +720,7 @@ class Neo4jDAO {
                 const record = result.records[0];
                 const saved = record.get('a').properties;
                 const status = record.get('status');
+                // Non serve parseDataFromNeo4j qui perché sono metadati di schema
                 
                 if (status === 'created') {
                     console.log(`✅ Nuovo attributo ${attributeName} aggiunto a schema ${entityType}`);
@@ -685,6 +802,14 @@ class Neo4jDAO {
         const now = new Date().toISOString();
         const schemaId = `schema_rel_${schema.relationType}`;
         
+        // Debug: log schema content
+        console.log(`💾 Salvando RelationSchema:`, {
+            relationType: schema.relationType,
+            sourceTypes: schema.sourceTypes,
+            targetTypes: schema.targetTypes,
+            cardinality: schema.cardinality
+        });
+        
         const cypher = `
             MERGE (s:SchemaRelationType {relationType: $relationType})
             SET s.schemaId = $schemaId,
@@ -718,10 +843,19 @@ class Neo4jDAO {
             }
             
             const savedSchema = result.records[0].get('s').properties;
+            // Non serve parseDataFromNeo4j qui perché è uno schema, non dati entità
             
             // Salva gli attributi della relazione
-            for (const [attrName, attrDef] of schema.attributes || new Map()) {
-                await this.saveAttributeDefinition(schemaId, attrName, attrDef);
+            if (schema.attributes) {
+                if (schema.attributes instanceof Map) {
+                    for (const [attrName, attrDef] of schema.attributes) {
+                        await this.saveAttributeDefinition(schemaId, attrName, attrDef);
+                    }
+                } else if (typeof schema.attributes === 'object') {
+                    for (const [attrName, attrDef] of Object.entries(schema.attributes)) {
+                        await this.saveAttributeDefinition(schemaId, attrName, attrDef);
+                    }
+                }
             }
             
             console.log('✅ Schema relazione salvato:', savedSchema);
@@ -765,6 +899,18 @@ class Neo4jDAO {
             const schemaNode = record.get('s').properties;
             const attributesData = record.get('attributes').filter(a => a !== null);
             
+            // Deserializza i defaultValue JSON per attributi di tipo json
+            const processedAttributes = attributesData.map(attr => {
+                if (attr.type === 'json' && attr.defaultValue && typeof attr.defaultValue === 'string') {
+                    try {
+                        attr.defaultValue = JSON.parse(attr.defaultValue);
+                    } catch (e) {
+                        console.warn(`⚠️ Errore parsing defaultValue JSON per attributo ${attr.name}:`, e.message);
+                    }
+                }
+                return attr;
+            });
+            
             const schema = {
                 relationType: schemaNode.relationType,
                 version: schemaNode.version,
@@ -774,7 +920,7 @@ class Neo4jDAO {
                 created: schemaNode.created,
                 modified: schemaNode.modified,
                 constraints: JSON.parse(schemaNode.constraints || '[]'),
-                attributes: attributesData
+                attributes: processedAttributes
             };
             
             console.log('✅ Schema relazione caricato:', schema);
@@ -888,6 +1034,7 @@ class Neo4jDAO {
             const result = await this.connector.executeQuery(cypher, parameters);
             if (result.records.length > 0) {
                 const saved = result.records[0].get('a').properties;
+                // Non serve parseDataFromNeo4j qui perché sono metadati di schema
                 
                 // Aggiungi proprietà opzionali in transazione separata
                 await this.updateAttributeOptionalProperties(schemaId, attributeName, attributeDefinition);

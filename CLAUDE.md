@@ -226,22 +226,30 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 
 ## System Evolution: From Organic Discovery to Dynamic UI
 
-### Current Development Phase: Dynamic UI with Svelte
+### Current Development Phase: SSOT-4000 Knowledge Platform - Phase 2 Starting
 
-**Status**: Transitioning from organic schema discovery to hierarchical module-entity system
+**Status**: Backend Foundation completed, ready for Svelte Workspace implementation
 
-**Active Task**: Implementation of dynamic UI with Svelte framework
-- **Document**: `documento_ui_dinamica_svelte.md` (track progress here)
-- **Goal**: Create intuitive grid-based interface where users model data through smart inputs
-- **Model**: ModuleInstance as semantic hub for entity relationships with contextual attributes
+**Active Task**: Evolution to Knowledge Platform (SSOT-4000)
+- **Planning Document**: `docs/development/SSOT-4000-implementation-plan.md`
+- **Goal**: Transform from data management app to knowledge orchestration platform
+- **Key Innovation**: CompositeDocument as meta-meta-entity for process modeling
+- **UI Revolution**: Svelte-based dynamic workspace with visual composition
 
-**Key Changes in Progress**:
-1. **Hierarchical Relations**: `Project → ModuleInstance → Entities` with contextual attributes
-2. **Smart Input System**: Autocomplete + "Create new..." functionality 
-3. **Relational Attributes**: Store context-specific data (fee, role) on relationships
-4. **Svelte Integration**: Modern UI framework for dynamic grid components
+**Recent Progress - Phase 1 Completed (14 June 2025)**: 
+- ✅ CompositeDocument schema defined with full attribute support
+- ✅ DocumentService implemented with complete CRUD operations
+- ✅ API endpoints for documents, layout management, and context inheritance
+- ✅ WebSocket integration for real-time synchronization
+- ✅ 100% test coverage (12/12 integration tests passing)
+- ✅ JSON serialization/deserialization for Neo4j
+- ✅ Support for CONTAINS_MODULE relations with layout attributes
 
-**Recent Progress**: ✅ Neo4j LIMIT error fixed (converted float to integer values inline)
+**Next Phase (Phase 2 - Svelte Workspace)**:
+1. **Setup Svelte**: Configure Rollup and directory structure
+2. **Core Components**: DocumentWorkspace, ModuleContainer, GridLayout
+3. **State Management**: Svelte stores for document and layout state
+4. **Service Integration**: Frontend DocumentService with WebSocket
 
 ### Recent Architectural Evolutions
 
@@ -267,6 +275,14 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - **API REST Complete**: CRUD per membri modulo con aggregati automatici
 - **Test Coverage**: 100% con integrazione Neo4j verificata
 
+**Phase 5**: SSOT-4000 Knowledge Platform (In Planning)
+- **CompositeDocument**: Meta-meta-entità per orchestrazione di moduli multipli
+- **Workspace Dinamico Svelte**: UI componibile con drag & drop e layout persistente
+- **Ereditarietà del Contesto**: Propagazione automatica del contesto dai documenti ai moduli
+- **SDK Dichiarativo**: Template JSON per estensibilità della piattaforma
+- **Virtualizzazione**: Performance ottimale con grandi quantità di moduli
+- **Documento di Riferimento**: `docs/development/SSOT-4000-implementation-plan.md`
+
 ## Common Development Tasks
 
 ### Adding New Entity Types
@@ -285,11 +301,22 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - UI components in `relation-list.js` and `relation-editor.js`
 - **NEW**: ModuleRelationService for hierarchical entity-module relationships
 
-### Working with Dynamic UI (New)
-- See `documento_ui_dinamica_svelte.md` for current implementation plan
+### Working with Dynamic UI (Current Phase)
 - Smart inputs with contextual autocomplete
 - Relational attributes on entity-module relationships
 - Bidirectional queries (entity→projects, project→entities)
+
+### Working with SSOT-4000 Platform (Next Phase)
+- **Reference Document**: `docs/development/SSOT-4000-implementation-plan.md`
+- **CompositeDocument**: Meta-meta-entity that orchestrates multiple modules
+  - Schema defined in `initializeBaseSchemas()` in server.js
+  - Attributes: name, description, projectId, layout, ownerId, metadata, status
+  - Related to ModuleInstance via CONTAINS_MODULE relation
+- **Workspace Svelte**: Dynamic grid-based UI with drag & drop
+- **Context Inheritance**: Automatic context propagation to all modules
+- **Virtual Scrolling**: Performance optimization for large workspaces
+- **Progressive Disclosure**: Start simple, reveal complexity gradually
+- **Base Schemas**: Project, ModuleInstance, CompositeDocument automatically initialized on server start
 
 ### Working with ModuleRelationService (New ✅)
 - **Hierarchical Model**: `Project → ModuleInstance → Entity` with contextual attributes

@@ -15,6 +15,8 @@
 🤖 SoftValidationEngine inizializzato - Validazione Intelligente
 🔗 RelationEngine inizializzato
 🚀 EntityEngine Evoluto inizializzato
+🎯 ModuleRelationService inizializzato
+📄 DocumentService inizializzato per SSOT-4000
 [AttributeSpace] Nuova sottoscrizione registrata: sub_1 {
   type: 'entity',
   entityType: '*',
@@ -185,6 +187,180 @@ Connessione a Neo4j in corso...
       cardinalityForReference: null,
       defaultValue: null,
       type: 'string',
+      required: false,
+      validationRules: null
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'CompositeDocument',
+  version: 1,
+  mode: 'strict',
+  created: 1749909968946,
+  modified: '2025-06-14T14:06:08.947Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Stato del documento',
+      name: 'status',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'select',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Metadati aggiuntivi del documento',
+      name: 'metadata',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'json',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Layout e configurazione dei moduli nel documento',
+      name: 'layout',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'json',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'ID del proprietario del documento',
+      name: 'ownerId',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: true,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Descrizione del documento',
+      name: 'description',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'text',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Nome del documento composito',
+      name: 'name',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: true,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Progetto di appartenenza del documento',
+      name: 'projectId',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'reference',
+      required: false,
+      validationRules: null
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'Contact',
+  version: 1,
+  mode: 'flexible',
+  created: 1749912318148,
+  modified: '2025-06-14T14:45:18.148Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Contact name',
+      name: 'nome',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: true,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Phone number',
+      name: 'telefono',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Email address',
+      name: 'email',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'email',
       required: false,
       validationRules: null
     }
@@ -382,6 +558,105 @@ Connessione a Neo4j in corso...
                    } END) as attributes
         
 ✅ Schema entità caricato: {
+  entityType: 'Project',
+  version: 1,
+  mode: 'strict',
+  created: 1749909968557,
+  modified: '2025-06-14T14:06:08.558Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Budget del progetto',
+      name: 'budget',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'number',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Data di fine del progetto',
+      name: 'endDate',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'date',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Data di inizio del progetto',
+      name: 'startDate',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'date',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Nome del progetto',
+      name: 'name',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: true,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Stato del progetto',
+      name: 'status',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'select',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Descrizione del progetto',
+      name: 'description',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'text',
+      required: false,
+      validationRules: null
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
   entityType: 'TestDiscovery',
   version: 1,
   mode: 'flexible',
@@ -439,25 +714,231 @@ Connessione a Neo4j in corso...
     }
   ]
 }
-✅ Trovati 4 schemi entità
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'TestEvoluzione',
+  version: 1,
+  mode: 'flexible',
+  created: 1749538026273,
+  modified: '2025-06-10T06:47:06.273Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: nome',
+      name: 'nome',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaEntityType {entityType: $entityType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s, 
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description,
+                       referencesEntityType: a.referencesEntityType,
+                       relationTypeForReference: a.relationTypeForReference,
+                       displayAttributeFromReferencedEntity: a.displayAttributeFromReferencedEntity,
+                       cardinalityForReference: a.cardinalityForReference
+                   } END) as attributes
+        
+✅ Schema entità caricato: {
+  entityType: 'TestOrganico',
+  version: 1,
+  mode: 'flexible',
+  created: 1749661496032,
+  modified: '2025-06-11T17:04:56.032Z',
+  constraints: [],
+  attributes: [
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: attivo',
+      name: 'attivo',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'boolean',
+      required: false,
+      validationRules: null
+    },
+    {
+      referencesEntityType: null,
+      displayAttributeFromReferencedEntity: null,
+      description: 'Auto-discovered attribute: nome',
+      name: 'nome',
+      relationTypeForReference: null,
+      cardinalityForReference: null,
+      defaultValue: null,
+      type: 'string',
+      required: false,
+      validationRules: null
+    }
+  ]
+}
+✅ Trovati 9 schemi entità
 ✅ Schema entità caricato:  Giannino
+✅ Schema entità caricato: CompositeDocument
+✅ Schema entità caricato: Contact
 ✅ Schema entità caricato: FilmProject
 ✅ Schema entità caricato: ModuleInstance
+✅ Schema entità caricato: Project
 ✅ Schema entità caricato: TestDiscovery
+✅ Schema entità caricato: TestEvoluzione
+✅ Schema entità caricato: TestOrganico
 🔍 Esecuzione query: 
             MATCH (s:SchemaRelationType)
             RETURN s.relationType as relationType
             ORDER BY s.relationType
         
-✅ Trovati 0 schemi relazione
-✅ SchemaManager inizializzato con 4 schemi entità e 0 schemi relazione
+🔍 Esecuzione query: 
+            MATCH (s:SchemaRelationType {relationType: $relationType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s,
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description
+                   } END) as attributes
+        
+✅ Schema relazione caricato: {
+  relationType: 'CONTAINS_MODULE',
+  version: 1,
+  cardinality: '1:N',
+  sourceTypes: [],
+  targetTypes: [],
+  created: 1749909969268,
+  modified: '2025-06-14T14:06:09.269Z',
+  constraints: [],
+  attributes: [
+    {
+      description: 'Configurazione specifica per questo modulo nel documento',
+      name: 'config',
+      defaultValue: null,
+      type: 'json',
+      required: false,
+      validationRules: null
+    },
+    {
+      description: 'Stato di collasso del modulo',
+      name: 'collapsed',
+      defaultValue: null,
+      type: 'boolean',
+      required: false,
+      validationRules: null
+    },
+    {
+      description: 'Dimensione del modulo nel layout',
+      name: 'size',
+      defaultValue: null,
+      type: 'json',
+      required: false,
+      validationRules: null
+    },
+    {
+      description: 'Posizione del modulo nel layout',
+      name: 'position',
+      defaultValue: null,
+      type: 'json',
+      required: false,
+      validationRules: null
+    },
+    {
+      description: 'Ordine del modulo nel documento',
+      name: 'order',
+      defaultValue: null,
+      type: 'number',
+      required: true,
+      validationRules: null
+    }
+  ]
+}
+🔍 Esecuzione query: 
+            MATCH (s:SchemaRelationType {relationType: $relationType})
+            OPTIONAL MATCH (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition)
+            RETURN s,
+                   COLLECT(CASE WHEN a IS NOT NULL THEN {
+                       name: a.name,
+                       type: a.type,
+                       required: a.required,
+                       defaultValue: a.defaultValue,
+                       validationRules: a.validationRules,
+                       description: a.description
+                   } END) as attributes
+        
+✅ Schema relazione caricato: {
+  relationType: 'Knows',
+  version: 1,
+  cardinality: 'N:M',
+  sourceTypes: [ 'Contact' ],
+  targetTypes: [ 'Contact' ],
+  created: 1749912318288,
+  modified: '2025-06-14T14:45:18.288Z',
+  constraints: [],
+  attributes: [
+    {
+      description: 'Relationship strength (1-10)',
+      name: 'strength',
+      defaultValue: null,
+      type: 'number',
+      required: false,
+      validationRules: null
+    },
+    {
+      description: 'Since when they know each other',
+      name: 'since',
+      defaultValue: null,
+      type: 'date',
+      required: false,
+      validationRules: null
+    }
+  ]
+}
+✅ Trovati 2 schemi relazione
+✅ Schema relazione caricato: CONTAINS_MODULE
+✅ Schema relazione caricato: Knows
+✅ SchemaManager inizializzato con 9 schemi entità e 2 schemi relazione
 ✅ SchemaManager evoluto inizializzato
+📋 Inizializzazione schemi base del sistema...
+📋 Tutti gli schemi base inizializzati con successo
+✅ Schemi base del sistema inizializzati
 🔍 Esecuzione query: 
                 MATCH (source:Entity)-[:HAS_RELATION]->(r:Relation)-[:TO_ENTITY]->(target:Entity)
                 RETURN r, source, target
                 ORDER BY r.created
             
-✅ Caricate 0 relazioni dal database
+✅ Caricate 2 relazioni dal database
 ✅ RelationEngine caricato con relazioni esistenti
 🎯 Tutti i componenti evoluti inizializzati con successo
 🚀 Server SSOT Dinamico Evoluto (Fase 4 - AttributeSpace) avviato su porta 3000
@@ -472,28 +953,388 @@ Connessione a Neo4j in corso...
    - WebSocket per real-time updates
    - Template test page: http://localhost:3000/views/template-test.html
 ============================================================
-2025-06-09T23:07:26.937Z - GET /api/entities/TestOrganico
-🔍 Recupero tutte le entità di tipo: TestOrganico
-🚨 FIX LIMIT APPLIED: limit=1000 -> 1000, offset=0 -> 0
+Nuovo client WebSocket connesso
+2025-06-14T14:51:49.380Z - GET /api/documents
 🔍 Esecuzione query: 
-            MATCH (e:Entity:`TestOrganico`)
-            RETURN e
-            ORDER BY e.createdAt
-            SKIP 0
-            LIMIT 1000
-        
-✅ Trovate 0 entità di tipo TestOrganico
-✅ Recuperate 0 entità di tipo TestOrganico
-2025-06-09T23:07:42.306Z - GET /api/entities/FilmProject
-🔍 Recupero tutte le entità di tipo: FilmProject
-🚨 FIX LIMIT APPLIED: limit=1000 -> 1000, offset=0 -> 0
+                MATCH (d:CompositeDocument)
+                OPTIONAL MATCH (d)-[r:CONTAINS_MODULE]->()
+                WITH d, COUNT(r) as moduleCount
+                RETURN d, moduleCount
+                ORDER BY d.modifiedAt DESC
+                SKIP 0
+                LIMIT 50
+            
+✅ Trovati 8 documenti con filtri: { projectId: undefined, ownerId: undefined, status: undefined }
+2025-06-14T14:51:52.150Z - GET /api/documents
 🔍 Esecuzione query: 
-            MATCH (e:Entity:`FilmProject`)
+                MATCH (d:CompositeDocument)
+                OPTIONAL MATCH (d)-[r:CONTAINS_MODULE]->()
+                WITH d, COUNT(r) as moduleCount
+                RETURN d, moduleCount
+                ORDER BY d.modifiedAt DESC
+                SKIP 0
+                LIMIT 50
+            
+✅ Trovati 8 documenti con filtri: { projectId: undefined, ownerId: undefined, status: undefined }
+2025-06-14T14:52:03.138Z - POST /api/documents
+📄 [Document] Creazione nuovo CompositeDocument: {
+  name: 'Test API Document - Verifiche Fase 1',
+  description: 'Documento creato via API REST per verifiche',
+  ownerId: 'test-api-user-fase1',
+  status: 'draft',
+  metadata: {
+    source: 'curl_test',
+    timestamp: '2025-06-14',
+    phase: 'fase1-verification'
+  }
+}
+🔧 Creazione entità tipo CompositeDocument {
+  name: 'Test API Document - Verifiche Fase 1',
+  description: 'Documento creato via API REST per verifiche',
+  projectId: null,
+  ownerId: 'test-api-user-fase1',
+  layout: { type: 'grid', columns: 2, modules: [] },
+  metadata: {
+    source: 'curl_test',
+    timestamp: '2025-06-14',
+    phase: 'fase1-verification'
+  },
+  status: 'draft'
+}
+🔄 Schema aggiornato in cache per CompositeDocument
+✅ Applicati 0 valori di default
+🔍 Esecuzione query: 
+            CREATE (e:Entity:`CompositeDocument`)
+            SET e.id = $id, e.entityType = $entityType, e.createdAt = $createdAt, e.modifiedAt = $modifiedAt, e.`name` = $attr0, e.`description` = $attr1, e.`projectId` = $attr2, e.`ownerId` = $attr3, e.`layout` = $attr4, e.`metadata` = $attr5, e.`status` = $attr6
             RETURN e
-            ORDER BY e.createdAt
-            SKIP 0
-            LIMIT 1000
         
-✅ Trovate 6 entità di tipo FilmProject
-✅ Recuperate 6 entità di tipo FilmProject
-2025-06-09T23:07:57.035Z - GET /src/frontend/test-organic.html
+✅ Entità creata: {
+  layout: '{"type":"grid","columns":2,"modules":[]}',
+  createdAt: '2025-06-14T14:52:03.139Z',
+  metadata: '{"source":"curl_test","timestamp":"2025-06-14","phase":"fase1-verification"}',
+  modifiedAt: '2025-06-14T14:52:03.139Z',
+  entityType: 'CompositeDocument',
+  name: 'Test API Document - Verifiche Fase 1',
+  description: 'Documento creato via API REST per verifiche',
+  id: '8f5c7135-7cfc-4793-bb47-38b40302e0ee',
+  ownerId: 'test-api-user-fase1',
+  status: 'draft'
+}
+✅ Entità creata: 8f5c7135-7cfc-4793-bb47-38b40302e0ee (tipo: CompositeDocument)
+✅ CompositeDocument creato: 8f5c7135-7cfc-4793-bb47-38b40302e0ee - Test API Document - Verifiche Fase 1
+[AttributeSpace] Processando batch di 1 notifiche
+[AttributeSpace] Trovate 1 sottoscrizioni corrispondenti per: {
+  type: 'entity',
+  entityId: '8f5c7135-7cfc-4793-bb47-38b40302e0ee',
+  attributeName: undefined
+}
+🔄 Notifica entità propagata a 1 client: {
+  entityId: '8f5c7135-7cfc-4793-bb47-38b40302e0ee',
+  attributeName: undefined,
+  changeType: 'created'
+}
+2025-06-14T14:52:04.256Z - GET /api/documents
+🔍 Esecuzione query: 
+                MATCH (d:CompositeDocument)
+                OPTIONAL MATCH (d)-[r:CONTAINS_MODULE]->()
+                WITH d, COUNT(r) as moduleCount
+                RETURN d, moduleCount
+                ORDER BY d.modifiedAt DESC
+                SKIP 0
+                LIMIT 50
+            
+✅ Trovati 9 documenti con filtri: { projectId: undefined, ownerId: undefined, status: undefined }
+2025-06-14T14:52:05.440Z - POST /api/documents
+📄 [Document] Creazione nuovo CompositeDocument: {
+  name: 'Test Document',
+  description: 'Documento di test per Fase 1',
+  ownerId: 'user-123',
+  status: 'draft',
+  metadata: { createdVia: 'test-page', timestamp: '2025-06-14T14:52:05.435Z' }
+}
+🔧 Creazione entità tipo CompositeDocument {
+  name: 'Test Document',
+  description: 'Documento di test per Fase 1',
+  projectId: null,
+  ownerId: 'user-123',
+  layout: { type: 'grid', columns: 2, modules: [] },
+  metadata: { createdVia: 'test-page', timestamp: '2025-06-14T14:52:05.435Z' },
+  status: 'draft'
+}
+🔄 Schema aggiornato in cache per CompositeDocument
+✅ Applicati 0 valori di default
+🔍 Esecuzione query: 
+            CREATE (e:Entity:`CompositeDocument`)
+            SET e.id = $id, e.entityType = $entityType, e.createdAt = $createdAt, e.modifiedAt = $modifiedAt, e.`name` = $attr0, e.`description` = $attr1, e.`projectId` = $attr2, e.`ownerId` = $attr3, e.`layout` = $attr4, e.`metadata` = $attr5, e.`status` = $attr6
+            RETURN e
+        
+✅ Entità creata: {
+  layout: '{"type":"grid","columns":2,"modules":[]}',
+  createdAt: '2025-06-14T14:52:05.442Z',
+  metadata: '{"createdVia":"test-page","timestamp":"2025-06-14T14:52:05.435Z"}',
+  modifiedAt: '2025-06-14T14:52:05.442Z',
+  entityType: 'CompositeDocument',
+  name: 'Test Document',
+  description: 'Documento di test per Fase 1',
+  id: 'cca706fc-6b29-4efc-8ad8-432c14858be5',
+  ownerId: 'user-123',
+  status: 'draft'
+}
+✅ Entità creata: cca706fc-6b29-4efc-8ad8-432c14858be5 (tipo: CompositeDocument)
+✅ CompositeDocument creato: cca706fc-6b29-4efc-8ad8-432c14858be5 - Test Document
+[AttributeSpace] Processando batch di 1 notifiche
+[AttributeSpace] Trovate 1 sottoscrizioni corrispondenti per: {
+  type: 'entity',
+  entityId: 'cca706fc-6b29-4efc-8ad8-432c14858be5',
+  attributeName: undefined
+}
+🔄 Notifica entità propagata a 1 client: {
+  entityId: 'cca706fc-6b29-4efc-8ad8-432c14858be5',
+  attributeName: undefined,
+  changeType: 'created'
+}
+2025-06-14T14:52:11.924Z - GET /api/documents/8f5c7135-7cfc-4793-bb47-38b40302e0ee
+🔍 Esecuzione query: 
+                    MATCH (d:CompositeDocument {id: $documentId})-[r:CONTAINS_MODULE]->(m:ModuleInstance)
+                    RETURN m, r, properties(r) as relationProps
+                    ORDER BY r.order ASC
+                
+✅ CompositeDocument recuperato: 8f5c7135-7cfc-4793-bb47-38b40302e0ee con 0 moduli
+Client WebSocket disconnesso
+Nuovo client WebSocket connesso
+2025-06-14T14:52:56.571Z - GET /api/documents
+🔍 Esecuzione query: 
+                MATCH (d:CompositeDocument)
+                OPTIONAL MATCH (d)-[r:CONTAINS_MODULE]->()
+                WITH d, COUNT(r) as moduleCount
+                RETURN d, moduleCount
+                ORDER BY d.modifiedAt DESC
+                SKIP 0
+                LIMIT 50
+            
+✅ Trovati 10 documenti con filtri: { projectId: undefined, ownerId: undefined, status: undefined }
+2025-06-14T14:53:05.533Z - GET /.well-known/appspecific/com.chrome.devtools.json
+Client WebSocket disconnesso
+2025-06-14T14:53:07.362Z - GET /.well-known/appspecific/com.chrome.devtools.json
+Nuovo client WebSocket connesso
+2025-06-14T14:53:07.410Z - GET /api/documents
+🔍 Esecuzione query: 
+                MATCH (d:CompositeDocument)
+                OPTIONAL MATCH (d)-[r:CONTAINS_MODULE]->()
+                WITH d, COUNT(r) as moduleCount
+                RETURN d, moduleCount
+                ORDER BY d.modifiedAt DESC
+                SKIP 0
+                LIMIT 50
+            
+✅ Trovati 10 documenti con filtri: { projectId: undefined, ownerId: undefined, status: undefined }
+2025-06-14T14:53:08.956Z - GET /api/documents
+🔍 Esecuzione query: 
+                MATCH (d:CompositeDocument)
+                OPTIONAL MATCH (d)-[r:CONTAINS_MODULE]->()
+                WITH d, COUNT(r) as moduleCount
+                RETURN d, moduleCount
+                ORDER BY d.modifiedAt DESC
+                SKIP 0
+                LIMIT 50
+            
+✅ Trovati 10 documenti con filtri: { projectId: undefined, ownerId: undefined, status: undefined }
+2025-06-14T14:53:12.622Z - POST /api/documents
+📄 [Document] Creazione nuovo CompositeDocument: {
+  name: 'Test Document',
+  description: 'Documento di test per Fase 1',
+  ownerId: 'user-123',
+  status: 'draft',
+  metadata: { createdVia: 'test-page', timestamp: '2025-06-14T14:53:12.617Z' }
+}
+🔧 Creazione entità tipo CompositeDocument {
+  name: 'Test Document',
+  description: 'Documento di test per Fase 1',
+  projectId: null,
+  ownerId: 'user-123',
+  layout: { type: 'grid', columns: 2, modules: [] },
+  metadata: { createdVia: 'test-page', timestamp: '2025-06-14T14:53:12.617Z' },
+  status: 'draft'
+}
+🔄 Schema aggiornato in cache per CompositeDocument
+✅ Applicati 0 valori di default
+🔍 Esecuzione query: 
+            CREATE (e:Entity:`CompositeDocument`)
+            SET e.id = $id, e.entityType = $entityType, e.createdAt = $createdAt, e.modifiedAt = $modifiedAt, e.`name` = $attr0, e.`description` = $attr1, e.`projectId` = $attr2, e.`ownerId` = $attr3, e.`layout` = $attr4, e.`metadata` = $attr5, e.`status` = $attr6
+            RETURN e
+        
+✅ Entità creata: {
+  layout: '{"type":"grid","columns":2,"modules":[]}',
+  createdAt: '2025-06-14T14:53:12.625Z',
+  metadata: '{"createdVia":"test-page","timestamp":"2025-06-14T14:53:12.617Z"}',
+  modifiedAt: '2025-06-14T14:53:12.625Z',
+  entityType: 'CompositeDocument',
+  name: 'Test Document',
+  description: 'Documento di test per Fase 1',
+  id: '276f66df-dfee-45c8-87b5-3f0fd3db671d',
+  ownerId: 'user-123',
+  status: 'draft'
+}
+✅ Entità creata: 276f66df-dfee-45c8-87b5-3f0fd3db671d (tipo: CompositeDocument)
+✅ CompositeDocument creato: 276f66df-dfee-45c8-87b5-3f0fd3db671d - Test Document
+[AttributeSpace] Processando batch di 1 notifiche
+[AttributeSpace] Trovate 1 sottoscrizioni corrispondenti per: {
+  type: 'entity',
+  entityId: '276f66df-dfee-45c8-87b5-3f0fd3db671d',
+  attributeName: undefined
+}
+🔄 Notifica entità propagata a 1 client: {
+  entityId: '276f66df-dfee-45c8-87b5-3f0fd3db671d',
+  attributeName: undefined,
+  changeType: 'created'
+}
+Client WebSocket disconnesso
+Nuovo client WebSocket connesso
+2025-06-14T14:55:21.472Z - GET /api/documents
+🔍 Esecuzione query: 
+                MATCH (d:CompositeDocument)
+                OPTIONAL MATCH (d)-[r:CONTAINS_MODULE]->()
+                WITH d, COUNT(r) as moduleCount
+                RETURN d, moduleCount
+                ORDER BY d.modifiedAt DESC
+                SKIP 0
+                LIMIT 50
+            
+✅ Trovati 11 documenti con filtri: { projectId: undefined, ownerId: undefined, status: undefined }
+2025-06-14T14:55:27.328Z - GET /api/documents/b7c7c541-aed1-4349-8369-16e522caa758
+🔍 Esecuzione query: 
+            MATCH (e:Entity {id: $id})
+            RETURN e
+        
+✅ Entità trovata: {
+  layout: '{"type":"grid","columns":2,"modules":[]}',
+  createdAt: '2025-06-14T14:26:55.556Z',
+  metadata: '{"category":"test","priority":"high"}',
+  entityType: 'CompositeDocument',
+  name: 'Test Document SSOT-4000',
+  description: 'A test composite document',
+  id: 'b7c7c541-aed1-4349-8369-16e522caa758',
+  ownerId: 'test-user-123',
+  projectId: '5b41b73c-aa25-4864-aca4-062cacb36f3c',
+  updatedAt: '2025-06-14T14:26:55.556Z',
+  status: 'draft'
+}
+🔍 Esecuzione query: 
+                    MATCH (d:CompositeDocument {id: $documentId})-[r:CONTAINS_MODULE]->(m:ModuleInstance)
+                    RETURN m, r, properties(r) as relationProps
+                    ORDER BY r.order ASC
+                
+✅ CompositeDocument recuperato: b7c7c541-aed1-4349-8369-16e522caa758 con 0 moduli
+2025-06-14T14:55:33.157Z - DELETE /api/documents/b7c7c541-aed1-4349-8369-16e522caa758
+🔍 Esecuzione query: 
+                MATCH (d:CompositeDocument {id: $documentId})-[r:CONTAINS_MODULE]->()
+                DELETE r
+            
+🗑️ Eliminazione entità: b7c7c541-aed1-4349-8369-16e522caa758
+🔍 Esecuzione query: 
+            MATCH (e:Entity {id: $id})
+            RETURN e
+        
+✅ Entità trovata: {
+  layout: '{"type":"grid","columns":2,"modules":[]}',
+  createdAt: '2025-06-14T14:26:55.556Z',
+  metadata: '{"category":"test","priority":"high"}',
+  entityType: 'CompositeDocument',
+  name: 'Test Document SSOT-4000',
+  description: 'A test composite document',
+  id: 'b7c7c541-aed1-4349-8369-16e522caa758',
+  ownerId: 'test-user-123',
+  projectId: '5b41b73c-aa25-4864-aca4-062cacb36f3c',
+  updatedAt: '2025-06-14T14:26:55.556Z',
+  status: 'draft'
+}
+🔍 Esecuzione query: 
+            MATCH (e:Entity {id: $entityId})
+            DETACH DELETE e
+            RETURN count(e) as deleted
+        
+✅ Entità b7c7c541-aed1-4349-8369-16e522caa758 eliminata
+✅ Entità b7c7c541-aed1-4349-8369-16e522caa758 eliminata
+✅ CompositeDocument b7c7c541-aed1-4349-8369-16e522caa758 eliminato con tutte le relazioni
+2025-06-14T14:55:33.222Z - GET /api/documents
+🔍 Esecuzione query: 
+                MATCH (d:CompositeDocument)
+                OPTIONAL MATCH (d)-[r:CONTAINS_MODULE]->()
+                WITH d, COUNT(r) as moduleCount
+                RETURN d, moduleCount
+                ORDER BY d.modifiedAt DESC
+                SKIP 0
+                LIMIT 50
+            
+✅ Trovati 10 documenti con filtri: { projectId: undefined, ownerId: undefined, status: undefined }
+[AttributeSpace] Processando batch di 1 notifiche
+[AttributeSpace] Trovate 1 sottoscrizioni corrispondenti per: {
+  type: 'entity',
+  entityId: 'b7c7c541-aed1-4349-8369-16e522caa758',
+  attributeName: undefined
+}
+🔄 Notifica entità propagata a 1 client: {
+  entityId: 'b7c7c541-aed1-4349-8369-16e522caa758',
+  attributeName: undefined,
+  changeType: 'deleted'
+}
+2025-06-14T14:55:34.957Z - PUT /api/documents/7b8375d7-1993-4a5e-a186-2e007fc7e2ab/modules
+🔍 Esecuzione query: 
+                MATCH (d:CompositeDocument {id: $documentId})
+                MATCH (m:ModuleInstance {id: $moduleId})
+                RETURN d, m
+            
+❌ Errore addModuleToDocument: Documento 7b8375d7-1993-4a5e-a186-2e007fc7e2ab o ModuleInstance test-module-1749912934952 non trovati
+❌ Errore gestione moduli documento: Error: Documento 7b8375d7-1993-4a5e-a186-2e007fc7e2ab o ModuleInstance test-module-1749912934952 non trovati
+    at DocumentService.addModuleToDocument (/Users/hlessio/Desktop/Lavoro/SSOT-3005 claude code/src/backend/services/DocumentService.js:239:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async /Users/hlessio/Desktop/Lavoro/SSOT-3005 claude code/src/backend/server.js:1935:34
+2025-06-14T14:55:48.000Z - POST /api/documents
+📄 [Document] Creazione nuovo CompositeDocument: {
+  name: 'Test Document',
+  description: 'Documento di test per Fase 1',
+  ownerId: 'user-123',
+  status: 'published',
+  metadata: { createdVia: 'test-page', timestamp: '2025-06-14T14:55:47.995Z' }
+}
+🔧 Creazione entità tipo CompositeDocument {
+  name: 'Test Document',
+  description: 'Documento di test per Fase 1',
+  projectId: null,
+  ownerId: 'user-123',
+  layout: { type: 'grid', columns: 2, modules: [] },
+  metadata: { createdVia: 'test-page', timestamp: '2025-06-14T14:55:47.995Z' },
+  status: 'published'
+}
+🔄 Schema aggiornato in cache per CompositeDocument
+✅ Applicati 0 valori di default
+🔍 Esecuzione query: 
+            CREATE (e:Entity:`CompositeDocument`)
+            SET e.id = $id, e.entityType = $entityType, e.createdAt = $createdAt, e.modifiedAt = $modifiedAt, e.`name` = $attr0, e.`description` = $attr1, e.`projectId` = $attr2, e.`ownerId` = $attr3, e.`layout` = $attr4, e.`metadata` = $attr5, e.`status` = $attr6
+            RETURN e
+        
+✅ Entità creata: {
+  layout: '{"type":"grid","columns":2,"modules":[]}',
+  createdAt: '2025-06-14T14:55:48.001Z',
+  metadata: '{"createdVia":"test-page","timestamp":"2025-06-14T14:55:47.995Z"}',
+  modifiedAt: '2025-06-14T14:55:48.001Z',
+  entityType: 'CompositeDocument',
+  name: 'Test Document',
+  description: 'Documento di test per Fase 1',
+  id: 'd6dd709b-de12-49fb-ba12-dd8d83dc16aa',
+  ownerId: 'user-123',
+  status: 'published'
+}
+✅ Entità creata: d6dd709b-de12-49fb-ba12-dd8d83dc16aa (tipo: CompositeDocument)
+✅ CompositeDocument creato: d6dd709b-de12-49fb-ba12-dd8d83dc16aa - Test Document
+[AttributeSpace] Processando batch di 1 notifiche
+[AttributeSpace] Trovate 1 sottoscrizioni corrispondenti per: {
+  type: 'entity',
+  entityId: 'd6dd709b-de12-49fb-ba12-dd8d83dc16aa',
+  attributeName: undefined
+}
+🔄 Notifica entità propagata a 1 client: {
+  entityId: 'd6dd709b-de12-49fb-ba12-dd8d83dc16aa',
+  attributeName: undefined,
+  changeType: 'created'
+}

@@ -24,6 +24,9 @@ const SoftValidationEngine = require('./core/softValidationEngine');
 // ✨ FASE 1 UI DINAMICA: Import ModuleRelationService
 const ModuleRelationService = require('./services/ModuleRelationService');
 
+// ✨ SSOT-4000: Import DocumentService
+const DocumentService = require('./services/DocumentService');
+
 class EvolvedServer {
     constructor() {
         this.app = express();
@@ -58,6 +61,9 @@ class EvolvedServer {
         // ✨ FASE 1 UI DINAMICA: Inizializzazione ModuleRelationService
         this.moduleRelationService = new ModuleRelationService(neo4jDAO, this.attributeSpace);
         
+        // ✨ SSOT-4000: Inizializzazione DocumentService
+        this.documentService = new DocumentService(neo4jDAO, this.entityEngine, this.schemaManager, this.attributeSpace);
+        
         // Flag per modalità evoluta e organica
         this.enableEvolvedFeatures = true;
         this.enableOrganicMode = process.env.ENABLE_ORGANIC_MODE !== 'false'; // Default: true
@@ -80,6 +86,10 @@ class EvolvedServer {
             await this.schemaManager.initialize();
             console.log('✅ SchemaManager evoluto inizializzato');
             
+            // Inizializza schemi base del sistema
+            await this.initializeBaseSchemas();
+            console.log('✅ Schemi base del sistema inizializzati');
+            
             // Carica relazioni esistenti nel RelationEngine
             await this.relationEngine.loadAllRelations();
             console.log('✅ RelationEngine caricato con relazioni esistenti');
@@ -89,6 +99,194 @@ class EvolvedServer {
         } catch (error) {
             console.error('❌ Errore inizializzazione componenti evoluti:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Inizializza gli schemi base del sistema (Project, ModuleInstance, CompositeDocument)
+     */
+    async initializeBaseSchemas() {
+        try {
+            console.log('📋 Inizializzazione schemi base del sistema...');
+
+            // Schema per Project (se non esiste già)
+            if (!this.schemaManager.getEntitySchema('Project')) {
+                const projectSchema = {
+                    mode: 'strict',
+                    attributes: {
+                        name: { 
+                            type: 'string', 
+                            required: true,
+                            description: 'Nome del progetto'
+                        },
+                        description: { 
+                            type: 'text',
+                            description: 'Descrizione del progetto'
+                        },
+                        status: {
+                            type: 'select',
+                            options: ['active', 'completed', 'archived', 'draft'],
+                            defaultValue: 'active',
+                            description: 'Stato del progetto'
+                        },
+                        startDate: {
+                            type: 'date',
+                            description: 'Data di inizio del progetto'
+                        },
+                        endDate: {
+                            type: 'date',
+                            description: 'Data di fine del progetto'
+                        },
+                        budget: {
+                            type: 'number',
+                            min: 0,
+                            description: 'Budget del progetto'
+                        }
+                    }
+                };
+                await this.schemaManager.defineEntitySchema('Project', projectSchema);
+                console.log('✅ Schema Project definito');
+            }
+
+            // Schema per ModuleInstance (se non esiste già)
+            if (!this.schemaManager.getEntitySchema('ModuleInstance')) {
+                const moduleInstanceSchema = {
+                    mode: 'strict',
+                    attributes: {
+                        templateId: {
+                            type: 'string',
+                            required: true,
+                            description: 'ID del template del modulo'
+                        },
+                        name: {
+                            type: 'string',
+                            required: true,
+                            description: 'Nome dell\'istanza del modulo'
+                        },
+                        configuration: {
+                            type: 'json',
+                            defaultValue: {},
+                            description: 'Configurazione specifica del modulo'
+                        },
+                        projectId: {
+                            type: 'reference',
+                            referencesEntityType: 'Project',
+                            relationTypeForReference: 'BELONGS_TO',
+                            displayAttributeFromReferencedEntity: 'name',
+                            description: 'Progetto di appartenenza'
+                        }
+                    }
+                };
+                await this.schemaManager.defineEntitySchema('ModuleInstance', moduleInstanceSchema);
+                console.log('✅ Schema ModuleInstance definito');
+            }
+
+            // Schema per CompositeDocument (NUOVO per SSOT-4000)
+            if (!this.schemaManager.getEntitySchema('CompositeDocument')) {
+                const compositeDocumentSchema = {
+                    mode: 'strict',
+                    attributes: {
+                        name: {
+                            type: 'string',
+                            required: true,
+                            description: 'Nome del documento composito'
+                        },
+                        description: {
+                            type: 'text',
+                            description: 'Descrizione del documento'
+                        },
+                        projectId: {
+                            type: 'reference',
+                            referencesEntityType: 'Project',
+                            relationTypeForReference: 'BELONGS_TO',
+                            displayAttributeFromReferencedEntity: 'name',
+                            description: 'Progetto di appartenenza del documento'
+                        },
+                        layout: {
+                            type: 'json',
+                            defaultValue: {
+                                type: 'grid',
+                                columns: 2,
+                                modules: []
+                            },
+                            description: 'Layout e configurazione dei moduli nel documento'
+                        },
+                        ownerId: {
+                            type: 'string',
+                            required: true,
+                            description: 'ID del proprietario del documento'
+                        },
+                        metadata: {
+                            type: 'json',
+                            defaultValue: {},
+                            description: 'Metadati aggiuntivi del documento'
+                        },
+                        status: {
+                            type: 'select',
+                            options: ['draft', 'published', 'archived'],
+                            defaultValue: 'draft',
+                            description: 'Stato del documento'
+                        },
+                        createdAt: {
+                            type: 'string',
+                            description: 'Data di creazione del documento'
+                        },
+                        modifiedAt: {
+                            type: 'string',
+                            description: 'Data di ultima modifica del documento'
+                        }
+                    }
+                };
+                await this.schemaManager.defineEntitySchema('CompositeDocument', compositeDocumentSchema);
+                console.log('✅ Schema CompositeDocument definito per SSOT-4000');
+            }
+
+            // Schema per la relazione CONTAINS_MODULE (CompositeDocument -> ModuleInstance)
+            if (!this.schemaManager.getRelationSchema('CONTAINS_MODULE')) {
+                const containsModuleSchema = {
+                    cardinality: '1:N', // Un documento può contenere molti moduli
+                    sourceTypes: ['CompositeDocument'],
+                    targetTypes: ['ModuleInstance'],
+                    attributes: {
+                        order: {
+                            type: 'number',
+                            required: true,
+                            description: 'Ordine del modulo nel documento'
+                        },
+                        position: {
+                            type: 'json',
+                            defaultValue: { x: 0, y: 0 },
+                            description: 'Posizione del modulo nel layout'
+                        },
+                        size: {
+                            type: 'json',
+                            defaultValue: { width: 1, height: 1 },
+                            description: 'Dimensione del modulo nel layout'
+                        },
+                        collapsed: {
+                            type: 'boolean',
+                            defaultValue: false,
+                            description: 'Stato di collasso del modulo'
+                        },
+                        config: {
+                            type: 'json',
+                            defaultValue: {},
+                            description: 'Configurazione specifica per questo modulo nel documento'
+                        }
+                    }
+                };
+                await this.schemaManager.defineRelationSchema('CONTAINS_MODULE', containsModuleSchema);
+                console.log('✅ Schema relazione CONTAINS_MODULE definito');
+            }
+
+            console.log('📋 Tutti gli schemi base inizializzati con successo');
+            
+        } catch (error) {
+            console.error('❌ Errore inizializzazione schemi base:', error);
+            // Non blocchiamo l'avvio se alcuni schemi esistono già
+            if (error.message && !error.message.includes('già esiste')) {
+                throw error;
+            }
         }
     }
 
@@ -1601,6 +1799,292 @@ class EvolvedServer {
                 });
             } catch (error) {
                 console.error('❌ Errore eliminazione relazione:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // ============================================
+        // SSOT-4000: ENDPOINTS COMPOSITE DOCUMENTS
+        // ============================================
+
+        // POST /api/documents - Crea un nuovo CompositeDocument
+        this.app.post('/api/documents', async (req, res) => {
+            try {
+                const documentData = req.body;
+                
+                console.log('📄 [Document] Creazione nuovo CompositeDocument:', documentData);
+                
+                const newDocument = await this.documentService.createDocument(documentData);
+                
+                // Notifica creazione documento via WebSocket
+                this.broadcastMessage({
+                    type: 'document-created',
+                    data: newDocument,
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.status(201).json({
+                    success: true,
+                    data: newDocument
+                });
+            } catch (error) {
+                console.error('❌ Errore creazione documento:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/documents/:id - Recupera un documento con i suoi moduli
+        this.app.get('/api/documents/:id', async (req, res) => {
+            try {
+                const { id } = req.params;
+                const options = {
+                    includeModules: req.query.includeModules !== 'false',
+                    includeProject: req.query.includeProject === 'true'
+                };
+                
+                const documentData = await this.documentService.getDocument(id, options);
+                
+                res.json({
+                    success: true,
+                    data: documentData
+                });
+            } catch (error) {
+                console.error('❌ Errore recupero documento:', error);
+                res.status(404).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // PUT /api/documents/:id - Aggiorna un documento
+        this.app.put('/api/documents/:id', async (req, res) => {
+            try {
+                const { id } = req.params;
+                const updates = req.body;
+                
+                const updatedDocument = await this.documentService.updateDocument(id, updates);
+                
+                // Notifica aggiornamento documento via WebSocket
+                this.broadcastMessage({
+                    type: 'document-updated',
+                    data: {
+                        documentId: id,
+                        updates: updates,
+                        document: updatedDocument
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.json({
+                    success: true,
+                    data: updatedDocument
+                });
+            } catch (error) {
+                console.error('❌ Errore aggiornamento documento:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // DELETE /api/documents/:id - Elimina un documento
+        this.app.delete('/api/documents/:id', async (req, res) => {
+            try {
+                const { id } = req.params;
+                
+                await this.documentService.deleteDocument(id);
+                
+                // Notifica eliminazione documento via WebSocket
+                this.broadcastMessage({
+                    type: 'document-deleted',
+                    data: { documentId: id },
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.json({
+                    success: true,
+                    message: `Documento ${id} eliminato con successo`
+                });
+            } catch (error) {
+                console.error('❌ Errore eliminazione documento:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // PUT /api/documents/:id/modules - Gestione moduli nel documento
+        this.app.put('/api/documents/:id/modules', async (req, res) => {
+            try {
+                const { id } = req.params;
+                const { action, moduleId, layoutConfig } = req.body;
+                
+                let result;
+                
+                switch (action) {
+                    case 'add':
+                        result = await this.documentService.addModuleToDocument(id, moduleId, layoutConfig);
+                        break;
+                    case 'remove':
+                        result = await this.documentService.removeModuleFromDocument(id, moduleId);
+                        break;
+                    default:
+                        return res.status(400).json({
+                            success: false,
+                            error: 'Azione non valida. Usa "add" o "remove"'
+                        });
+                }
+                
+                // Notifica modifica moduli via WebSocket
+                this.broadcastMessage({
+                    type: 'document-modules-updated',
+                    data: {
+                        documentId: id,
+                        action: action,
+                        moduleId: moduleId,
+                        result: result
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.json({
+                    success: true,
+                    data: result
+                });
+            } catch (error) {
+                console.error('❌ Errore gestione moduli documento:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // PUT /api/documents/:id/layout - Aggiorna il layout dei moduli
+        this.app.put('/api/documents/:id/layout', async (req, res) => {
+            try {
+                const { id } = req.params;
+                const { moduleLayouts } = req.body;
+                
+                if (!Array.isArray(moduleLayouts)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'moduleLayouts deve essere un array'
+                    });
+                }
+                
+                const updatedDocument = await this.documentService.updateDocumentLayout(id, moduleLayouts);
+                
+                // Notifica aggiornamento layout via WebSocket
+                this.broadcastMessage({
+                    type: 'document-layout-updated',
+                    data: {
+                        documentId: id,
+                        layout: updatedDocument.document.layout
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.json({
+                    success: true,
+                    data: updatedDocument
+                });
+            } catch (error) {
+                console.error('❌ Errore aggiornamento layout documento:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/documents - Lista documenti con filtri
+        this.app.get('/api/documents', async (req, res) => {
+            try {
+                const filters = {
+                    projectId: req.query.projectId,
+                    ownerId: req.query.ownerId,
+                    status: req.query.status
+                };
+                
+                const options = {
+                    limit: parseInt(req.query.limit) || 50,
+                    offset: parseInt(req.query.offset) || 0,
+                    orderBy: req.query.orderBy || 'modifiedAt',
+                    orderDirection: req.query.orderDirection || 'DESC'
+                };
+                
+                const documents = await this.documentService.listDocuments(filters, options);
+                
+                res.json({
+                    success: true,
+                    data: documents,
+                    count: documents.length,
+                    filters: filters,
+                    pagination: options
+                });
+            } catch (error) {
+                console.error('❌ Errore lista documenti:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // POST /api/documents/:id/clone - Clona un documento
+        this.app.post('/api/documents/:id/clone', async (req, res) => {
+            try {
+                const { id } = req.params;
+                const overrides = req.body;
+                
+                const clonedDocument = await this.documentService.cloneDocument(id, overrides);
+                
+                // Notifica creazione clone via WebSocket
+                this.broadcastMessage({
+                    type: 'document-cloned',
+                    data: {
+                        originalId: id,
+                        clonedDocument: clonedDocument
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                res.status(201).json({
+                    success: true,
+                    data: clonedDocument
+                });
+            } catch (error) {
+                console.error('❌ Errore clonazione documento:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/documents/:id/context - Recupera il contesto ereditabile del documento
+        this.app.get('/api/documents/:id/context', async (req, res) => {
+            try {
+                const { id } = req.params;
+                
+                const context = await this.documentService.getDocumentContext(id);
+                
+                res.json({
+                    success: true,
+                    data: context
+                });
+            } catch (error) {
+                console.error('❌ Errore recupero contesto documento:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
