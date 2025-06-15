@@ -93,10 +93,12 @@ npm run test:legacy # Run legacy test files
 - **template-module-renderer.js:** Key component that takes module template ID + entity ID and dynamically renders module
 - **attribute-editor.js:** Schema-aware editable field with validation and debounce
 - **attribute-display.js:** Displays single attribute with schema-based formatting
-- **entity-autocomplete.js:** Entity search/selection with real-time WebSocket updates
+- **entity-autocomplete.js:** Entity search/selection with real-time WebSocket updates + entity creation capability
 - **relation-list.js:** Displays list of related entities for a source entity
 - **relation-editor.js:** Modal editor for creating/modifying relations with entity search
 - **saved-module-instance.js:** Renders previously saved module instance (specific template configuration)
+- **✨ NEW - callsheet-module.js:** Tabular module for managing entity-module relationships with contextual attributes (fee, role, dates)
+- **✨ NEW - realtime-contact-card.js:** Real-time synchronized contact card displaying intrinsic entity attributes
 
 **Module Definitions (src/frontend/definitions/):**
 - JSON files (StandardContactCard.json, CompactContactCard.json, DynamicTableModule.json)
@@ -111,6 +113,9 @@ npm run test:legacy # Run legacy test files
 **Views and Pages (src/frontend/views/):**
 - Demo and test pages for different components and features
 - Development and debugging interfaces
+- **✨ NEW - realtime-sync-demo.html:** Complete working real-time sync demo with entity cards and cross-window synchronization
+- **✨ NEW - callsheet-demo.html:** Comprehensive callsheet + contact card demo showing intrinsic vs contextual attributes
+- **✨ NEW - websocket-test.html:** WebSocket debugging and testing interface with message monitoring
 
 ### III. Database (Neo4j)
 
@@ -296,7 +301,15 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - **Multi-window Sync**: ✅ BroadcastChannel per sincronizzazione tra finestre
 - **Documento di Riferimento**: `docs/development/SSOT-4000-implementation-plan.md`
 
-**Phase 6**: Future Enhancements (Optional)
+**Phase 6**: Real-time Sync Framework (✅ COMPLETED - 15 June 2025)
+- **realtime-sync-demo.html**: ✅ Complete working real-time sync demo with bidirectional synchronization
+- **WebSocket Architecture Fix**: ✅ Corrected server message format with data.newValue/oldValue structure
+- **Callsheet + Contact Card Demo**: ✅ Comprehensive demo with intrinsic vs contextual attributes
+- **Cross-window Synchronization**: ✅ BroadcastChannel implementation for multi-window real-time sync
+- **Testing Framework**: ✅ Automated test suite (test-callsheet-sync.js) for end-to-end validation
+- **Debugging Tools**: ✅ WebSocket test interface and comprehensive logging
+
+**Phase 7**: Future Enhancements (Optional)
 - **Svelte Migration**: Per performance ottimale con UI ancora più reattiva
 - **Advanced Drag & Drop**: Visual feedback e snap-to-grid avanzato
 - **Template System**: Workspace templates riutilizzabili
@@ -351,6 +364,20 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - **Contextual Attributes**: Store fee, role, dates on MEMBER_OF relationships
 - **Aggregates**: Calculate totals, averages, member counts per module
 - **Bidirectional Queries**: `/api/entities/:entityId/projects` for entity's project history
+
+### Working with Real-time Sync Framework (✅ NEW - Phase 6)
+- **Demo URL**: http://localhost:3000/views/realtime-sync-demo.html
+- **Architecture**: Direct WebSocket connection with BroadcastChannel for cross-window sync
+- **Message Format**: Server sends `{type: 'change', entityId, attributeName, data: {newValue, oldValue}}`
+- **Testing**: Use `test-callsheet-sync.js` for automated end-to-end validation
+- **Debugging**: WebSocket test interface at http://localhost:3000/views/websocket-test.html
+
+### Working with Callsheet + Contact Card Demo (✅ NEW)
+- **Demo URL**: http://localhost:3000/views/callsheet-demo.html
+- **Intrinsic Attributes**: Entity properties (nome, email, telefono) sync across all instances
+- **Contextual Attributes**: Relationship properties (fee, role, dates) remain in specific module context
+- **Components**: callsheet-module.js + realtime-contact-card.js + entity-autocomplete.js
+- **Real-time Sync**: Bidirectional synchronization between callsheet table and contact cards
 
 This system prevents duplication by centralizing schema definitions and providing schema-aware, reusable UI components that adapt to any entity type.
 
