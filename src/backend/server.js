@@ -412,6 +412,7 @@ class EvolvedServer {
     }
 
     setupAttributeSpaceNotifications() {
+        console.log('🔗🔗🔗 SETTING UP ATTRIBUTESPACE NOTIFICATIONS');
         // ✨ NUOVO: Integrazione AttributeSpace Evoluto con pattern matching avanzato
         
         // Sottoscrizione 1: Tutte le modifiche entità con filtri intelligenti
@@ -426,18 +427,24 @@ class EvolvedServer {
                 entityId: changeNotification.entityId,
                 changeType: changeNotification.changeType,
                 attributeName: changeNotification.attributeName,
-                data: changeNotification.data,
+                data: {
+                    newValue: changeNotification.newValue,
+                    oldValue: changeNotification.oldValue
+                },
                 timestamp: new Date().toISOString()
             };
             
             // Invia solo ai client con sottoscrizioni matching
             this.broadcastToSubscribedClients(message);
             
-            console.log('🔄 Notifica entità propagata:', {
+            console.log('🔄🔄🔄 WEBSOCKET BROADCASTING:', {
                 entityType: changeNotification.entityType,
                 entityId: changeNotification.entityId,
+                attributeName: changeNotification.attributeName,
+                newValue: changeNotification.newValue,
                 changeType: changeNotification.changeType,
-                clients: this.clients.size
+                clients: this.clients.size,
+                message: message
             });
         });
 
@@ -2300,16 +2307,18 @@ class EvolvedServer {
     broadcastToSubscribedClients(message) {
         const messageString = JSON.stringify(message);
         
-        this.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN && client.subscriptions) {
-                // Verifica se il client ha sottoscrizioni che matchano il messaggio
-                const hasMatchingSubscription = Array.from(client.subscriptions).some(subscription => 
-                    this.messageMatchesSubscription(message, subscription.pattern)
-                );
-                
-                if (hasMatchingSubscription) {
+        console.log(`📡 Broadcasting to ${this.clients.size} clients:`, message.type);
+        
+        this.clients.forEach((client, index) => {
+            if (client.readyState === WebSocket.OPEN) {
+                try {
                     client.send(messageString);
+                    console.log(`📡 Sent message to client ${index + 1}/${this.clients.size}`);
+                } catch (error) {
+                    console.error(`❌ Error sending to client ${index + 1}:`, error);
                 }
+            } else {
+                console.log(`⚠️ Client ${index + 1} not ready (state: ${client.readyState})`);
             }
         });
     }

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test - SSOT System</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .test-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #212529;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .status-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .status-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #007bff;
+        }
+        
+        .status-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 4px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #1e7e34; }
+        
+        .log-container {
+            background: #212529;
+            color: #f8f9fa;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 16px;
+            border-radius: 8px;
+            height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .message-type-change { color: #28a745; }
+        .message-type-relation { color: #ffc107; }
+        .message-type-schema { color: #17a2b8; }
+        .message-error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">🔌 WebSocket Connection Test</h1>
+        
+        <div class="status-grid">
+            <div class="status-item">
+                <div class="status-value" id="connection-status">❌</div>
+                <div class="status-label">Connection Status</div>
+            </div>
+            <div class="status-item">
+                <div class="status-value" id="messages-received">0</div>
+                <div class="status-label">Messages Received</div>
+            </div>
+            <div class="status-item">
+                <div class="status-value" id="last-message-time">-</div>
+                <div class="status-label">Last Message</div>
+            </div>
+            <div class="status-item">
+                <div class="status-value" id="connection-time">-</div>
+                <div class="status-label">Connected For</div>
+            </div>
+        </div>
+        
+        <div>
+            <button class="btn btn-primary" onclick="testConnection()">🔄 Reconnect</button>
+            <button class="btn btn-success" onclick="testEntityUpdate()">🧪 Test Entity Update</button>
+            <button class="btn btn-primary" onclick="clearLog()">🗑️ Clear Log</button>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2 class="test-title">📡 WebSocket Message Log</h2>
+        <div class="log-container" id="message-log"></div>
+    </div>
+
+    <script>
+        class WebSocketTester {
+            constructor() {
+                this.websocket = null;
+                this.isConnected = false;
+                this.messagesReceived = 0;
+                this.connectionTime = null;
+                this.messageLog = [];
+                
+                this.connect();
+                this.startConnectionTimer();
+            }
+
+            connect() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}`;
+                
+                this.log(`🔌 Connecting to: ${wsUrl}`, 'info');
+                
+                this.websocket = new WebSocket(wsUrl);
+                
+                this.websocket.onopen = () => {
+                    this.isConnected = true;
+                    this.connectionTime = new Date();
+                    this.updateConnectionStatus();
+                    this.log('✅ WebSocket connection established', 'success');
+                };
+                
+                this.websocket.onmessage = (event) => {
+                    this.messagesReceived++;
+                    this.updateMessagesReceived();
+                    this.updateLastMessageTime();
+                    
+                    try {
+                        const message = JSON.parse(event.data);
+                        this.handleMessage(message);
+                    } catch (error) {
+                        this.log(`❌ Failed to parse message: ${error.message}`, 'error');
+                        this.log(`Raw data: ${event.data}`, 'error');
+                    }
+                };
+                
+                this.websocket.onclose = (event) => {
+                    this.isConnected = false;
+                    this.connectionTime = null;
+                    this.updateConnectionStatus();
+                    this.log(`🔌 WebSocket closed (Code: ${event.code})`, 'info');
+                    
+                    // Auto-reconnect after 3 seconds
+                    setTimeout(() => this.connect(), 3000);
+                };
+                
+                this.websocket.onerror = (error) => {
+                    this.log(`❌ WebSocket error: ${error}`, 'error');
+                };
+            }
+
+            handleMessage(message) {
+                const timestamp = new Date().toISOString().substring(11, 23);
+                let messageClass = '';
+                
+                switch (message.type) {
+                    case 'change':
+                        messageClass = 'message-type-change';
+                        this.log(`📝 [${timestamp}] ENTITY CHANGE:`, messageClass);
+                        this.log(`   Entity ID: ${message.entityId}`, messageClass);
+                        this.log(`   Entity Type: ${message.entityType}`, messageClass);
+                        this.log(`   Attribute: ${message.attributeName}`, messageClass);
+                        this.log(`   Change Type: ${message.changeType}`, messageClass);
+                        if (message.data) {
+                            this.log(`   New Value: ${message.data.newValue}`, messageClass);
+                            this.log(`   Old Value: ${message.data.oldValue}`, messageClass);
+                        }
+                        break;
+                        
+                    case 'relation-change':
+                        messageClass = 'message-type-relation';
+                        this.log(`🔗 [${timestamp}] RELATION CHANGE:`, messageClass);
+                        this.log(`   Relation Type: ${message.relationType}`, messageClass);
+                        this.log(`   Source: ${message.sourceEntityId}`, messageClass);
+                        this.log(`   Target: ${message.targetEntityId}`, messageClass);
+                        this.log(`   Change Type: ${message.changeType}`, messageClass);
+                        break;
+                        
+                    case 'schema-change':
+                        messageClass = 'message-type-schema';
+                        this.log(`📋 [${timestamp}] SCHEMA CHANGE:`, messageClass);
+                        this.log(`   Entity Type: ${message.entityType}`, messageClass);
+                        this.log(`   Change Type: ${message.changeType}`, messageClass);
+                        break;
+                        
+                    default:
+                        this.log(`❓ [${timestamp}] UNKNOWN MESSAGE TYPE: ${message.type}`, 'info');
+                        this.log(`   Full message: ${JSON.stringify(message, null, 2)}`, 'info');
+                }
+                
+                this.log('', 'info'); // Add spacing
+            }
+
+            log(message, type = 'info') {
+                const timestamp = new Date().toISOString().substring(11, 23);
+                const logEntry = `${message}`;
+                
+                this.messageLog.push({ message: logEntry, type, timestamp });
+                
+                // Keep only last 200 entries
+                if (this.messageLog.length > 200) {
+                    this.messageLog = this.messageLog.slice(-200);
+                }
+                
+                this.updateLogDisplay();
+                console.log(logEntry);
+            }
+
+            updateLogDisplay() {
+                const logElement = document.getElementById('message-log');
+                logElement.innerHTML = this.messageLog.map(entry => 
+                    `<span class="${entry.type}">${entry.message}</span>`
+                ).join('\n');
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+
+            updateConnectionStatus() {
+                const statusElement = document.getElementById('connection-status');
+                statusElement.textContent = this.isConnected ? '✅' : '❌';
+            }
+
+            updateMessagesReceived() {
+                document.getElementById('messages-received').textContent = this.messagesReceived;
+            }
+
+            updateLastMessageTime() {
+                const now = new Date().toISOString().substring(11, 19);
+                document.getElementById('last-message-time').textContent = now;
+            }
+
+            startConnectionTimer() {
+                setInterval(() => {
+                    if (this.isConnected && this.connectionTime) {
+                        const duration = new Date() - this.connectionTime;
+                        const seconds = Math.floor(duration / 1000);
+                        const minutes = Math.floor(seconds / 60);
+                        const hours = Math.floor(minutes / 60);
+                        
+                        let timeString;
+                        if (hours > 0) {
+                            timeString = `${hours}h ${minutes % 60}m`;
+                        } else if (minutes > 0) {
+                            timeString = `${minutes}m ${seconds % 60}s`;
+                        } else {
+                            timeString = `${seconds}s`;
+                        }
+                        
+                        document.getElementById('connection-time').textContent = timeString;
+                    } else {
+                        document.getElementById('connection-time').textContent = '-';
+                    }
+                }, 1000);
+            }
+
+            reconnect() {
+                if (this.websocket) {
+                    this.websocket.close();
+                }
+                this.connect();
+            }
+
+            async testEntityUpdate() {
+                try {
+                    this.log('🧪 Testing entity attribute update...', 'info');
+                    
+                    // First, get or create a test entity
+                    const testData = {
+                        entityType: 'TestEntity',
+                        nome: 'WebSocket Test',
+                        value: Math.random().toString(36).substring(7)
+                    };
+                    
+                    const createResponse = await fetch('/api/entities', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(testData)
+                    });
+                    
+                    if (!createResponse.ok) {
+                        throw new Error(`Failed to create entity: ${createResponse.status}`);
+                    }
+                    
+                    const entity = await createResponse.json();
+                    this.log(`✅ Created test entity: ${entity.id}`, 'success');
+                    
+                    // Now update an attribute
+                    const newValue = `Updated-${Date.now()}`;
+                    const updateResponse = await fetch(`/api/entity/${entity.id}/attribute`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            attributeName: 'value',
+                            value: newValue
+                        })
+                    });
+                    
+                    if (!updateResponse.ok) {
+                        throw new Error(`Failed to update entity: ${updateResponse.status}`);
+                    }
+                    
+                    this.log(`✅ Updated entity attribute to: ${newValue}`, 'success');
+                    this.log('📡 Waiting for WebSocket notification...', 'info');
+                    
+                } catch (error) {
+                    this.log(`❌ Test failed: ${error.message}`, 'error');
+                }
+            }
+
+            clearLog() {
+                this.messageLog = [];
+                this.updateLogDisplay();
+                this.log('🗑️ Log cleared', 'info');
+            }
+        }
+
+        // Global functions for buttons
+        let tester;
+
+        function testConnection() {
+            tester.reconnect();
+        }
+
+        function testEntityUpdate() {
+            tester.testEntityUpdate();
+        }
+
+        function clearLog() {
+            tester.clearLog();
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            tester = new WebSocketTester();
+        });
+    </script>
+</body>
+</html>

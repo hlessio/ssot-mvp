@@ -79,8 +79,10 @@ class EntityAutocompleteComponent extends HTMLElement {
 
     connectedCallback() {
         this.render();
-        this.setupEventListeners();
-        this.setupWebSocketListeners();
+        // Setup WebSocket listeners dopo il rendering
+        setTimeout(() => {
+            this.setupWebSocketListeners();
+        }, 0);
     }
 
     /**
@@ -737,9 +739,9 @@ class EntityAutocompleteComponent extends HTMLElement {
             }
         };
 
-        // Registra i listeners
-        wsService.addEventListener('entity-created', this.entityCreatedListener);
-        wsService.addEventListener('attribute-updated', this.entityUpdatedListener);
+        // Registra i listeners usando il metodo subscribe corretto
+        this.entityCreatedSubscriptionId = wsService.subscribe('entity-created', this.entityCreatedListener);
+        this.entityUpdatedSubscriptionId = wsService.subscribe('attribute-updated', this.entityUpdatedListener);
         
         console.log('✅ WebSocket listeners registrati per autocomplete');
     }
@@ -748,10 +750,14 @@ class EntityAutocompleteComponent extends HTMLElement {
      * ✅ NUOVO: Cleanup WebSocket listeners quando il componente viene rimosso
      */
     disconnectedCallback() {
-        if (this.entityCreatedListener && window.demoApp?.websocketService) {
+        if (window.demoApp?.websocketService) {
             const wsService = window.demoApp.websocketService;
-            wsService.removeEventListener('entity-created', this.entityCreatedListener);
-            wsService.removeEventListener('attribute-updated', this.entityUpdatedListener);
+            if (this.entityCreatedSubscriptionId) {
+                wsService.unsubscribe(this.entityCreatedSubscriptionId);
+            }
+            if (this.entityUpdatedSubscriptionId) {
+                wsService.unsubscribe(this.entityUpdatedSubscriptionId);
+            }
             console.log('🔗 WebSocket listeners rimossi per autocomplete');
         }
     }

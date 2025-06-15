@@ -182,12 +182,22 @@ class EntityEngine {
             
             // 5. Notifica AttributeSpace
             if (this.attributeSpace) {
+                console.log('🔔🔔🔔 NOTIFYING ATTRIBUTESPACE:', {
+                    entityId,
+                    attributeName,
+                    newValue: value,
+                    oldValue: entity[attributeName],
+                    entityType: entity.entityType
+                });
                 this.attributeSpace.notifyChange({
                     entityId,
+                    entityType: entity.entityType,
                     attributeName,
                     newValue: value,
                     oldValue: entity[attributeName]
                 });
+            } else {
+                console.log('❌ NO ATTRIBUTESPACE available for notification!');
             }
             
             console.log(`✅ Attributo ${attributeName} aggiornato per entità ${entityId}`);

@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Callsheet & Real-time Contact Demo - SSOT Dynamic System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .demo-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .demo-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+        
+        .demo-description {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .demo-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background: #f8f9fa;
+            padding: 16px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 4px;
+        }
+        
+        .section-subtitle {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .section-body {
+            padding: 20px;
+        }
+        
+        .contact-cards-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+        
+        .demo-controls {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .controls-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #212529;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .control-label {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #117a8b;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .status-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        
+        .status-item {
+            text-align: center;
+        }
+        
+        .status-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #007bff;
+        }
+        
+        .status-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        
+        .websocket-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .websocket-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .websocket-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            max-width: 300px;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: #28a745;
+        }
+        
+        .notification.error {
+            background: #dc3545;
+        }
+        
+        .notification.info {
+            background: #17a2b8;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loading-content {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        .loading-spinner {
+            font-size: 32px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .demo-title {
+                font-size: 24px;
+            }
+            
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <!-- Header -->
+        <div class="demo-header">
+            <h1 class="demo-title">📋 Callsheet & Real-time Contact Demo</h1>
+            <p class="demo-subtitle">SSOT Dynamic System - Entity-Module Relationships with Real-time Sync</p>
+            
+            <div class="demo-description">
+                <p>This demo showcases the <strong>ModuleRelationService</strong> with real-time synchronization. 
+                The callsheet manages entity-module relationships with contextual attributes (fee, role, etc.), 
+                while contact cards sync attribute changes instantly across all instances and browser windows.</p>
+            </div>
+        </div>
+
+        <!-- Status Panel -->
+        <div class="status-panel">
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-value" id="status-members">0</div>
+                    <div class="status-label">Callsheet Members</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="status-total-fees">$0</div>
+                    <div class="status-label">Total Fees</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="status-contacts">0</div>
+                    <div class="status-label">Contact Cards</div>
+                </div>
+                <div class="status-item">
+                    <div class="websocket-status" id="websocket-status">
+                        🔴 Connecting...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Controls -->
+        <div class="demo-controls">
+            <h3 class="controls-title">🎮 Demo Controls</h3>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label class="control-label">Demo Setup</label>
+                    <button class="btn btn-success" onclick="demoApp.createSampleData()">
+                        🎭 Create Sample Data
+                    </button>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Test Real-time Sync</label>
+                    <button class="btn btn-info" onclick="demoApp.simulateAttributeChange()">
+                        🔄 Simulate Attribute Change
+                    </button>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Test Cross-window Sync</label>
+                    <button class="btn btn-warning" onclick="demoApp.openSecondWindow()">
+                        🪟 Open Second Window
+                    </button>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Reset Demo</label>
+                    <button class="btn btn-primary" onclick="demoApp.resetDemo()">
+                        🔄 Reset All Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Demo Grid -->
+        <div class="demo-grid">
+            <!-- Callsheet Section -->
+            <div class="demo-section">
+                <div class="section-header">
+                    <h3 class="section-title">📋 Callsheet Module</h3>
+                    <p class="section-subtitle">Manage entity-module relationships with contextual attributes</p>
+                </div>
+                <div class="section-body">
+                    <callsheet-module 
+                        id="demo-callsheet"
+                        module-id="00482728-3590-4d2a-8dea-af949107e980"
+                        module-title="Film Production Callsheet"
+                        entity-types="Persona,Contact,Person"
+                        contextual-attributes="fee,role,startDate,endDate,notes"
+                        allow-add-members="true"
+                        allow-remove-members="true"
+                        allow-edit-attributes="true"
+                        show-aggregates="true">
+                    </callsheet-module>
+                </div>
+            </div>
+
+            <!-- Contact Cards Section -->
+            <div class="demo-section">
+                <div class="section-header">
+                    <h3 class="section-title">👤 Real-time Contact Cards</h3>
+                    <p class="section-subtitle">Synchronized attribute updates across all instances</p>
+                </div>
+                <div class="section-body">
+                    <div class="contact-cards-grid" id="contact-cards-container">
+                        <!-- Contact cards will be dynamically added here -->
+                        <div style="text-align: center; color: #6c757d; padding: 20px;">
+                            Contact cards will appear here when you add members to the callsheet
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner">⏳</div>
+            <div>Processing...</div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Include all required services and components -->
+    <script src="../services/EntityService.js"></script>
+    <script src="../services/ModuleRelationService.js"></script>
+    <script src="../components/entity-autocomplete.js"></script>
+    <script src="../components/callsheet-module.js"></script>
+    <script src="../components/realtime-contact-card.js"></script>
+
+    <script>
+        class CallsheetDemoApp {
+            constructor() {
+                this.moduleId = '00482728-3590-4d2a-8dea-af949107e980'; // Use the working module we just created
+                this.contactCards = new Map();
+                this.sampleEntities = [];
+                this.websocketConnected = false;
+                
+                console.log('🎬 Callsheet Demo App initialized');
+            }
+
+            async init() {
+                await this.initializeServices();
+                await this.ensureModuleExists();
+                this.setupEventListeners();
+                this.setupBroadcastChannel();
+                this.setupWebSocketConnection();
+                this.updateStatus();
+                
+                // Load existing data
+                await this.loadExistingData();
+            }
+
+            async initializeServices() {
+                // Wait for services to be available
+                while (!window.EntityService || !window.ModuleRelationService) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                this.entityService = window.EntityService;
+                this.moduleRelationService = window.ModuleRelationService;
+                this.websocket = null;
+                
+                console.log('✅ All services initialized');
+            }
+
+            async ensureModuleExists() {
+                try {
+                    // Check if module exists
+                    await this.moduleRelationService.getMembers(this.moduleId);
+                    console.log('✅ Demo module exists');
+                } catch (error) {
+                    // Module doesn't exist, create it
+                    console.log('🎯 Creating demo module...');
+                    try {
+                        const moduleData = {
+                            entityType: 'ModuleInstance',
+                            instanceName: 'Demo Callsheet Module',
+                            description: 'Auto-created demo module for callsheet demo',
+                            templateModuleId: 'callsheet-template',
+                            targetEntityType: 'Persona',
+                            version: 1
+                        };
+                        
+                        const newModule = await this.entityService.createEntity('ModuleInstance', moduleData);
+                        this.moduleId = newModule.id;
+                        console.log(`✅ Demo module created with ID: ${this.moduleId}`);
+                        
+                        // Update callsheet component with new module ID
+                        const callsheet = document.getElementById('demo-callsheet');
+                        if (callsheet) {
+                            callsheet.setAttribute('module-id', this.moduleId);
+                        }
+                    } catch (createError) {
+                        console.error('❌ Failed to create demo module:', createError);
+                        throw createError;
+                    }
+                }
+            }
+
+            setupEventListeners() {
+                // Listen for callsheet events
+                document.addEventListener('entity-selected', (e) => {
+                    console.log('🎯 Entity selected:', e.detail);
+                    this.handleEntityAdded(e.detail.entity);
+                });
+
+                document.addEventListener('create-entity-requested', (e) => {
+                    console.log('➕ Entity creation requested:', e.detail);
+                    this.handleCreateEntityRequest(e.detail);
+                });
+
+                // Listen for entity attribute updates from contact cards
+                document.addEventListener('entity-attribute-updated', (e) => {
+                    console.log('🔄 Entity attribute updated event received:', e.detail);
+                    this.handleEntityAttributeUpdated(e.detail);
+                });
+
+                // Listen for callsheet member changes
+                const callsheet = document.getElementById('demo-callsheet');
+                if (callsheet) {
+                    // Listen for internal callsheet events
+                    callsheet.addEventListener('member-added', (e) => {
+                        this.handleEntityAdded(e.detail.entity);
+                        this.updateStatus();
+                    });
+
+                    callsheet.addEventListener('member-removed', (e) => {
+                        this.handleEntityRemoved(e.detail.entityId);
+                        this.updateStatus();
+                    });
+                }
+
+                console.log('✅ Event listeners setup complete');
+            }
+
+            setupWebSocketConnection() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}`;
+                
+                console.log(`🔌 Connecting to WebSocket: ${wsUrl}`);
+                
+                this.websocket = new WebSocket(wsUrl);
+                
+                this.websocket.onopen = () => {
+                    this.websocketConnected = true;
+                    this.updateWebSocketStatus();
+                    console.log('✅ WebSocket connected');
+                    this.showNotification('WebSocket connected - Real-time sync active', 'success');
+                };
+                
+                this.websocket.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        console.log('📡 WebSocket message received:', message);
+                        
+                        if (message.type === 'change') {
+                            this.handleAttributeChange(message);
+                        } else if (message.type === 'relation-change') {
+                            this.handleRelationUpdate(message);
+                        }
+                    } catch (error) {
+                        console.error('❌ WebSocket message parse error:', error);
+                    }
+                };
+                
+                this.websocket.onclose = () => {
+                    this.websocketConnected = false;
+                    this.updateWebSocketStatus();
+                    console.log('🔌 WebSocket disconnected');
+                    this.showNotification('WebSocket disconnected', 'error');
+                    
+                    // Attempt reconnection after 3 seconds
+                    setTimeout(() => this.setupWebSocketConnection(), 3000);
+                };
+                
+                this.websocket.onerror = (error) => {
+                    console.error('❌ WebSocket error:', error);
+                };
+            }
+
+            updateWebSocketStatus() {
+                const statusElement = document.getElementById('websocket-status');
+                if (statusElement) {
+                    if (this.websocketConnected) {
+                        statusElement.className = 'websocket-status connected';
+                        statusElement.innerHTML = '🟢 Connected';
+                    } else {
+                        statusElement.className = 'websocket-status disconnected';
+                        statusElement.innerHTML = '🔴 Disconnected';
+                    }
+                }
+            }
+
+            setupBroadcastChannel() {
+                // Setup BroadcastChannel for cross-window sync
+                this.broadcastChannel = new BroadcastChannel('callsheet-demo-sync');
+                
+                this.broadcastChannel.addEventListener('message', (event) => {
+                    const { type, data } = event.data;
+                    console.log('📻 BroadcastChannel message:', type, data);
+                    
+                    switch (type) {
+                        case 'entity-updated':
+                            this.handleEntityUpdate({ data });
+                            break;
+                        case 'member-updated':
+                            this.handleMemberUpdate({ data });
+                            break;
+                        case 'reload-callsheet':
+                            this.reloadCallsheet();
+                            break;
+                    }
+                });
+                
+                console.log('📻 BroadcastChannel setup complete');
+            }
+
+            handleAttributeChange(message) {
+                console.log('🔄🔄🔄 handleAttributeChange called with:', message);
+                
+                // Extract data correctly from WebSocket message format
+                const entityId = message.entityId;
+                const entityType = message.entityType;
+                const attributeName = message.attributeName;
+                const newValue = message.data?.newValue;
+                
+                console.log(`🔄 Handling attribute change: ${entityType} ${entityId} ${attributeName}=${newValue}`);
+                
+                if (!entityId || !attributeName) {
+                    console.warn('⚠️ Missing entityId or attributeName in message:', message);
+                    return;
+                }
+                
+                // Broadcast to other windows
+                console.log('📻 Broadcasting to other windows via BroadcastChannel');
+                this.broadcastChannel?.postMessage({
+                    type: 'entity-updated',
+                    data: { entityId, attributeName, newValue, entityType }
+                });
+                
+                // Update contact cards if they exist
+                console.log('🔄 Updating contact cards for entity:', entityId);
+                this.updateContactCardEntity(entityId, attributeName, newValue);
+                
+                // Reload callsheet to show updated data
+                console.log('🔄 Scheduling callsheet reload in 500ms');
+                setTimeout(() => {
+                    console.log('🔄 Executing callsheet reload now');
+                    this.reloadCallsheet();
+                }, 500);
+            }
+
+            handleEntityUpdate(message) {
+                const { entityId, attributeName, newValue } = message.data || message;
+                console.log(`🔄 Handling entity update: ${entityId} ${attributeName}=${newValue}`);
+                
+                // Update contact cards
+                this.updateContactCardEntity(entityId, attributeName, newValue);
+                
+                // Update status
+                this.updateStatus();
+            }
+
+            handleRelationUpdate(message) {
+                console.log(`🔄 Handling relation update:`, message);
+                
+                // Broadcast to other windows
+                this.broadcastChannel?.postMessage({
+                    type: 'member-updated',
+                    data: message.data || message
+                });
+                
+                // Reload callsheet to show updated attributes
+                setTimeout(() => {
+                    this.reloadCallsheet();
+                }, 500);
+            }
+
+            handleMemberUpdate(message) {
+                console.log(`🔄 Handling member update:`, message);
+                
+                // Reload callsheet to show updated member attributes
+                setTimeout(() => {
+                    this.reloadCallsheet();
+                }, 500);
+                
+                // Update status
+                this.updateStatus();
+            }
+
+            handleSchemaUpdate(message) {
+                console.log(`🔄 Handling schema update:`, message);
+                
+                // Schema changes might affect how we display data
+                // For now, just update status
+                this.updateStatus();
+            }
+
+            updateContactCardEntity(entityId, attributeName, newValue) {
+                // Find and update contact card
+                const contactCard = this.contactCards.get(entityId);
+                if (contactCard) {
+                    // Update the entity data in the contact card
+                    contactCard.updateEntityAttribute(attributeName, newValue);
+                    console.log(`✅ Updated contact card for ${entityId}: ${attributeName}=${newValue}`);
+                }
+            }
+
+            async reloadCallsheet() {
+                const callsheet = document.getElementById('demo-callsheet');
+                if (callsheet) {
+                    try {
+                        await callsheet.loadData();
+                        console.log('✅ Callsheet reloaded');
+                    } catch (error) {
+                        console.log('ℹ️ Callsheet reload skipped:', error.message);
+                    }
+                }
+            }
+
+            async loadExistingData() {
+                try {
+                    // Load existing callsheet members
+                    const members = await this.moduleRelationService.getMembers(this.moduleId);
+                    
+                    // Create contact cards for existing members
+                    for (const member of members) {
+                        this.addContactCard(member.entity);
+                    }
+                    
+                    this.updateStatus();
+                    console.log(`✅ Loaded ${members.length} existing members`);
+                    
+                } catch (error) {
+                    console.log('ℹ️ No existing data found (this is normal for first run)');
+                }
+            }
+
+            async createSampleData() {
+                this.showLoading(true);
+                
+                try {
+                    // Create sample entities
+                    const sampleData = [
+                        {
+                            entityType: 'Persona',
+                            nome: 'John',
+                            cognome: 'Doe',
+                            email: 'john.doe@example.com',
+                            telefono: '+1-555-0101',
+                            indirizzo: '123 Main St',
+                            citta: 'New York'
+                        },
+                        {
+                            entityType: 'Persona',
+                            nome: 'Jane',
+                            cognome: 'Smith',
+                            email: 'jane.smith@example.com',
+                            telefono: '+1-555-0102',
+                            indirizzo: '456 Oak Ave',
+                            citta: 'Los Angeles'
+                        },
+                        {
+                            entityType: 'Contact',
+                            nome: 'Robert',
+                            cognome: 'Johnson',
+                            email: 'robert.johnson@example.com',
+                            telefono: '+1-555-0103',
+                            indirizzo: '789 Pine St',
+                            citta: 'Chicago'
+                        }
+                    ];
+
+                    // Create entities in parallel
+                    const createPromises = sampleData.map(data => 
+                        this.entityService.createEntity(data.entityType, data)
+                    );
+                    
+                    this.sampleEntities = await Promise.all(createPromises);
+                    
+                    // Add entities to callsheet with sample attributes
+                    const roles = ['Director', 'Actor', 'Producer'];
+                    const fees = ['$5000', '$8000', '$12000'];
+                    
+                    for (let i = 0; i < this.sampleEntities.length; i++) {
+                        const entity = this.sampleEntities[i];
+                        const attributes = {
+                            fee: fees[i],
+                            role: roles[i],
+                            startDate: '2025-01-15',
+                            endDate: '2025-03-15',
+                            notes: `Sample ${roles[i]} for demo`
+                        };
+                        
+                        await this.moduleRelationService.addMember(this.moduleId, entity.id, attributes);
+                        this.addContactCard(entity);
+                    }
+                    
+                    this.showNotification(`Created ${this.sampleEntities.length} sample entities and added to callsheet`, 'success');
+                    await this.updateStatus();
+                    
+                } catch (error) {
+                    console.error('❌ Error creating sample data:', error);
+                    this.showNotification('Error creating sample data: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async simulateAttributeChange() {
+                if (this.sampleEntities.length === 0) {
+                    this.showNotification('Please create sample data first', 'warning');
+                    return;
+                }
+                
+                const randomEntity = this.sampleEntities[Math.floor(Math.random() * this.sampleEntities.length)];
+                const attributes = ['telefono', 'email', 'indirizzo'];
+                const randomAttr = attributes[Math.floor(Math.random() * attributes.length)];
+                
+                let newValue;
+                switch (randomAttr) {
+                    case 'telefono':
+                        newValue = `+1-555-${Math.floor(Math.random() * 9000) + 1000}`;
+                        break;
+                    case 'email':
+                        newValue = `${randomEntity.nome.toLowerCase()}.${Date.now()}@example.com`;
+                        break;
+                    case 'indirizzo':
+                        newValue = `${Math.floor(Math.random() * 9999)} Random St`;
+                        break;
+                }
+                
+                try {
+                    await this.entityService.updateAttribute(randomEntity.id, randomAttr, newValue);
+                    this.showNotification(`Updated ${randomAttr} for ${randomEntity.nome} ${randomEntity.cognome}`, 'info');
+                    
+                } catch (error) {
+                    console.error('❌ Error simulating attribute change:', error);
+                    this.showNotification('Error updating attribute: ' + error.message, 'error');
+                }
+            }
+
+            openSecondWindow() {
+                const currentUrl = window.location.href;
+                const newWindow = window.open(currentUrl, '_blank', 'width=1200,height=800');
+                
+                if (newWindow) {
+                    this.showNotification('Second window opened - test cross-window sync!', 'info');
+                } else {
+                    this.showNotification('Please allow popups to test cross-window sync', 'warning');
+                }
+            }
+
+            async resetDemo() {
+                if (!confirm('This will remove all demo data. Are you sure?')) {
+                    return;
+                }
+                
+                this.showLoading(true);
+                
+                try {
+                    // Remove all members from callsheet
+                    const members = await this.moduleRelationService.getMembers(this.moduleId);
+                    
+                    for (const member of members) {
+                        await this.moduleRelationService.removeMember(this.moduleId, member.entity.id);
+                    }
+                    
+                    // Clear contact cards
+                    this.clearAllContactCards();
+                    this.sampleEntities = [];
+                    
+                    this.showNotification('Demo reset complete', 'success');
+                    await this.updateStatus();
+                    
+                } catch (error) {
+                    console.error('❌ Error resetting demo:', error);
+                    this.showNotification('Error resetting demo: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            handleEntityAdded(entity) {
+                this.addContactCard(entity);
+                this.updateStatus();
+            }
+
+            handleEntityRemoved(entityId) {
+                this.removeContactCard(entityId);
+                this.updateStatus();
+            }
+
+            async handleCreateEntityRequest(detail) {
+                const { entityType, suggestedName } = detail;
+                
+                try {
+                    // Create basic entity with suggested name
+                    const entityData = {
+                        nome: suggestedName,
+                        email: `${suggestedName.toLowerCase().replace(/\s+/g, '.')}@example.com`
+                    };
+                    
+                    const newEntity = await this.entityService.createEntity(entityType, entityData);
+                    
+                    // Add to callsheet with default attributes
+                    const defaultAttributes = {
+                        fee: '$0',
+                        role: 'Member',
+                        startDate: new Date().toISOString().split('T')[0],
+                        notes: 'Created from autocomplete'
+                    };
+                    
+                    await this.moduleRelationService.addMember(this.moduleId, newEntity.id, defaultAttributes);
+                    
+                    this.addContactCard(newEntity);
+                    this.showNotification(`Created and added ${suggestedName}`, 'success');
+                    this.updateStatus();
+                    
+                } catch (error) {
+                    console.error('❌ Error creating entity:', error);
+                    this.showNotification('Error creating entity: ' + error.message, 'error');
+                }
+            }
+
+            addContactCard(entity) {
+                if (this.contactCards.has(entity.id)) {
+                    return; // Already exists
+                }
+                
+                const container = document.getElementById('contact-cards-container');
+                
+                // Remove placeholder text
+                if (container.children.length === 1 && container.firstElementChild.style.textAlign === 'center') {
+                    container.innerHTML = '';
+                }
+                
+                // Create contact card element
+                const cardElement = document.createElement('realtime-contact-card');
+                cardElement.setAttribute('entity-id', entity.id);
+                cardElement.setAttribute('entity-type', entity.entityType);
+                cardElement.setAttribute('display-attributes', 'nome,cognome,email,telefono');
+                cardElement.setAttribute('editable-attributes', 'nome,cognome,email,telefono,indirizzo,citta');
+                cardElement.setAttribute('allow-edit', 'true');
+                cardElement.setAttribute('compact-mode', 'true');
+                
+                container.appendChild(cardElement);
+                this.contactCards.set(entity.id, cardElement);
+                
+                console.log(`✅ Added contact card for ${entity.nome || entity.name || entity.id}`);
+            }
+
+            removeContactCard(entityId) {
+                const cardElement = this.contactCards.get(entityId);
+                if (cardElement && cardElement.parentNode) {
+                    cardElement.parentNode.removeChild(cardElement);
+                    this.contactCards.delete(entityId);
+                    
+                    // Add placeholder if no cards left
+                    const container = document.getElementById('contact-cards-container');
+                    if (container.children.length === 0) {
+                        container.innerHTML = `
+                            <div style="text-align: center; color: #6c757d; padding: 20px;">
+                                Contact cards will appear here when you add members to the callsheet
+                            </div>
+                        `;
+                    }
+                    
+                    console.log(`✅ Removed contact card for ${entityId}`);
+                }
+            }
+
+            clearAllContactCards() {
+                this.contactCards.forEach((cardElement) => {
+                    if (cardElement.parentNode) {
+                        cardElement.parentNode.removeChild(cardElement);
+                    }
+                });
+                this.contactCards.clear();
+                
+                // Reset container
+                const container = document.getElementById('contact-cards-container');
+                container.innerHTML = `
+                    <div style="text-align: center; color: #6c757d; padding: 20px;">
+                        Contact cards will appear here when you add members to the callsheet
+                    </div>
+                `;
+            }
+
+            handleEntityAttributeUpdated(detail) {
+                console.log('🔄🔄🔄 handleEntityAttributeUpdated called with:', detail);
+                const { entityId, attributeName, newValue, entityType } = detail;
+                
+                // Update contact cards immediately for same-window sync
+                this.updateContactCardEntity(entityId, attributeName, newValue);
+                
+                // Update callsheet to reflect changes
+                setTimeout(() => {
+                    this.reloadCallsheet();
+                }, 100);
+                
+                // Update status
+                this.updateStatus();
+                
+                console.log(`✅ Local sync completed for ${entityId}: ${attributeName}=${newValue}`);
+            }
+
+            async updateStatus() {
+                try {
+                    // Get current callsheet data
+                    const [members, aggregates] = await Promise.all([
+                        this.moduleRelationService.getMembers(this.moduleId),
+                        this.moduleRelationService.getAggregates(this.moduleId, 'fee')
+                    ]);
+                    
+                    // Update status displays
+                    this.updateStatusValue('status-members', members.length);
+                    this.updateStatusValue('status-total-fees', this.formatCurrency(aggregates?.totalAmount || 0));
+                    this.updateStatusValue('status-contacts', this.contactCards.size);
+                    
+                } catch (error) {
+                    console.log('ℹ️ Could not load status (module may not exist yet)');
+                    this.updateStatusValue('status-members', 0);
+                    this.updateStatusValue('status-total-fees', '$0');
+                    this.updateStatusValue('status-contacts', this.contactCards.size);
+                }
+            }
+
+            updateStatusValue(elementId, value) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.textContent = value;
+                }
+            }
+
+            formatCurrency(amount) {
+                if (typeof amount === 'number') {
+                    return `$${amount.toLocaleString()}`;
+                }
+                return amount || '$0';
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = `notification ${type} show`;
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 4000);
+            }
+
+            showLoading(show) {
+                const overlay = document.getElementById('loading-overlay');
+                if (show) {
+                    overlay.classList.add('show');
+                } else {
+                    overlay.classList.remove('show');
+                }
+            }
+        }
+
+        // Global demo app instance
+        window.demoApp = new CallsheetDemoApp();
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                window.demoApp.init();
+            });
+        } else {
+            window.demoApp.init();
+        }
+    </script>
+</body>
+</html>

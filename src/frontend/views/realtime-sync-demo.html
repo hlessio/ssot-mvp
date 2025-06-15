@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Sync Demo - SSOT System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .demo-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .demo-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+        
+        .status-bar {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-value {
+            font-weight: 600;
+            color: #007bff;
+        }
+        
+        .websocket-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dc3545;
+            animation: pulse 2s infinite;
+        }
+        
+        .websocket-indicator.connected {
+            background: #28a745;
+            animation: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .controls {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #1e7e34; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        
+        .entities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .entity-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .entity-card.syncing {
+            box-shadow: 0 0 20px rgba(0,123,255,0.5);
+            transform: scale(1.02);
+        }
+        
+        .entity-header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .entity-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .entity-id {
+            font-size: 12px;
+            opacity: 0.8;
+            font-family: monospace;
+        }
+        
+        .entity-body {
+            padding: 20px;
+        }
+        
+        .attribute-group {
+            margin-bottom: 16px;
+            position: relative;
+        }
+        
+        .attribute-group.updating {
+            background: linear-gradient(90deg, #e3f2fd, transparent);
+            border-radius: 8px;
+            padding: 8px;
+            margin: -8px;
+            animation: updateFlash 0.5s ease-out;
+        }
+        
+        @keyframes updateFlash {
+            0% { background: linear-gradient(90deg, #2196f3, transparent); }
+            100% { background: linear-gradient(90deg, #e3f2fd, transparent); }
+        }
+        
+        .attribute-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 4px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .attribute-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .attribute-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+        }
+        
+        .sync-indicator {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 10px;
+            transform: scale(0);
+            transition: transform 0.2s;
+        }
+        
+        .sync-indicator.show {
+            transform: scale(1);
+        }
+        
+        .debug-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .debug-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #212529;
+        }
+        
+        .debug-log {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid #e9ecef;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+        
+        .notification.show { transform: translateX(0); }
+        .notification.success { background: #28a745; }
+        .notification.error { background: #dc3545; }
+        .notification.info { background: #17a2b8; }
+        
+        @media (max-width: 768px) {
+            .entities-grid {
+                grid-template-columns: 1fr;
+            }
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <!-- Header -->
+        <div class="demo-header">
+            <h1 class="demo-title">🔄 Real-time Sync Demo</h1>
+            <p class="demo-subtitle">Clean implementation of bidirectional real-time synchronization</p>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <span>WebSocket:</span>
+                <div class="websocket-indicator" id="ws-indicator"></div>
+                <span class="status-value" id="ws-status">Connecting...</span>
+            </div>
+            <div class="status-item">
+                <span>Entities:</span>
+                <span class="status-value" id="entity-count">0</span>
+            </div>
+            <div class="status-item">
+                <span>Sync Events:</span>
+                <span class="status-value" id="sync-count">0</span>
+            </div>
+            <div class="status-item">
+                <span>Latency:</span>
+                <span class="status-value" id="latency">-</span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="controls-grid">
+                <button class="btn btn-success" onclick="demo.createSampleEntities()">
+                    🎭 Create Sample Entities
+                </button>
+                <button class="btn btn-primary" onclick="demo.simulateRandomUpdate()">
+                    🎲 Simulate Random Update
+                </button>
+                <button class="btn btn-warning" onclick="demo.openSecondWindow()">
+                    🪟 Open Second Window
+                </button>
+                <button class="btn btn-danger" onclick="demo.clearAll()">
+                    🗑️ Clear All
+                </button>
+            </div>
+        </div>
+
+        <!-- Entities Grid -->
+        <div class="entities-grid" id="entities-container">
+            <!-- Entities will be dynamically added here -->
+        </div>
+
+        <!-- Debug Panel -->
+        <div class="debug-panel">
+            <h3 class="debug-title">🐛 Debug Log</h3>
+            <div class="debug-log" id="debug-log"></div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        class RealtimeSyncDemo {
+            constructor() {
+                this.entities = new Map();
+                this.websocket = null;
+                this.isConnected = false;
+                this.syncCount = 0;
+                this.debugLog = [];
+                this.pendingUpdates = new Map(); // For debouncing
+                
+                this.log('🚀 Demo initialized');
+                this.setupWebSocket();
+                this.setupBroadcastChannel();
+                this.loadExistingEntities(); // Load entities on startup
+            }
+
+            log(message) {
+                const timestamp = new Date().toISOString().substring(11, 23);
+                const logEntry = `[${timestamp}] ${message}`;
+                this.debugLog.push(logEntry);
+                
+                // Keep only last 50 entries
+                if (this.debugLog.length > 50) {
+                    this.debugLog = this.debugLog.slice(-50);
+                }
+                
+                const debugElement = document.getElementById('debug-log');
+                if (debugElement) {
+                    debugElement.textContent = this.debugLog.join('\n');
+                    debugElement.scrollTop = debugElement.scrollHeight;
+                }
+                
+                console.log(logEntry);
+            }
+
+            setupWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}`;
+                
+                this.log(`🔌 Connecting to WebSocket: ${wsUrl}`);
+                
+                this.websocket = new WebSocket(wsUrl);
+                
+                this.websocket.onopen = () => {
+                    this.isConnected = true;
+                    this.updateConnectionStatus();
+                    this.log('✅ WebSocket connected');
+                    this.showNotification('WebSocket connected', 'success');
+                };
+                
+                this.websocket.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        this.handleWebSocketMessage(message);
+                    } catch (error) {
+                        this.log(`❌ WebSocket message parse error: ${error.message}`);
+                    }
+                };
+                
+                this.websocket.onclose = () => {
+                    this.isConnected = false;
+                    this.updateConnectionStatus();
+                    this.log('🔌 WebSocket disconnected');
+                    this.showNotification('WebSocket disconnected', 'error');
+                    
+                    // Attempt reconnection after 3 seconds
+                    setTimeout(() => this.setupWebSocket(), 3000);
+                };
+                
+                this.websocket.onerror = (error) => {
+                    this.log(`❌ WebSocket error: ${error}`);
+                };
+            }
+
+            setupBroadcastChannel() {
+                if (typeof BroadcastChannel !== 'undefined') {
+                    this.broadcastChannel = new BroadcastChannel('realtime-sync-demo');
+                    this.broadcastChannel.addEventListener('message', (event) => {
+                        this.handleCrossWindowMessage(event.data);
+                    });
+                    
+                    // Request sync from other windows after a short delay
+                    setTimeout(() => {
+                        this.broadcastChannel.postMessage({
+                            type: 'request-sync'
+                        });
+                    }, 1000);
+                    
+                    this.log('📻 BroadcastChannel setup complete');
+                }
+            }
+
+            handleWebSocketMessage(message) {
+                this.log(`📡 WebSocket message: ${message.type}`);
+                
+                if (message.type === 'change') {
+                    this.handleEntityUpdate(message);
+                }
+            }
+
+            handleEntityUpdate(updateMessage) {
+                const { entityId, attributeName, data } = updateMessage;
+                const newValue = data?.newValue;
+                
+                this.log(`🔄 Entity update: ${entityId} ${attributeName}=${newValue}`);
+                
+                // Update local entity data
+                if (this.entities.has(entityId)) {
+                    const entity = this.entities.get(entityId);
+                    entity[attributeName] = newValue;
+                    
+                    // Update UI
+                    this.updateEntityCardAttribute(entityId, attributeName, newValue);
+                    
+                    // Broadcast to other windows
+                    if (this.broadcastChannel) {
+                        this.broadcastChannel.postMessage({
+                            type: 'entity-updated',
+                            entityId,
+                            attributeName,
+                            newValue
+                        });
+                    }
+                    
+                    this.syncCount++;
+                    this.updateSyncCount();
+                    this.showSyncIndicator(entityId, attributeName);
+                }
+            }
+
+            handleCrossWindowMessage(message) {
+                if (message.type === 'entity-updated') {
+                    this.log(`📻 Cross-window update: ${message.entityId} ${message.attributeName}=${message.newValue}`);
+                    
+                    // Update local entity data
+                    if (this.entities.has(message.entityId)) {
+                        const entity = this.entities.get(message.entityId);
+                        entity[message.attributeName] = message.newValue;
+                    }
+                    
+                    this.updateEntityCardAttribute(message.entityId, message.attributeName, message.newValue);
+                    this.showSyncIndicator(message.entityId, message.attributeName);
+                } else if (message.type === 'entity-created') {
+                    this.log(`📻 Cross-window entity created: ${message.entity.id}`);
+                    if (!this.entities.has(message.entity.id)) {
+                        this.addEntity(message.entity, true); // fromSync = true
+                    }
+                } else if (message.type === 'request-sync') {
+                    // Another window is requesting current entities
+                    this.log(`📻 Sync request from another window`);
+                    this.entities.forEach(entity => {
+                        this.broadcastChannel.postMessage({
+                            type: 'entity-sync',
+                            entity: entity
+                        });
+                    });
+                } else if (message.type === 'entity-sync') {
+                    this.log(`📻 Receiving entity sync: ${message.entity.id}`);
+                    if (!this.entities.has(message.entity.id)) {
+                        this.addEntity(message.entity, true); // fromSync = true
+                    }
+                }
+            }
+
+            updateEntityCardAttribute(entityId, attributeName, newValue) {
+                const input = document.querySelector(`[data-entity-id="${entityId}"][data-attribute="${attributeName}"]`);
+                if (input && input !== document.activeElement) {
+                    input.value = newValue || '';
+                    
+                    // Add update animation
+                    const attributeGroup = input.closest('.attribute-group');
+                    if (attributeGroup) {
+                        attributeGroup.classList.add('updating');
+                        setTimeout(() => {
+                            attributeGroup.classList.remove('updating');
+                        }, 500);
+                    }
+                }
+            }
+
+            showSyncIndicator(entityId, attributeName) {
+                const input = document.querySelector(`[data-entity-id="${entityId}"][data-attribute="${attributeName}"]`);
+                if (input) {
+                    const indicator = input.closest('.attribute-group').querySelector('.sync-indicator');
+                    if (indicator) {
+                        indicator.classList.add('show');
+                        setTimeout(() => {
+                            indicator.classList.remove('show');
+                        }, 1000);
+                    }
+                }
+            }
+
+            async updateEntityAttribute(entityId, attributeName, value) {
+                try {
+                    const startTime = Date.now();
+                    this.log(`💾 Updating ${attributeName} for ${entityId}: ${value}`);
+                    
+                    const response = await fetch(`/api/entity/${entityId}/attribute`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            attributeName,
+                            value
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.error || 'Update failed');
+                    }
+                    
+                    const latency = Date.now() - startTime;
+                    this.updateLatency(latency);
+                    this.log(`✅ Attribute updated (${latency}ms)`);
+                    
+                } catch (error) {
+                    this.log(`❌ Update failed: ${error.message}`);
+                    this.showNotification(`Update failed: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+
+            async loadExistingEntities() {
+                try {
+                    this.log('📥 Loading existing entities from backend...');
+                    
+                    // Load entities of common types
+                    const entityTypes = ['Persona', 'Contact', 'Person'];
+                    
+                    for (const entityType of entityTypes) {
+                        try {
+                            const response = await fetch(`/api/entities?entityType=${entityType}`);
+                            if (response.ok) {
+                                const entities = await response.json();
+                                entities.forEach(entity => {
+                                    if (entity.id && !this.entities.has(entity.id)) {
+                                        this.addEntity(entity);
+                                    }
+                                });
+                                this.log(`✅ Loaded ${entities.length} entities of type ${entityType}`);
+                            }
+                        } catch (error) {
+                            this.log(`⚠️ Could not load ${entityType} entities: ${error.message}`);
+                        }
+                    }
+                    
+                    if (this.entities.size === 0) {
+                        this.log('ℹ️ No existing entities found. Use "Create Sample Entities" to start.');
+                    } else {
+                        this.log(`✅ Loaded ${this.entities.size} total entities`);
+                    }
+                    
+                } catch (error) {
+                    this.log(`❌ Error loading entities: ${error.message}`);
+                }
+            }
+
+            async createSampleEntities() {
+                try {
+                    this.log('🎭 Creating sample entities...');
+                    
+                    const sampleData = [
+                        {
+                            entityType: 'Persona',
+                            nome: 'Alice',
+                            cognome: 'Johnson',
+                            email: 'alice.johnson@example.com',
+                            telefono: '+1-555-0101'
+                        },
+                        {
+                            entityType: 'Persona',
+                            nome: 'Bob',
+                            cognome: 'Smith',
+                            email: 'bob.smith@example.com',
+                            telefono: '+1-555-0102'
+                        },
+                        {
+                            entityType: 'Contact',
+                            nome: 'Charlie',
+                            cognome: 'Brown',
+                            email: 'charlie.brown@example.com',
+                            telefono: '+1-555-0103'
+                        }
+                    ];
+                    
+                    for (const data of sampleData) {
+                        const response = await fetch('/api/entities', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        });
+                        
+                        if (response.ok) {
+                            const entity = await response.json();
+                            this.addEntity(entity);
+                        }
+                    }
+                    
+                    this.log(`✅ Created ${sampleData.length} sample entities`);
+                    this.showNotification('Sample entities created', 'success');
+                    
+                } catch (error) {
+                    this.log(`❌ Error creating entities: ${error.message}`);
+                    this.showNotification('Error creating entities', 'error');
+                }
+            }
+
+            addEntity(entity, fromSync = false) {
+                this.entities.set(entity.id, entity);
+                this.renderEntityCard(entity);
+                this.updateEntityCount();
+                
+                // Notify other windows of new entity (but don't create infinite loops)
+                if (!fromSync && this.broadcastChannel) {
+                    this.broadcastChannel.postMessage({
+                        type: 'entity-created',
+                        entity: entity
+                    });
+                }
+            }
+
+            renderEntityCard(entity) {
+                const container = document.getElementById('entities-container');
+                const displayName = `${entity.nome || entity.name || ''} ${entity.cognome || entity.surname || ''}`.trim() || entity.id;
+                
+                const cardElement = document.createElement('div');
+                cardElement.className = 'entity-card';
+                cardElement.dataset.entityId = entity.id;
+                
+                cardElement.innerHTML = `
+                    <div class="entity-header">
+                        <div>
+                            <div class="entity-name">👤 ${displayName}</div>
+                            <div class="entity-id">${entity.id}</div>
+                        </div>
+                    </div>
+                    <div class="entity-body">
+                        ${this.renderAttributes(entity)}
+                    </div>
+                `;
+                
+                container.appendChild(cardElement);
+                this.setupCardEventListeners(cardElement, entity);
+            }
+
+            renderAttributes(entity) {
+                const attributes = ['nome', 'cognome', 'email', 'telefono'];
+                return attributes.map(attr => `
+                    <div class="attribute-group">
+                        <div class="attribute-label">${this.getAttributeLabel(attr)}</div>
+                        <input 
+                            type="text" 
+                            class="attribute-input"
+                            data-entity-id="${entity.id}"
+                            data-attribute="${attr}"
+                            value="${entity[attr] || ''}"
+                            placeholder="Enter ${this.getAttributeLabel(attr).toLowerCase()}...">
+                        <div class="sync-indicator">✓ Synced</div>
+                    </div>
+                `).join('');
+            }
+
+            getAttributeLabel(attributeName) {
+                const labels = {
+                    nome: 'First Name',
+                    cognome: 'Last Name',
+                    email: 'Email',
+                    telefono: 'Phone'
+                };
+                return labels[attributeName] || attributeName;
+            }
+
+            setupCardEventListeners(cardElement, entity) {
+                const inputs = cardElement.querySelectorAll('.attribute-input');
+                
+                inputs.forEach(input => {
+                    let timeout;
+                    
+                    input.addEventListener('input', (e) => {
+                        const attributeName = e.target.dataset.attribute;
+                        const value = e.target.value;
+                        
+                        // Clear existing timeout
+                        clearTimeout(timeout);
+                        
+                        // Debounce the update
+                        timeout = setTimeout(async () => {
+                            try {
+                                await this.updateEntityAttribute(entity.id, attributeName, value);
+                                
+                                // Update local data immediately
+                                entity[attributeName] = value;
+                                
+                            } catch (error) {
+                                // Revert on error
+                                e.target.value = entity[attributeName] || '';
+                            }
+                        }, 1000);
+                    });
+                });
+            }
+
+            async simulateRandomUpdate() {
+                if (this.entities.size === 0) {
+                    this.showNotification('No entities to update. Create some first!', 'warning');
+                    return;
+                }
+                
+                const entityArray = Array.from(this.entities.values());
+                const randomEntity = entityArray[Math.floor(Math.random() * entityArray.length)];
+                const attributes = ['nome', 'cognome', 'email', 'telefono'];
+                const randomAttr = attributes[Math.floor(Math.random() * attributes.length)];
+                
+                let newValue;
+                switch (randomAttr) {
+                    case 'nome':
+                        newValue = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'][Math.floor(Math.random() * 5)];
+                        break;
+                    case 'cognome':
+                        newValue = ['Smith', 'Johnson', 'Williams', 'Brown', 'Davis'][Math.floor(Math.random() * 5)];
+                        break;
+                    case 'email':
+                        newValue = `user${Math.floor(Math.random() * 1000)}@example.com`;
+                        break;
+                    case 'telefono':
+                        newValue = `+1-555-${Math.floor(Math.random() * 9000) + 1000}`;
+                        break;
+                }
+                
+                try {
+                    await this.updateEntityAttribute(randomEntity.id, randomAttr, newValue);
+                    this.showNotification(`Updated ${randomAttr} for ${randomEntity.nome || randomEntity.id}`, 'info');
+                } catch (error) {
+                    this.showNotification('Update failed', 'error');
+                }
+            }
+
+            openSecondWindow() {
+                const newWindow = window.open(window.location.href, '_blank', 'width=1200,height=800');
+                if (newWindow) {
+                    this.showNotification('Second window opened - test cross-window sync!', 'info');
+                } else {
+                    this.showNotification('Please allow popups to test cross-window sync', 'warning');
+                }
+            }
+
+            clearAll() {
+                if (!confirm('This will clear all entities from the demo. Continue?')) {
+                    return;
+                }
+                
+                this.entities.clear();
+                document.getElementById('entities-container').innerHTML = '';
+                this.updateEntityCount();
+                this.log('🗑️ All entities cleared');
+                this.showNotification('All entities cleared', 'info');
+            }
+
+            updateConnectionStatus() {
+                const indicator = document.getElementById('ws-indicator');
+                const status = document.getElementById('ws-status');
+                
+                if (this.isConnected) {
+                    indicator.classList.add('connected');
+                    status.textContent = 'Connected';
+                } else {
+                    indicator.classList.remove('connected');
+                    status.textContent = 'Disconnected';
+                }
+            }
+
+            updateEntityCount() {
+                document.getElementById('entity-count').textContent = this.entities.size;
+            }
+
+            updateSyncCount() {
+                document.getElementById('sync-count').textContent = this.syncCount;
+            }
+
+            updateLatency(latency) {
+                document.getElementById('latency').textContent = `${latency}ms`;
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = `notification ${type} show`;
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 4000);
+            }
+        }
+
+        // Initialize demo when page loads
+        let demo;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                demo = new RealtimeSyncDemo();
+            });
+        } else {
+            demo = new RealtimeSyncDemo();
+        }
+
+        // Make demo globally accessible
+        window.demo = demo;
+    </script>
+</body>
+</html>
