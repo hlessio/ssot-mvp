@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSOT-4000 Workspace Demo - Fase 2</title>
+    <link rel="stylesheet" href="dist/bundle.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .demo-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .demo-title {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: 300;
+        }
+        
+        .demo-info {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .demo-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .demo-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        
+        .demo-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .demo-btn.primary {
+            background: #28a745;
+            border-color: #28a745;
+        }
+        
+        .demo-btn.primary:hover {
+            background: #218838;
+        }
+        
+        .workspace-container {
+            height: calc(100vh - 70px);
+            overflow: hidden;
+        }
+        
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #343a40;
+            color: white;
+            padding: 8px 25px;
+            font-size: 0.85em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+        
+        .status-indicator.connecting {
+            background: #ffc107;
+            animation: pulse 1s infinite;
+        }
+        
+        .status-indicator.error {
+            background: #dc3545;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Demo Header -->
+    <header class="demo-header">
+        <div>
+            <h1 class="demo-title">🎯 SSOT-4000 Workspace Demo</h1>
+            <p class="demo-info">Fase 2: Svelte Workspace Base | Real-time CompositeDocument</p>
+        </div>
+        
+        <div class="demo-controls">
+            <button class="demo-btn" onclick="createTestDocument()">
+                📄 Crea Documento Test
+            </button>
+            <button class="demo-btn" onclick="loadExistingDocument()">
+                📂 Carica Documento
+            </button>
+            <button class="demo-btn" onclick="toggleFullscreen()">
+                📺 Fullscreen
+            </button>
+            <button class="demo-btn primary" onclick="openDocumentAPI()">
+                🔧 API Test
+            </button>
+        </div>
+    </header>
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Inizializzazione SSOT-4000 Workspace...</p>
+    </div>
+    
+    <!-- Workspace Container -->
+    <div class="workspace-container">
+        <div id="svelteApp"></div>
+    </div>
+    
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            <div id="wsIndicator" class="status-indicator connecting"></div>
+            <span id="wsStatus">Connessione WebSocket...</span>
+        </div>
+        
+        <div class="status-item">
+            <span>Fase 2 SSOT-4000</span>
+        </div>
+        
+        <div class="status-item">
+            <span id="documentStatus">Nessun documento caricato</span>
+        </div>
+    </div>
+    
+    <!-- Svelte Bundle -->
+    <script src="dist/bundle.js"></script>
+    
+    <script>
+        let app;
+        let currentDocumentId = null;
+        
+        // Inizializza app quando DOM è pronto
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Inizializzazione SSOT-4000 Workspace Demo');
+            
+            try {
+                // Simula caricamento per demo
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Nascondi loading overlay
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                
+                // Inizializza Svelte app
+                console.log('🎯 Avvio applicazione Svelte');
+                
+                // L'app Svelte si monta automaticamente su body
+                // ma possiamo monitorare il suo stato
+                
+                // Setup WebSocket status monitoring
+                setupWebSocketMonitoring();
+                
+                // Controlla se c'è un documentId nei parametri URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const documentId = urlParams.get('documentId');
+                
+                if (documentId) {
+                    currentDocumentId = documentId;
+                    updateDocumentStatus(`Documento: ${documentId}`);
+                }
+                
+                console.log('✅ SSOT-4000 Workspace Demo pronto');
+                
+            } catch (error) {
+                console.error('❌ Errore inizializzazione:', error);
+                document.getElementById('loadingOverlay').innerHTML = 
+                    '<div style="text-align: center;"><h3>❌ Errore Inizializzazione</h3><p>' + error.message + '</p></div>';
+            }
+        });
+        
+        // Monitoring WebSocket status
+        function setupWebSocketMonitoring() {
+            const wsIndicator = document.getElementById('wsIndicator');
+            const wsStatus = document.getElementById('wsStatus');
+            
+            // Simula WebSocket status (in realtà viene gestito da DocumentService)
+            setTimeout(() => {
+                wsIndicator.className = 'status-indicator';
+                wsStatus.textContent = 'WebSocket connesso';
+            }, 2000);
+        }
+        
+        // Demo functions
+        async function createTestDocument() {
+            try {
+                const response = await fetch('/api/documents', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: `Demo Document ${new Date().toLocaleTimeString()}`,
+                        description: 'Documento creato dalla demo Workspace',
+                        ownerId: 'demo-user',
+                        status: 'draft',
+                        metadata: {
+                            createdVia: 'workspace-demo',
+                            demoMode: true
+                        }
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const document = result.success ? result.data : result;
+                    
+                    // Reindirizza al documento creato
+                    window.location.href = `?documentId=${document.id}`;
+                    
+                } else {
+                    alert('Errore creazione documento');
+                }
+            } catch (error) {
+                alert('Errore: ' + error.message);
+            }
+        }
+        
+        async function loadExistingDocument() {
+            try {
+                const response = await fetch('/api/documents');
+                const result = await response.json();
+                const documents = result.success ? result.data : [];
+                
+                if (documents.length === 0) {
+                    alert('Nessun documento trovato. Crea prima un documento.');
+                    return;
+                }
+                
+                // Mostra lista documenti per selezione
+                const documentsList = documents.map(doc => 
+                    `${doc.id}: ${doc.name} (${doc.status})`
+                ).join('\n');
+                
+                const selectedDoc = prompt('Documenti disponibili:\n\n' + documentsList + '\n\nInserisci ID documento:');
+                
+                if (selectedDoc) {
+                    window.location.href = `?documentId=${selectedDoc}`;
+                }
+                
+            } catch (error) {
+                alert('Errore caricamento documenti: ' + error.message);
+            }
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        function openDocumentAPI() {
+            window.open('/views/test-composite-document.html', '_blank');
+        }
+        
+        function updateDocumentStatus(status) {
+            document.getElementById('documentStatus').textContent = status;
+        }
+        
+        // Error handling globale
+        window.addEventListener('error', (event) => {
+            console.error('🚨 Errore applicazione:', event.error);
+            
+            const wsIndicator = document.getElementById('wsIndicator');
+            const wsStatus = document.getElementById('wsStatus');
+            
+            if (wsIndicator) {
+                wsIndicator.className = 'status-indicator error';
+                wsStatus.textContent = 'Errore applicazione';
+            }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            // Ctrl/Cmd + N: Nuovo documento
+            if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
+                event.preventDefault();
+                createTestDocument();
+            }
+            
+            // Ctrl/Cmd + O: Apri documento
+            if ((event.ctrlKey || event.metaKey) && event.key === 'o') {
+                event.preventDefault();
+                loadExistingDocument();
+            }
+            
+            // F11: Fullscreen
+            if (event.key === 'F11') {
+                event.preventDefault();
+                toggleFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>

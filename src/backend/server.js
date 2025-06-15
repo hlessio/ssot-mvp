@@ -310,14 +310,32 @@ class EvolvedServer {
     setupWebSocket() {
         this.wss.on('connection', (ws, req) => {
             console.log('Nuovo client WebSocket connesso');
+            
+            // Inizializza le sottoscrizioni del client
+            ws.subscriptions = new Set();
             this.clients.add(ws);
             
             // Messaggio di benvenuto
             ws.send(JSON.stringify({
                 type: 'connection',
-                message: 'Connesso al server SSOT Dinamico Evoluto (Fase 3 - EntityEngine)',
+                message: 'Connesso al server SSOT Dinamico Evoluto (SSOT-4000)',
                 timestamp: new Date().toISOString()
             }));
+            
+            // Gestione messaggi dal client
+            ws.on('message', (message) => {
+                try {
+                    const data = JSON.parse(message);
+                    this.handleClientMessage(ws, data);
+                } catch (error) {
+                    console.error('❌ Errore parsing messaggio WebSocket:', error);
+                    ws.send(JSON.stringify({
+                        type: 'error',
+                        message: 'Formato messaggio non valido',
+                        timestamp: new Date().toISOString()
+                    }));
+                }
+            });
             
             // Gestione disconnessione
             ws.on('close', () => {
@@ -333,80 +351,139 @@ class EvolvedServer {
         });
     }
 
+    /**
+     * Gestisce i messaggi ricevuti dai client WebSocket
+     */
+    handleClientMessage(ws, data) {
+        switch (data.type) {
+            case 'subscribe':
+                this.handleSubscription(ws, data.pattern);
+                break;
+            case 'unsubscribe':
+                this.handleUnsubscription(ws, data.pattern);
+                break;
+            case 'ping':
+                ws.send(JSON.stringify({
+                    type: 'pong',
+                    timestamp: new Date().toISOString()
+                }));
+                break;
+            default:
+                console.warn('⚠️ Tipo messaggio WebSocket non supportato:', data.type);
+        }
+    }
+
+    /**
+     * Gestisce le sottoscrizioni client
+     */
+    handleSubscription(ws, pattern) {
+        const subscription = {
+            id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            pattern: pattern
+        };
+        
+        ws.subscriptions.add(subscription);
+        
+        console.log('📡 Nuova sottoscrizione WebSocket:', subscription);
+        
+        ws.send(JSON.stringify({
+            type: 'subscription-confirmed',
+            subscriptionId: subscription.id,
+            pattern: pattern,
+            timestamp: new Date().toISOString()
+        }));
+    }
+
+    /**
+     * Gestisce la rimozione delle sottoscrizioni
+     */
+    handleUnsubscription(ws, pattern) {
+        const toRemove = Array.from(ws.subscriptions).filter(sub => 
+            JSON.stringify(sub.pattern) === JSON.stringify(pattern)
+        );
+        
+        toRemove.forEach(sub => ws.subscriptions.delete(sub));
+        
+        ws.send(JSON.stringify({
+            type: 'unsubscription-confirmed',
+            pattern: pattern,
+            timestamp: new Date().toISOString()
+        }));
+    }
+
     setupAttributeSpaceNotifications() {
         // ✨ NUOVO: Integrazione AttributeSpace Evoluto con pattern matching avanzato
         
-        // Sottoscrizione 1: Tutte le modifiche entità per WebSocket (compatibilità MVP)
+        // Sottoscrizione 1: Tutte le modifiche entità con filtri intelligenti
         this.attributeSpace.subscribe({
-            type: 'entity', // Solo eventi entità
-            changeType: '*' // Tutti i tipi di cambiamento
+            type: 'entity',
+            changeType: '*'
         }, (changeNotification) => {
-            const message = JSON.stringify({
-                type: 'attributeChange',
-                data: changeNotification,
-                timestamp: new Date().toISOString()
-            });
-            
-            // Invia la notifica a tutti i client connessi
-            this.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(message);
-                }
-            });
-            
-            console.log('🔄 Notifica entità propagata a', this.clients.size, 'client:', {
+            // Crea messaggio standardizzato
+            const message = {
+                type: 'change',
+                entityType: changeNotification.entityType,
                 entityId: changeNotification.entityId,
+                changeType: changeNotification.changeType,
                 attributeName: changeNotification.attributeName,
-                changeType: changeNotification.changeType
+                data: changeNotification.data,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Invia solo ai client con sottoscrizioni matching
+            this.broadcastToSubscribedClients(message);
+            
+            console.log('🔄 Notifica entità propagata:', {
+                entityType: changeNotification.entityType,
+                entityId: changeNotification.entityId,
+                changeType: changeNotification.changeType,
+                clients: this.clients.size
             });
         });
 
-        // Sottoscrizione 2: Eventi relazioni per WebSocket
+        // Sottoscrizione 2: Eventi relazioni
         this.attributeSpace.subscribe({
-            type: 'relation', // Solo eventi relazioni
+            type: 'relation',
             changeType: '*'
         }, (changeNotification) => {
-            const message = JSON.stringify({
-                type: 'relationChange',
-                data: changeNotification,
-                timestamp: new Date().toISOString()
-            });
-            
-            this.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(message);
-                }
-            });
-            
-            console.log('🔗 Notifica relazione propagata a', this.clients.size, 'client:', {
+            const message = {
+                type: 'relation-change',
                 relationType: changeNotification.relationType,
                 sourceEntityId: changeNotification.sourceEntityId,
                 targetEntityId: changeNotification.targetEntityId,
-                changeType: changeNotification.changeType
+                changeType: changeNotification.changeType,
+                data: changeNotification.data,
+                timestamp: new Date().toISOString()
+            };
+            
+            this.broadcastToSubscribedClients(message);
+            
+            console.log('🔗 Notifica relazione propagata:', {
+                relationType: changeNotification.relationType,
+                changeType: changeNotification.changeType,
+                clients: this.clients.size
             });
         });
 
-        // Sottoscrizione 3: Eventi schema per sincronizzazione struttura
+        // Sottoscrizione 3: Eventi schema
         this.attributeSpace.subscribe({
             type: 'schema',
             changeType: '*'
         }, (changeNotification) => {
-            const message = JSON.stringify({
-                type: 'schemaChange',
-                data: changeNotification,
-                timestamp: new Date().toISOString()
-            });
-            
-            this.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(message);
-                }
-            });
-            
-            console.log('📋 Notifica schema propagata a', this.clients.size, 'client:', {
+            const message = {
+                type: 'schema-change',
                 entityType: changeNotification.entityType,
-                schemaChange: changeNotification.attributeName,
-                changeType: changeNotification.changeType
+                changeType: changeNotification.changeType,
+                data: changeNotification.data,
+                timestamp: new Date().toISOString()
+            };
+            
+            this.broadcastToSubscribedClients(message);
+            
+            console.log('📋 Notifica schema propagata:', {
+                entityType: changeNotification.entityType,
+                changeType: changeNotification.changeType,
+                clients: this.clients.size
             });
         });
 
@@ -1934,13 +2011,16 @@ class EvolvedServer {
                     case 'add':
                         result = await this.documentService.addModuleToDocument(id, moduleId, layoutConfig);
                         break;
+                    case 'update':
+                        result = await this.documentService.updateModuleInDocument(id, moduleId, layoutConfig);
+                        break;
                     case 'remove':
                         result = await this.documentService.removeModuleFromDocument(id, moduleId);
                         break;
                     default:
                         return res.status(400).json({
                             success: false,
-                            error: 'Azione non valida. Usa "add" o "remove"'
+                            error: 'Azione non valida. Usa "add", "update" o "remove"'
                         });
                 }
                 
@@ -2212,6 +2292,66 @@ class EvolvedServer {
                 client.send(messageString);
             }
         });
+    }
+
+    /**
+     * Invia messaggi solo ai client con sottoscrizioni matching
+     */
+    broadcastToSubscribedClients(message) {
+        const messageString = JSON.stringify(message);
+        
+        this.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN && client.subscriptions) {
+                // Verifica se il client ha sottoscrizioni che matchano il messaggio
+                const hasMatchingSubscription = Array.from(client.subscriptions).some(subscription => 
+                    this.messageMatchesSubscription(message, subscription.pattern)
+                );
+                
+                if (hasMatchingSubscription) {
+                    client.send(messageString);
+                }
+            }
+        });
+    }
+
+    /**
+     * Verifica se un messaggio corrisponde a una sottoscrizione pattern
+     */
+    messageMatchesSubscription(message, pattern) {
+        // Pattern vuoto o non definito = match tutto
+        if (!pattern) return true;
+        
+        // Verifica tipo di entità
+        if (pattern.entityType && pattern.entityType !== '*' && 
+            message.entityType !== pattern.entityType) {
+            return false;
+        }
+        
+        // Verifica ID entità specifico
+        if (pattern.entityId && pattern.entityId !== '*' && 
+            message.entityId !== pattern.entityId) {
+            return false;
+        }
+        
+        // Verifica tipo di cambiamento
+        if (pattern.changeType && pattern.changeType !== '*' && 
+            message.changeType !== pattern.changeType) {
+            return false;
+        }
+        
+        // Verifica nome attributo
+        if (pattern.attributeName && pattern.attributeName !== '*' && 
+            message.attributeName !== pattern.attributeName) {
+            return false;
+        }
+        
+        // Verifica tipo di relazione (per messaggi di relazione)
+        if (pattern.relationType && pattern.relationType !== '*' && 
+            message.relationType !== pattern.relationType) {
+            return false;
+        }
+        
+        return true;
     }
 
     /**

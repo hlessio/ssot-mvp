@@ -137,6 +137,12 @@ class Assert {
         }
     }
 
+    static isArray(value, message = 'Expected value to be an array') {
+        if (!Array.isArray(value)) {
+            throw new Error(message);
+        }
+    }
+
     static hasProperty(obj, prop, message = `Expected object to have property ${prop}`) {
         if (!obj || !obj.hasOwnProperty(prop)) {
             throw new Error(message);

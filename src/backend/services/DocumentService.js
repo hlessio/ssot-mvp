@@ -100,14 +100,8 @@ class DocumentService {
                 throw new Error(`CompositeDocument ${documentId} non trovato`);
             }
             
-            // Risultato da ritornare
-            const result = {
-                document: document,
-                modules: [],
-                project: null
-            };
-            
             // Recupera i moduli contenuti se richiesto
+            let modules = [];
             if (includeModules) {
                 const modulesQuery = `
                     MATCH (d:CompositeDocument {id: $documentId})-[r:CONTAINS_MODULE]->(m:ModuleInstance)
@@ -117,8 +111,10 @@ class DocumentService {
                 
                 const modulesResult = await this.dao.connector.executeQuery(modulesQuery, { documentId });
                 
-                result.modules = modulesResult.records.map(record => {
+                modules = modulesResult.records.map(record => {
+                    const moduleData = record.get('m').properties;
                     const relationProps = record.get('relationProps');
+                    
                     // Parse JSON fields
                     const position = typeof relationProps.position === 'string' 
                         ? JSON.parse(relationProps.position) 
@@ -131,16 +127,27 @@ class DocumentService {
                         : relationProps.config;
                     
                     return {
-                        module: record.get('m').properties,
-                        relation: relationProps,
+                        moduleId: moduleData.id,
+                        instanceName: moduleData.instanceName,
+                        templateModuleId: moduleData.templateModuleId,
+                        targetEntityType: moduleData.targetEntityType,
+                        targetEntityId: moduleData.targetEntityId,
+                        description: moduleData.description,
                         order: relationProps.order,
                         position: position,
                         size: size,
                         collapsed: relationProps.collapsed,
-                        config: config
+                        config: config,
+                        addedAt: relationProps.addedAt
                     };
                 });
             }
+            
+            // Merge documento con moduli e altre proprietà
+            const result = {
+                ...document,
+                modules: modules
+            };
             
             // Recupera il progetto se richiesto
             if (includeProject && document.projectId) {
@@ -371,6 +378,86 @@ class DocumentService {
             
         } catch (error) {
             console.error('❌ Errore removeModuleFromDocument:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Aggiorna il layout e la configurazione di un modulo specifico in un documento
+     * @param {string} documentId - ID del documento
+     * @param {string} moduleId - ID del ModuleInstance
+     * @param {object} layoutConfig - Nuova configurazione di layout
+     * @returns {Promise<object>} La relazione aggiornata
+     */
+    async updateModuleInDocument(documentId, moduleId, layoutConfig = {}) {
+        try {
+            // Verifica che il modulo esista nel documento
+            const checkQuery = `
+                MATCH (d:CompositeDocument {id: $documentId})-[r:CONTAINS_MODULE]->(m:ModuleInstance {id: $moduleId})
+                RETURN r, m
+            `;
+            
+            const checkResult = await this.dao.connector.executeQuery(checkQuery, {
+                documentId,
+                moduleId
+            });
+            
+            if (checkResult.records.length === 0) {
+                throw new Error(`Modulo ${moduleId} non trovato nel documento ${documentId}`);
+            }
+            
+            // Aggiorna le proprietà della relazione CONTAINS_MODULE
+            const updateQuery = `
+                MATCH (d:CompositeDocument {id: $documentId})-[r:CONTAINS_MODULE]->(m:ModuleInstance {id: $moduleId})
+                SET r.position = $position,
+                    r.size = $size,
+                    r.collapsed = $collapsed,
+                    r.config = $config
+                RETURN r, m
+            `;
+            
+            const parameters = {
+                documentId,
+                moduleId,
+                position: JSON.stringify(layoutConfig.position || { x: 0, y: 0 }),
+                size: JSON.stringify(layoutConfig.size || { width: 4, height: 6 }),
+                collapsed: layoutConfig.collapsed || false,
+                config: JSON.stringify(layoutConfig.config || {})
+            };
+            
+            const result = await this.dao.connector.executeQuery(updateQuery, parameters);
+            
+            if (result.records.length === 0) {
+                throw new Error('Errore nell\'aggiornamento della relazione CONTAINS_MODULE');
+            }
+            
+            const record = result.records[0];
+            const relation = record.get('r').properties;
+            
+            // Parse JSON fields
+            relation.position = JSON.parse(relation.position);
+            relation.size = JSON.parse(relation.size);
+            relation.config = JSON.parse(relation.config);
+            
+            // Notifica l'aggiornamento del modulo
+            this.attributeSpace.notifyChange({
+                type: 'relation',
+                relationType: 'CONTAINS_MODULE',
+                changeType: 'updated',
+                sourceEntityId: documentId,
+                targetEntityId: moduleId,
+                data: relation
+            });
+            
+            // Aggiorna il timestamp del documento
+            await this.dao.updateEntityAttribute(documentId, 'modifiedAt', new Date().toISOString());
+            
+            console.log(`✅ ModuleInstance ${moduleId} aggiornato nel documento ${documentId}`);
+            
+            return relation;
+            
+        } catch (error) {
+            console.error('❌ Errore updateModuleInDocument:', error.message);
             throw error;
         }
     }
