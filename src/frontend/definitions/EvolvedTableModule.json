@@ -1,0 +1,60 @@
+{
+  "module_id": "evolved-table-module",
+  "version": "1.0.0",
+  "metadata": {
+    "name": "Tabella Dinamica Evoluta",
+    "description": "Un modulo tabellare avanzato con architettura pulita e separazione tra logica e presentazione.",
+    "category": "Core",
+    "author": "SSOT System",
+    "icon": "📊",
+    "features": [
+      "Architettura MVC",
+      "Event-driven updates",
+      "Auto-discovery attributi",
+      "Attributi contestuali",
+      "Real-time sync",
+      "Performance ottimizzata"
+    ]
+  },
+  "layout": {
+    "type": "custom",
+    "elements": [
+      {
+        "element": "div",
+        "attributes": { 
+          "class": "evolved-table-module-container",
+          "data-module": "evolved-table"
+        }
+      }
+    ]
+  },
+  "behavior": {
+    "script": "evolved-table-module.js",
+    "class_name": "EvolvedTableModule",
+    "dependencies": [
+      "core/table/TableAPI.js",
+      "components/table-controller.js"
+    ]
+  },
+  "configuration": {
+    "permissions": {
+      "canAddRows": true,
+      "canEditRows": true,
+      "canDeleteRows": true,
+      "canAddColumns": true,
+      "canEditColumns": true,
+      "canRemoveColumns": true
+    },
+    "display": {
+      "showStats": true,
+      "showTableName": true,
+      "enableAutocomplete": true,
+      "enableColumnMenu": true
+    },
+    "performance": {
+      "debounceDelay": 300,
+      "maxRows": 1000,
+      "virtualScroll": false
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "module_id": "simple-table-module",
+  "version": "1.0.0",
+  "metadata": {
+    "name": "Tabella Semplice",
+    "description": "Un modulo tabellare in stile foglio di calcolo con manipolazione diretta.",
+    "category": "Utility",
+    "author": "SSOT System",
+    "icon": "📋"
+  },
+  "layout": {
+    "type": "custom",
+    "elements": [
+      {
+        "element": "div",
+        "attributes": { 
+          "class": "simple-table-container",
+          "data-table-module": "true" 
+        }
+      }
+    ]
+  },
+  "behavior": {
+    "script": "simple-table-module.js",
+    "class_name": "SimpleTableModule"
+  }
+}

@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo: Tabella Espandibile - SSOT-4000</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+
+        .demo-sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .demo-main {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            grid-column: 1 / -1;
+        }
+
+        .demo-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .demo-header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .sidebar-section:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .demo-button {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+            text-align: left;
+        }
+
+        .demo-button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .demo-button.secondary {
+            background: #6c757d;
+        }
+
+        .demo-button.secondary:hover {
+            background: #5a6268;
+        }
+
+        .demo-button.danger {
+            background: #dc3545;
+        }
+
+        .demo-button.danger:hover {
+            background: #c82333;
+        }
+
+        .info-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .info-panel h4 {
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .info-panel p {
+            color: #6c757d;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #495057;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .demo-scenario {
+            background: #e8f5e8;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .demo-scenario:hover {
+            background: #d4edda;
+            transform: translateY(-1px);
+        }
+
+        .scenario-title {
+            font-weight: 600;
+            color: #2d5a2d;
+            margin-bottom: 4px;
+        }
+
+        .scenario-desc {
+            font-size: 0.85em;
+            color: #5a6c5a;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.connected {
+            background: #4CAF50;
+        }
+
+        .status-indicator.disconnected {
+            background: #dc3545;
+        }
+
+        .log-panel {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85em;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            padding: 2px 0;
+        }
+
+        .log-entry.info {
+            color: #63b3ed;
+        }
+
+        .log-entry.success {
+            color: #68d391;
+        }
+
+        .log-entry.error {
+            color: #fc8181;
+        }
+
+        .log-entry.warning {
+            color: #f6ad55;
+        }
+
+        @media (max-width: 1200px) {
+            .demo-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .demo-header {
+                grid-column: 1;
+            }
+
+            .demo-sidebar {
+                order: 2;
+            }
+
+            .demo-main {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>📊 Tabella Espandibile</h1>
+            <p>Modulo dinamico per la gestione avanzata di entità con colonne espandibili</p>
+        </div>
+
+        <div class="demo-sidebar">
+            <div class="sidebar-section">
+                <h3>🎮 Scenari Demo</h3>
+                <div class="demo-scenario" onclick="runContactManagementDemo()">
+                    <div class="scenario-title">Gestione Contatti</div>
+                    <div class="scenario-desc">Crea una tabella per gestire contatti con attributi dinamici</div>
+                </div>
+                <div class="demo-scenario" onclick="runProjectTrackingDemo()">
+                    <div class="scenario-title">Tracking Progetti</div>
+                    <div class="scenario-desc">Tabella per il monitoraggio di progetti e task</div>
+                </div>
+                <div class="demo-scenario" onclick="runCustomEntityDemo()">
+                    <div class="scenario-title">Entità Personalizzate</div>
+                    <div class="scenario-desc">Crea e gestisci tipi di entità completamente nuovi</div>
+                </div>
+                <div class="demo-scenario" onclick="runContextualAttributesDemo()">
+                    <div class="scenario-title">Attributi Contestuali</div>
+                    <div class="scenario-desc">Dimostra la creazione di attributi specifici per tabella</div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>⚡ Azioni Rapide</h3>
+                <button class="demo-button" onclick="addSampleData()">
+                    ➕ Aggiungi Dati di Esempio
+                </button>
+                <button class="demo-button" onclick="showColumnManagement()">
+                    📋 Gestione Colonne
+                </button>
+                <button class="demo-button secondary" onclick="toggleRealTimeSync()">
+                    <span class="status-indicator connected"></span>
+                    Sync Real-time
+                </button>
+                <button class="demo-button secondary" onclick="exportTableData()">
+                    💾 Esporta Dati
+                </button>
+                <button class="demo-button danger" onclick="clearTable()">
+                    🗑️ Pulisci Tabella
+                </button>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>📊 Statistiche</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="entities-count">0</div>
+                        <div class="stat-label">Entità</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="columns-count">0</div>
+                        <div class="stat-label">Colonne</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="intrinsic-count">0</div>
+                        <div class="stat-label">Intrinseche</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="contextual-count">0</div>
+                        <div class="stat-label">Contestuali</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>ℹ️ Funzionalità</h3>
+                <ul class="feature-list">
+                    <li>Creazione dinamica colonne</li>
+                    <li>Attributi intrinseci e contestuali</li>
+                    <li>Auto-discovery attributi</li>
+                    <li>Editing in-place</li>
+                    <li>Sync real-time WebSocket</li>
+                    <li>Selezione multipla righe</li>
+                    <li>Persistenza configurazione</li>
+                    <li>Type-ahead per entità</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>📋 Log Eventi</h3>
+                <div class="log-panel" id="event-log">
+                    <div class="log-entry info">[Demo] Sistema inizializzato</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-main">
+            <div class="info-panel">
+                <h4>🚀 Benvenuto nella Demo della Tabella Espandibile</h4>
+                <p>
+                    Questo modulo implementa il "Piano di Sviluppo Modulo Tabella Espandibile" con funzionalità avanzate 
+                    per la gestione dinamica di entità. Seleziona uno scenario demo per iniziare o crea la tua tabella personalizzata.
+                </p>
+            </div>
+
+            <div class="table-container" id="table-container">
+                <!-- Qui verrà renderizzata la tabella espandibile -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the required services and modules -->
+    <script src="../services/EntityService.js"></script>
+    <script src="../services/SchemaService.js"></script>
+    <script src="../services/WebSocketService.js"></script>
+    <script src="../components/expandable-table-module.js"></script>
+
+    <script>
+        // Demo application state
+        class ExpandableTableDemo {
+            constructor() {
+                this.tableModule = null;
+                this.mockData = {
+                    entityTypes: ['Contact', 'Project', 'Task', 'Note', 'Cliente', 'Prodotto'],
+                    sampleEntities: new Map(),
+                    eventLog: []
+                };
+                this.isRealTimeSyncEnabled = true;
+                
+                this.init();
+            }
+
+            async init() {
+                this.log('Inizializzazione demo...', 'info');
+                
+                // Check available modules
+                this.log(`Moduli disponibili: ${Object.keys(window).filter(k => k.includes('Module')).join(', ')}`, 'info');
+                
+                // Initialize mock services if needed
+                this.initializeMockServices();
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                this.log('Demo pronta! Seleziona uno scenario per iniziare.', 'success');
+            }
+
+            initializeMockServices() {
+                // Mock EntityService if not available
+                if (!window.EntityService) {
+                    window.EntityService = this.createMockEntityService();
+                    this.log('Mock EntityService creato', 'warning');
+                }
+
+                // Mock SchemaService if not available
+                if (!window.SchemaService) {
+                    window.SchemaService = this.createMockSchemaService();
+                    this.log('Mock SchemaService creato', 'warning');
+                }
+
+                // Mock WebSocketService if not available
+                if (!window.WebSocketService) {
+                    window.WebSocketService = this.createMockWebSocketService();
+                    this.log('Mock WebSocketService creato', 'warning');
+                }
+            }
+
+            createMockEntityService() {
+                const sharedEntities = new Map();
+                let nextId = 1;
+                
+                return function MockEntityService() {
+                    this.entities = sharedEntities;
+                    this.nextId = nextId;
+
+                    this.createEntity = async function(entityType, data) {
+                        const entity = {
+                            id: `entity_${nextId++}`,
+                            entityType,
+                            ...data,
+                            createdAt: new Date().toISOString()
+                        };
+                        
+                        this.entities.set(entity.id, entity);
+                        
+                        return {
+                            success: true,
+                            data: entity
+                        };
+                    };
+
+                    this.getEntity = async function(entityId) {
+                        const entity = this.entities.get(entityId);
+                        return {
+                            success: !!entity,
+                            data: entity || null
+                        };
+                    };
+
+                    this.updateEntity = async function(entityId, updates) {
+                        const entity = this.entities.get(entityId);
+                        if (entity) {
+                            Object.assign(entity, updates);
+                            entity.modifiedAt = new Date().toISOString();
+                            
+                            return {
+                                success: true,
+                                data: entity
+                            };
+                        }
+                        
+                        return {
+                            success: false,
+                            error: 'Entity not found'
+                        };
+                    };
+
+                    this.deleteEntity = async function(entityId) {
+                        const deleted = this.entities.delete(entityId);
+                        return {
+                            success: deleted
+                        };
+                    };
+
+                    this.searchEntities = async function({ entityType, limit = 100 }) {
+                        const entities = Array.from(this.entities.values())
+                            .filter(entity => entity.entityType === entityType)
+                            .slice(0, limit);
+                        
+                        return {
+                            success: true,
+                            data: entities
+                        };
+                    };
+                };
+            }
+
+            createMockSchemaService() {
+                return function MockSchemaService() {
+                    this.schemas = new Map();
+
+                    this.getAvailableEntityTypes = async function() {
+                        return {
+                            success: true,
+                            data: ['Contact', 'Project', 'Task', 'Note', 'Cliente', 'Prodotto', 'Evento']
+                        };
+                    };
+
+                    this.getEntitySchema = async function(entityType) {
+                        // Try to get real schema first if available
+                        try {
+                            const response = await fetch(`/api/schema/entity/${entityType}`);
+                            if (response.ok) {
+                                const realSchema = await response.json();
+                                if (realSchema.success) {
+                                    return realSchema;
+                                }
+                            }
+                        } catch (error) {
+                            console.log('Real schema not available, using fallback');
+                        }
+                        
+                        // Fallback to mock schemas with correct attribute names
+                        const commonSchemas = {
+                            Contact: {
+                                attributes: {
+                                    nome: { type: 'string', required: true },
+                                    email: { type: 'email', required: false },
+                                    telefono: { type: 'phone', required: false },
+                                    azienda: { type: 'string', required: false },
+                                    ruolo: { type: 'string', required: false }
+                                }
+                            },
+                            Project: {
+                                attributes: {
+                                    name: { type: 'string', required: true },  // Corrected to match real schema
+                                    description: { type: 'string', required: false },
+                                    status: { type: 'string', required: false },
+                                    startDate: { type: 'date', required: false },  // Corrected to match real schema
+                                    endDate: { type: 'date', required: false },    // Corrected to match real schema
+                                    budget: { type: 'number', required: false }
+                                }
+                            },
+                            Task: {
+                                attributes: {
+                                    name: { type: 'string', required: true },  // Standardized to 'name'
+                                    description: { type: 'string', required: false },
+                                    priority: { type: 'string', required: false },
+                                    completed: { type: 'boolean', required: false },
+                                    dueDate: { type: 'date', required: false }
+                                }
+                            }
+                        };
+
+                        const schema = commonSchemas[entityType] || {
+                            attributes: {
+                                name: { type: 'string', required: true },  // Standardized to 'name'
+                                description: { type: 'string', required: false }
+                            }
+                        };
+
+                        return {
+                            success: true,
+                            data: schema
+                        };
+                    };
+
+                    this.evolveEntitySchema = async function(entityType, evolution) {
+                        return {
+                            success: true,
+                            data: { evolved: true }
+                        };
+                    };
+                };
+            }
+
+            createMockWebSocketService() {
+                const listeners = [];
+                
+                return function MockWebSocketService() {
+                    this.listeners = listeners;
+                    this.connected = true;
+                    
+                    this.addEventListener = function(type, listener) {
+                        this.listeners.push({ type, listener });
+                    };
+
+                    this.removeEventListener = function(type, listener) {
+                        this.listeners = this.listeners.filter(l => 
+                            l.type !== type || l.listener !== listener
+                        );
+                    };
+
+                    // Simulate WebSocket message
+                    this.simulateMessage = function(data) {
+                        this.listeners.forEach(({ type, listener }) => {
+                            if (type === 'message') {
+                                listener({ data });
+                            }
+                        });
+                    };
+                };
+            }
+
+            setupEventListeners() {
+                // Monitor table changes
+                if (this.tableModule) {
+                    // Setup monitoring for table events
+                }
+            }
+
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString('it-IT');
+                const entry = `[${timestamp}] ${message}`;
+                
+                this.mockData.eventLog.push({ message: entry, type, timestamp });
+                
+                const logPanel = document.getElementById('event-log');
+                if (logPanel) {
+                    const logEntry = document.createElement('div');
+                    logEntry.className = `log-entry ${type}`;
+                    logEntry.textContent = entry;
+                    logPanel.appendChild(logEntry);
+                    
+                    // Keep only last 50 entries
+                    while (logPanel.children.length > 50) {
+                        logPanel.removeChild(logPanel.firstChild);
+                    }
+                    
+                    // Scroll to bottom
+                    logPanel.scrollTop = logPanel.scrollHeight;
+                }
+                
+                console.log(`[Demo] ${entry}`);
+            }
+
+            updateStats() {
+                if (!this.tableModule) return;
+
+                const config = this.tableModule.getConfiguration();
+                
+                document.getElementById('entities-count').textContent = config.entityCount || 0;
+                document.getElementById('columns-count').textContent = config.columns ? config.columns.length : 0;
+                
+                if (config.columns) {
+                    const intrinsic = config.columns.filter(col => col.type === 'intrinsic').length;
+                    const contextual = config.columns.filter(col => col.type === 'contextual').length;
+                    
+                    document.getElementById('intrinsic-count').textContent = intrinsic;
+                    document.getElementById('contextual-count').textContent = contextual;
+                }
+            }
+
+            async createTable(config = {}) {
+                const container = document.getElementById('table-container');
+                if (!container) {
+                    this.log('❌ Container non trovato', 'error');
+                    return;
+                }
+
+                // Check if ExpandableTableModule is available
+                if (!window.ExpandableTableModule) {
+                    this.log('❌ ExpandableTableModule non disponibile. Controlla la console per errori di caricamento.', 'error');
+                    console.error('window.ExpandableTableModule is not defined. Available globals:', Object.keys(window).filter(k => k.includes('Module')));
+                    return;
+                }
+
+                try {
+                    // Destroy existing table
+                    if (this.tableModule) {
+                        this.tableModule.destroy();
+                    }
+
+                    // Create new table module
+                    this.tableModule = new window.ExpandableTableModule(container, config);
+                    
+                    this.log(`Tabella creata: ${config.tableName || 'Senza nome'}`, 'success');
+                    
+                    // Update stats periodically
+                    setInterval(() => this.updateStats(), 2000);
+                    
+                    return this.tableModule;
+                } catch (error) {
+                    this.log(`❌ Errore creazione tabella: ${error.message}`, 'error');
+                    console.error('Error creating table:', error);
+                    return null;
+                }
+            }
+        }
+
+        // Demo scenario functions
+        async function runContactManagementDemo() {
+            demo.log('🏃 Avvio scenario: Gestione Contatti', 'info');
+            
+            const table = await demo.createTable({
+                tableName: 'Gestione Contatti Aziendali',
+                selectedEntityType: 'Contact',
+                permissions: {
+                    canAddRows: true,
+                    canEditRows: true,
+                    canDeleteRows: true,
+                    canAddColumns: true,
+                    canEditColumns: true
+                }
+            });
+
+            // Add some sample contacts
+            setTimeout(() => {
+                demo.log('➕ Aggiunta contatti di esempio...', 'info');
+                addSampleContactData();
+            }, 1000);
+        }
+
+        async function runProjectTrackingDemo() {
+            demo.log('🏃 Avvio scenario: Tracking Progetti', 'info');
+            
+            const table = await demo.createTable({
+                tableName: 'Monitoraggio Progetti',
+                selectedEntityType: 'Project',
+                permissions: {
+                    canAddRows: true,
+                    canEditRows: true,
+                    canDeleteRows: false,
+                    canAddColumns: true,
+                    canEditColumns: true
+                }
+            });
+
+            setTimeout(() => {
+                demo.log('➕ Aggiunta progetti di esempio...', 'info');
+                addSampleProjectData();
+            }, 1000);
+        }
+
+        async function runCustomEntityDemo() {
+            demo.log('🏃 Avvio scenario: Entità Personalizzate', 'info');
+            
+            const table = await demo.createTable({
+                tableName: 'Inventario Personalizzato',
+                selectedEntityType: 'Prodotto',
+                permissions: {
+                    canAddRows: true,
+                    canEditRows: true,
+                    canDeleteRows: true,
+                    canAddColumns: true,
+                    canEditColumns: true
+                }
+            });
+
+            setTimeout(() => {
+                demo.log('➕ Creazione entità personalizzate...', 'info');
+                addSampleCustomData();
+            }, 1000);
+        }
+
+        async function runContextualAttributesDemo() {
+            demo.log('🏃 Avvio scenario: Attributi Contestuali', 'info');
+            
+            const table = await demo.createTable({
+                tableName: 'Demo Attributi Contestuali',
+                selectedEntityType: 'Contact',
+                permissions: {
+                    canAddRows: true,
+                    canEditRows: true,
+                    canDeleteRows: true,
+                    canAddColumns: true,
+                    canEditColumns: true
+                }
+            });
+
+            demo.log('ℹ️ Usa "Aggiungi Colonna" per creare attributi contestuali', 'info');
+        }
+
+        // Sample data functions
+        async function addSampleContactData() {
+            if (!demo.tableModule) return;
+
+            // Use the table module's entity service
+            const entityService = demo.tableModule.entityService;
+            if (!entityService) {
+                demo.log('⚠️ EntityService non disponibile', 'warning');
+                return;
+            }
+
+            const contacts = [
+                { nome: 'Mario Rossi', email: 'mario.rossi@example.com', telefono: '+39 320 1234567', azienda: 'ACME Corp' },
+                { nome: 'Laura Bianchi', email: 'laura.bianchi@example.com', telefono: '+39 340 7654321', azienda: 'Tech Solutions' },
+                { nome: 'Giuseppe Verdi', email: 'g.verdi@example.com', telefono: '+39 330 5555555', azienda: 'Innovation Lab' }
+            ];
+
+            for (const contact of contacts) {
+                await entityService.createEntity('Contact', contact);
+            }
+
+            demo.log(`✅ Aggiunti ${contacts.length} contatti di esempio`, 'success');
+            
+            // Refresh table
+            if (demo.tableModule.refreshData) {
+                demo.tableModule.refreshData();
+            }
+        }
+
+        async function addSampleProjectData() {
+            if (!demo.tableModule) return;
+
+            const entityService = demo.tableModule.entityService;
+            if (!entityService) {
+                demo.log('⚠️ EntityService non disponibile', 'warning');
+                return;
+            }
+
+            const projects = [
+                { 
+                    name: 'Redesign Website',      // Corrected to match real schema
+                    description: 'Rinnovamento completo del sito aziendale',
+                    status: 'In Progress',
+                    startDate: '2024-01-15',       // Corrected to match real schema
+                    budget: 15000
+                },
+                { 
+                    name: 'App Mobile',            // Corrected to match real schema
+                    description: 'Sviluppo app mobile per clienti',
+                    status: 'Planning',
+                    startDate: '2024-02-01',       // Corrected to match real schema
+                    budget: 25000
+                }
+            ];
+
+            for (const project of projects) {
+                await entityService.createEntity('Project', project);
+            }
+
+            demo.log(`✅ Aggiunti ${projects.length} progetti di esempio`, 'success');
+            
+            if (demo.tableModule.refreshData) {
+                demo.tableModule.refreshData();
+            }
+        }
+
+        async function addSampleCustomData() {
+            if (!demo.tableModule) return;
+
+            const entityService = demo.tableModule.entityService;
+            if (!entityService) {
+                demo.log('⚠️ EntityService non disponibile', 'warning');
+                return;
+            }
+
+            const products = [
+                { name: 'Laptop Pro', codice: 'LP001', categoria: 'Elettronica', prezzo: 1299.99, disponibilita: true },
+                { name: 'Mouse Wireless', codice: 'MW002', categoria: 'Accessori', prezzo: 29.99, disponibilita: true },
+                { name: 'Monitor 4K', codice: 'M4K003', categoria: 'Display', prezzo: 399.99, disponibilita: false }
+            ];
+
+            for (const product of products) {
+                await entityService.createEntity('Prodotto', product);
+            }
+
+            demo.log(`✅ Aggiunti ${products.length} prodotti di esempio`, 'success');
+            
+            if (demo.tableModule.refreshData) {
+                demo.tableModule.refreshData();
+            }
+        }
+
+        // Action functions
+        function addSampleData() {
+            if (demo.tableModule && demo.tableModule.state && demo.tableModule.state.selectedEntityType) {
+                const entityType = demo.tableModule.state.selectedEntityType;
+                
+                switch (entityType) {
+                    case 'Contact':
+                        addSampleContactData();
+                        break;
+                    case 'Project':
+                        addSampleProjectData();
+                        break;
+                    case 'Prodotto':
+                        addSampleCustomData();
+                        break;
+                    default:
+                        demo.log('⚠️ Nessun dato di esempio disponibile per questo tipo di entità', 'warning');
+                }
+            } else {
+                demo.log('⚠️ Seleziona prima un tipo di entità', 'warning');
+            }
+        }
+
+        function showColumnManagement() {
+            if (demo.tableModule && demo.tableModule.showAddColumnModal) {
+                demo.tableModule.showAddColumnModal();
+                demo.log('📋 Apertura pannello gestione colonne', 'info');
+            } else {
+                demo.log('⚠️ Tabella non inizializzata', 'warning');
+            }
+        }
+
+        function toggleRealTimeSync() {
+            demo.isRealTimeSyncEnabled = !demo.isRealTimeSyncEnabled;
+            const indicator = document.querySelector('.status-indicator');
+            
+            if (demo.isRealTimeSyncEnabled) {
+                indicator.className = 'status-indicator connected';
+                demo.log('✅ Sincronizzazione real-time abilitata', 'success');
+            } else {
+                indicator.className = 'status-indicator disconnected';
+                demo.log('⏸️ Sincronizzazione real-time disabilitata', 'warning');
+            }
+        }
+
+        function exportTableData() {
+            if (demo.tableModule) {
+                const config = demo.tableModule.getConfiguration();
+                const data = {
+                    exported: new Date().toISOString(),
+                    configuration: config,
+                    metadata: {
+                        moduleName: 'ExpandableTableModule',
+                        version: '1.0.0'
+                    }
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `table-export-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                demo.log('💾 Dati tabella esportati', 'success');
+            } else {
+                demo.log('⚠️ Nessuna tabella da esportare', 'warning');
+            }
+        }
+
+        function clearTable() {
+            if (confirm('Sei sicuro di voler pulire la tabella? Questa azione non può essere annullata.')) {
+                const container = document.getElementById('table-container');
+                if (container) {
+                    container.innerHTML = '<div class="info-panel"><h4>Tabella pulita</h4><p>Seleziona uno scenario demo per iniziare.</p></div>';
+                }
+                
+                if (demo.tableModule) {
+                    demo.tableModule.destroy();
+                    demo.tableModule = null;
+                }
+                
+                demo.log('🗑️ Tabella pulita', 'info');
+                demo.updateStats();
+            }
+        }
+
+        // Initialize demo application
+        const demo = new ExpandableTableDemo();
+        
+        // Global functions for demo buttons
+        window.runContactManagementDemo = runContactManagementDemo;
+        window.runProjectTrackingDemo = runProjectTrackingDemo;
+        window.runCustomEntityDemo = runCustomEntityDemo;
+        window.runContextualAttributesDemo = runContextualAttributesDemo;
+        window.addSampleData = addSampleData;
+        window.showColumnManagement = showColumnManagement;
+        window.toggleRealTimeSync = toggleRealTimeSync;
+        window.exportTableData = exportTableData;
+        window.clearTable = clearTable;
+
+    </script>
+</body>
+</html>

@@ -234,6 +234,44 @@ class SchemaManager {
                 }
             }
             
+            // Implementa la rinomina di attributi
+            if (evolution.renameAttributes) {
+                for (const [oldName, newName] of Object.entries(evolution.renameAttributes)) {
+                    console.log(`🔄 Rinomina attributo: ${oldName} -> ${newName} per ${entityType}`);
+                    
+                    // Ottieni la definizione dell'attributo esistente
+                    const existingAttr = currentSchema.attributes.get(oldName);
+                    if (!existingAttr) {
+                        throw new Error(`Attributo ${oldName} non trovato nello schema`);
+                    }
+                    
+                    // Rimuovi il vecchio attributo e aggiungi il nuovo con la stessa definizione
+                    currentSchema.removeAttribute(oldName);
+                    currentSchema.addAttribute(newName, existingAttr);
+                    
+                    // Rinomina nel database
+                    await this.persistence.renameAttributeInSchema(entityType, oldName, newName);
+                }
+            }
+            
+            // Implementa la rimozione di attributi
+            if (evolution.removeAttributes) {
+                for (const attrName of evolution.removeAttributes) {
+                    console.log(`🗑️ Rimozione attributo: ${attrName} da ${entityType}`);
+                    
+                    // Verifica che l'attributo esista
+                    if (!currentSchema.attributes.has(attrName)) {
+                        throw new Error(`Attributo ${attrName} non trovato nello schema`);
+                    }
+                    
+                    // Rimuovi dall'schema in memoria
+                    currentSchema.removeAttribute(attrName);
+                    
+                    // Rimuovi dal database
+                    await this.persistence.removeAttributeFromSchema(entityType, attrName);
+                }
+            }
+            
             // Aggiorna solo la versione in memoria (senza toccare il database principale)
             currentSchema.modified = Date.now();
             

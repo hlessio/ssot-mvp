@@ -90,8 +90,9 @@ class WebSocketService {
     handleMessage(event) {
         try {
             const message = JSON.parse(event.data);
-            console.log(`📨📨📨 [WebSocketService] Messaggio ricevuto:`, message);
-            console.log(`📨 Message type: ${message.type}, data:`, message.data || message);
+            // Removed verbose logging for performance - uncomment for debugging
+            // console.log(`📨📨📨 [WebSocketService] Messaggio ricevuto:`, message);
+            // console.log(`📨 Message type: ${message.type}, data:`, message.data || message);
 
             // Propaga il messaggio ai sottoscrittori appropriati
             this.distributeMessage(message);
@@ -176,25 +177,24 @@ class WebSocketService {
     distributeMessage(message) {
         let matchedSubscriptions = 0;
         
-        console.log(`🔄 [WebSocketService] Distributing message to ${this.subscriptions.size} subscriptions`);
-        console.log(`🔄 Message type: ${message.type}`);
+        // Removed verbose logging for performance - uncomment for debugging
+        // console.log(`🔄 [WebSocketService] Distributing message to ${this.subscriptions.size} subscriptions`);
+        // console.log(`🔄 Message type: ${message.type}`);
 
         this.subscriptions.forEach((subscription, subscriptionId) => {
-            console.log(`🔄 Checking subscription ${subscriptionId} with pattern: ${subscription.pattern}`);
+            // console.log(`🔄 Checking subscription ${subscriptionId} with pattern: ${subscription.pattern}`);
             if (this.matchesPattern(message, subscription.pattern)) {
-                console.log(`✅ Pattern match! Calling callback for ${subscriptionId}`);
+                // console.log(`✅ Pattern match! Calling callback for ${subscriptionId}`);
                 try {
                     subscription.callback(message);
                     matchedSubscriptions++;
                 } catch (error) {
                     console.error(`❌ [WebSocketService] Errore in callback sottoscrizione ${subscriptionId}:`, error);
                 }
-            } else {
-                console.log(`❌ No pattern match for ${subscriptionId}`);
             }
         });
 
-        console.log(`📊 [WebSocketService] ${matchedSubscriptions} sottoscrizioni hanno ricevuto il messaggio`);
+        // Only log if no matches found (potential issue)
         if (matchedSubscriptions === 0) {
             console.log(`⚠️ [WebSocketService] Nessuna sottoscrizione per messaggio tipo: ${message.type}`);
         }
@@ -207,11 +207,24 @@ class WebSocketService {
      * @returns {boolean} - True se corrisponde
      */
     matchesPattern(message, pattern) {
-        console.log(`🔍 Pattern matching: "${pattern}" vs message.type: "${message.type}"`);
+        // Removed verbose logging for performance - uncomment for debugging
+        // console.log(`🔍 Pattern matching: "${pattern}" vs message.type: "${message.type}"`);
         
         // Pattern esatti
         if (pattern === message.type) {
-            console.log(`✅ Exact match: ${pattern} === ${message.type}`);
+            return true;
+        }
+
+        // Mappature per compatibilità backend -> frontend
+        const patternMappings = {
+            'entity-changes': ['attribute-updated', 'entity-created', 'entity-deleted', 'change'],
+            'schema-changes': ['schema-evolved', 'schema-created'],
+            'module-changes': ['module-instance-created', 'module-instance-updated', 'module-instance-deleted'],
+            'document-changes': ['document-created', 'document-updated', 'document-deleted', 'document-modules-updated', 'document-layout-updated']
+        };
+
+        // Verifica mappature
+        if (patternMappings[pattern] && patternMappings[pattern].includes(message.type)) {
             return true;
         }
 
@@ -219,20 +232,15 @@ class WebSocketService {
         if (pattern.includes('*')) {
             const regexPattern = pattern.replace(/\*/g, '.*');
             const regex = new RegExp(`^${regexPattern}$`);
-            const matches = regex.test(message.type);
-            console.log(`🔍 Wildcard test: ${regexPattern} vs ${message.type} = ${matches}`);
-            return matches;
+            return regex.test(message.type);
         }
 
         // Pattern con entity type (es. 'attributeChange:Contact')
         if (pattern.includes(':') && message.data && message.data.entityType) {
             const [eventType, entityType] = pattern.split(':');
-            const matches = message.type === eventType && message.data.entityType === entityType;
-            console.log(`🔍 Entity type test: ${eventType}:${entityType} vs ${message.type}:${message.data.entityType} = ${matches}`);
-            return matches;
+            return message.type === eventType && message.data.entityType === entityType;
         }
 
-        console.log(`❌ No match for pattern: ${pattern}`);
         return false;
     }
 

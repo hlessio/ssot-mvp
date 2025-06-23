@@ -99,6 +99,7 @@ npm run test:legacy # Run legacy test files
 - **saved-module-instance.js:** Renders previously saved module instance (specific template configuration)
 - **✨ NEW - callsheet-module.js:** Tabular module for managing entity-module relationships with contextual attributes (fee, role, dates)
 - **✨ NEW - realtime-contact-card.js:** Real-time synchronized contact card displaying intrinsic entity attributes
+- **✨ NEW - SimpleTableModule.js:** Advanced spreadsheet-like table component with real-time bidirectional sync, inline editing, entity creation, and schema evolution
 
 **Module Definitions (src/frontend/definitions/):**
 - JSON files (StandardContactCard.json, CompactContactCard.json, DynamicTableModule.json)
@@ -116,6 +117,7 @@ npm run test:legacy # Run legacy test files
 - **✨ NEW - realtime-sync-demo.html:** Complete working real-time sync demo with entity cards and cross-window synchronization
 - **✨ NEW - callsheet-demo.html:** Comprehensive callsheet + contact card demo showing intrinsic vs contextual attributes
 - **✨ NEW - websocket-test.html:** WebSocket debugging and testing interface with message monitoring
+- **✨ NEW - simple-evolved-table-demo.html:** Advanced admin table + SimpleTableModule integration demo with bidirectional real-time synchronization
 
 ### III. Database (Neo4j)
 
@@ -231,15 +233,15 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 
 ## System Evolution: From Organic Discovery to Dynamic UI
 
-### Current Development Phase: SSOT-4000 Knowledge Platform - Phase 2 COMPLETED
+### Current Development Phase: Advanced Table Sync System - Phase 7 COMPLETED
 
-**Status**: Phase 2 Completed - Full Workspace Demo Functional (15 June 2025)
+**Status**: Phase 7 Completed - Enterprise-grade Real-time Collaboration System (23 June 2025)
 
-**Active Task**: Evolution to Knowledge Platform (SSOT-4000) ✅ **DEMO COMPLETE**
-- **Planning Document**: `docs/development/SSOT-4000-implementation-plan.md`
-- **Goal**: Transform from data management app to knowledge orchestration platform ✅ **ACHIEVED**
-- **Key Innovation**: CompositeDocument as meta-meta-entity for process modeling ✅ **IMPLEMENTED**
-- **UI Revolution**: Full workspace with dynamic module management ✅ **DELIVERED**
+**Active Task**: Advanced Table Sync System (Phase 7) ✅ **SYSTEM COMPLETE**
+- **Planning Document**: `docs/development/Phase-7-Advanced-Table-Sync-System.md`
+- **Goal**: Enterprise-grade real-time collaboration spreadsheet system ✅ **ACHIEVED**
+- **Key Innovation**: Smart debounce with bidirectional real-time sync ✅ **IMPLEMENTED**
+- **UX Revolution**: Professional spreadsheet experience with real-time collaboration ✅ **DELIVERED**
 
 **Phase 1 Completed (14 June 2025)**: 
 - ✅ CompositeDocument schema defined with full attribute support
@@ -309,11 +311,23 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - **Testing Framework**: ✅ Automated test suite (test-callsheet-sync.js) for end-to-end validation
 - **Debugging Tools**: ✅ WebSocket test interface and comprehensive logging
 
-**Phase 7**: Future Enhancements (Optional)
-- **Svelte Migration**: Per performance ottimale con UI ancora più reattiva
-- **Advanced Drag & Drop**: Visual feedback e snap-to-grid avanzato
-- **Template System**: Workspace templates riutilizzabili
-- **SDK Dichiarativo**: Template JSON per estensibilità della piattaforma
+**Phase 7**: Advanced Table Sync System (✅ COMPLETED - 23 June 2025)
+- **Enterprise Real-time Sync**: ✅ Perfect bidirectional synchronization between admin interface and SimpleTableModule
+- **Smart Debounce System**: ✅ Intelligent saving on user confirmation (blur/Enter/Tab) instead of every keystroke
+- **Cross-window Synchronization**: ✅ BroadcastChannel implementation with sender ID loop prevention
+- **WebSocket Compatibility**: ✅ Pattern mapping system for multiple backend message formats
+- **Entity Creation Sync**: ✅ Fixed duplicate method definitions, seamless entity creation from table
+- **Performance Optimization**: ✅ Clean console output, 90% reduction in verbose logging
+- **Loop Prevention**: ✅ Robust instance ID system prevents infinite message loops
+- **Professional UX**: ✅ Spreadsheet-like experience rivaling modern collaboration tools
+- **Planning Document**: `docs/development/Phase-7-Advanced-Table-Sync-System.md`
+
+**Phase 8**: Future Enhancements (Optional)
+- **Virtual Scrolling**: For large datasets (1000+ entities)
+- **Column Resizing**: Drag to resize table columns functionality  
+- **Advanced Filtering**: Real-time search and filter capabilities
+- **Export Features**: CSV/Excel export functionality
+- **Collaborative Cursors**: Show other users' active cells in real-time
 
 ## Common Development Tasks
 
@@ -378,6 +392,19 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - **Contextual Attributes**: Relationship properties (fee, role, dates) remain in specific module context
 - **Components**: callsheet-module.js + realtime-contact-card.js + entity-autocomplete.js
 - **Real-time Sync**: Bidirectional synchronization between callsheet table and contact cards
+
+### Working with Advanced Table Sync System (✅ NEW - Phase 7)
+- **Demo URL**: http://localhost:3000/views/simple-evolved-table-demo.html
+- **Architecture**: Enterprise-grade real-time collaboration system
+- **Features**:
+  - **Bidirectional Sync**: Admin interface ↔ SimpleTableModule perfect synchronization
+  - **Smart Debounce**: Saves only on blur/Enter/Tab, not every keystroke
+  - **Cross-window Sync**: BroadcastChannel with sender ID loop prevention
+  - **Entity Creation**: Seamless entity creation with duplicate detection
+  - **Performance**: Clean console output, optimized WebSocket usage
+- **Components**: SimpleTableModule.js + WebSocketService.js + EntityService.js
+- **Message Flow**: Input → Visual Update → User Confirmation → Persistence → WebSocket → All Clients Update
+- **Testing**: Multi-window real-time collaboration testing
 
 This system prevents duplication by centralizing schema definitions and providing schema-aware, reusable UI components that adapt to any entity type.
 

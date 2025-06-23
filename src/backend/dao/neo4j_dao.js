@@ -1048,6 +1048,100 @@ class Neo4jDAO {
             throw error;
         }
     }
+
+    /**
+     * Rinomina un attributo nello schema e in tutte le entità
+     * @param {string} entityType - Il tipo di entità
+     * @param {string} oldName - Nome attuale dell'attributo
+     * @param {string} newName - Nuovo nome dell'attributo
+     * @returns {Promise<void>}
+     */
+    async renameAttributeInSchema(entityType, oldName, newName) {
+        try {
+            console.log(`🔄 Rinomina attributo nel DB: ${oldName} -> ${newName} per ${entityType}`);
+            
+            // 1. Rinomina l'attributo nel nodo schema
+            const renameSchemaAttr = `
+                MATCH (s:SchemaEntityType {entityType: $entityType})-[:HAS_ATTRIBUTE]->(a:AttributeDefinition {name: $oldName})
+                SET a.name = $newName
+                RETURN a
+            `;
+            
+            await this.connector.executeQuery(renameSchemaAttr, {
+                entityType: entityType,
+                oldName: oldName,
+                newName: newName
+            });
+            
+            // 2. Rinomina l'attributo in tutte le entità esistenti
+            const renameEntityAttr = `
+                MATCH (e {entityType: $entityType})
+                WHERE e[$oldName] IS NOT NULL
+                SET e[$newName] = e[$oldName]
+                REMOVE e[$oldName]
+                RETURN count(e) as updated
+            `;
+            
+            const result = await this.connector.executeQuery(renameEntityAttr, {
+                entityType: entityType,
+                oldName: oldName,
+                newName: newName
+            });
+            
+            const updatedValue = result.records[0]?.get('updated');
+            const updatedCount = updatedValue?.toNumber ? updatedValue.toNumber() : (parseInt(updatedValue) || 0);
+            console.log(`✅ Attributo rinominato: ${updatedCount} entità aggiornate`);
+            
+        } catch (error) {
+            console.error('❌ Errore renameAttributeInSchema:', error.message);
+            throw error;
+        }
+    }
+
+    /**
+     * Rimuove un attributo dallo schema e da tutte le entità
+     * @param {string} entityType - Il tipo di entità
+     * @param {string} attributeName - Nome dell'attributo da rimuovere
+     * @returns {Promise<void>}
+     */
+    async removeAttributeFromSchema(entityType, attributeName) {
+        try {
+            console.log(`🗑️ Rimozione attributo dal DB: ${attributeName} da ${entityType}`);
+            
+            // 1. Rimuovi l'attributo dal nodo schema e la relazione
+            const removeSchemaAttr = `
+                MATCH (s:SchemaEntityType {entityType: $entityType})-[r:HAS_ATTRIBUTE]->(a:AttributeDefinition {name: $attributeName})
+                DELETE r, a
+                RETURN count(a) as removed
+            `;
+            
+            await this.connector.executeQuery(removeSchemaAttr, {
+                entityType: entityType,
+                attributeName: attributeName
+            });
+            
+            // 2. Rimuovi l'attributo da tutte le entità esistenti
+            const removeEntityAttr = `
+                MATCH (e {entityType: $entityType})
+                WHERE e[$attributeName] IS NOT NULL
+                REMOVE e[$attributeName]
+                RETURN count(e) as updated
+            `;
+            
+            const result = await this.connector.executeQuery(removeEntityAttr, {
+                entityType: entityType,
+                attributeName: attributeName
+            });
+            
+            const updatedValue = result.records[0]?.get('updated');
+            const updatedCount = updatedValue?.toNumber ? updatedValue.toNumber() : (parseInt(updatedValue) || 0);
+            console.log(`✅ Attributo rimosso: ${updatedCount} entità aggiornate`);
+            
+        } catch (error) {
+            console.error('❌ Errore removeAttributeFromSchema:', error.message);
+            throw error;
+        }
+    }
 }
 
 module.exports = new Neo4jDAO(); 

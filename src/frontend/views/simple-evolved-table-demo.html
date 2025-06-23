@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Evolved Table - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 40px 20px;
+            color: #333;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .demo-header h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .demo-header p {
+            font-size: 1.2em;
+            color: #7f8c8d;
+        }
+        
+        .demo-main {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .demo-info {
+            background: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+        
+        .demo-info h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+        
+        .demo-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .demo-info li {
+            padding: 5px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .demo-info li::before {
+            content: "→";
+            color: #4CAF50;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .table-container {
+            margin-top: 30px;
+        }
+        
+        .demo-controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .demo-btn {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .demo-btn:hover {
+            background: #45a049;
+        }
+        
+        .demo-btn.secondary {
+            background: #6c757d;
+        }
+        
+        .demo-btn.secondary:hover {
+            background: #5a6268;
+        }
+        
+        /* Admin Panel Styles */
+        .admin-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #ff9800;
+        }
+        
+        .admin-panel h2 {
+            color: #e65100;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .admin-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .bulk-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .bulk-actions.hidden {
+            display: none;
+        }
+        
+        .selected-count {
+            font-size: 14px;
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        .bulk-delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .bulk-delete-btn:hover {
+            background: #c82333;
+        }
+        
+        .select-all-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .select-all-btn:hover {
+            background: #5a6268;
+        }
+        
+        .admin-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .admin-selector label {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .admin-selector select {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+        
+        .admin-selector select:focus {
+            outline: none;
+            border-color: #ff9800;
+        }
+        
+        .entity-count {
+            background: #fff3e0;
+            color: #e65100;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .admin-table-container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .admin-placeholder {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .admin-table th,
+        .admin-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .admin-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .admin-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .admin-table .entity-id {
+            font-family: monospace;
+            font-size: 12px;
+            color: #666;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .admin-table .entity-name {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .admin-table .entity-email {
+            color: #666;
+        }
+        
+        .admin-table .actions {
+            text-align: center;
+        }
+        
+        .admin-table .select-cell {
+            text-align: center;
+            width: 40px;
+        }
+        
+        .admin-table .select-checkbox {
+            cursor: pointer;
+            transform: scale(1.1);
+        }
+        
+        .admin-table tr.selected {
+            background: #e3f2fd !important;
+        }
+        
+        .editable-cell {
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        
+        .editable-cell:hover {
+            background: #f8f9fa;
+        }
+        
+        .editable-cell.editing {
+            background: #fff3cd;
+            padding: 0;
+        }
+        
+        /* Attribute header menu styles */
+        .attribute-header {
+            position: relative;
+        }
+        
+        .attribute-header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        
+        .attribute-name {
+            flex: 1;
+        }
+        
+        .attribute-menu {
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .menu-trigger {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            color: #666;
+            line-height: 1;
+        }
+        
+        .menu-trigger:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 120px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        .menu-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        .menu-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .menu-item.delete:hover {
+            background: #fff5f5;
+            color: #dc3545;
+        }
+        
+        .editable-input {
+            width: 100%;
+            border: none;
+            padding: 12px;
+            font: inherit;
+            background: transparent;
+            outline: none;
+        }
+        
+        .editable-input:focus {
+            background: white;
+            box-shadow: inset 0 0 0 2px #007bff;
+        }
+        
+        .save-indicator {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 10px;
+            background: #28a745;
+            color: white;
+            padding: 1px 4px;
+            border-radius: 2px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .save-indicator.saving {
+            background: #ffc107;
+            color: #212529;
+            opacity: 1;
+        }
+        
+        .save-indicator.saved {
+            background: #28a745;
+            opacity: 1;
+        }
+        
+        .save-indicator.error {
+            background: #dc3545;
+            opacity: 1;
+        }
+        
+        .entity-id.editable-cell {
+            cursor: not-allowed;
+            background: #f8f9fa !important;
+        }
+        
+        .editable-hint {
+            font-size: 11px;
+            color: #6c757d;
+            font-style: italic;
+            margin-top: 2px;
+        }
+        
+        .new-entity-row {
+            background: #e8f5e9 !important;
+            border: 2px dashed #4caf50;
+        }
+        
+        .new-entity-row td {
+            border-color: #4caf50;
+        }
+        
+        .new-attribute-header {
+            background: #fff3e0 !important;
+            border: 2px dashed #ff9800;
+            position: relative;
+        }
+        
+        .new-attribute-header input {
+            background: transparent;
+            border: none;
+            width: 100%;
+            padding: 8px;
+            font-weight: 600;
+        }
+        
+        .new-attribute-header input:focus {
+            background: white;
+            outline: 2px solid #ff9800;
+            border-radius: 4px;
+        }
+        
+        .save-new-entity-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+        
+        .cancel-new-entity-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 3px;
+        }
+        
+        .attribute-type-selector {
+            font-size: 11px;
+            padding: 2px 4px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: white;
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .delete-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+        
+        .delete-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .loading-row {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>Tabella Semplice ed Elegante</h1>
+            <p>Interfaccia minimalista con autocomplete intelligente</p>
+        </div>
+        
+        <div class="demo-main">
+            <div class="demo-info">
+                <h3>Come usare:</h3>
+                <ul>
+                    <li>Prima cella: Digita per selezionare il tipo di entità (es: "Persona", "Contact")</li>
+                    <li>Header colonne: Digita per aggiungere attributi (mostra quelli dello schema)</li>
+                    <li>Prima colonna: Cerca o crea entità del tipo selezionato</li>
+                    <li>Celle dati: Si popolano automaticamente quando selezioni un'entità</li>
+                    <li>Click destro su una colonna per rimuoverla</li>
+                </ul>
+            </div>
+            
+            <div class="table-container" id="table-container">
+                <!-- Table will be rendered here -->
+            </div>
+            
+            <div class="demo-controls">
+                <button class="demo-btn" onclick="addSamplePersone()">
+                    Aggiungi Persone Demo
+                </button>
+                <button class="demo-btn secondary" onclick="clearAndRestart()">
+                    Pulisci e Ricomincia
+                </button>
+            </div>
+        </div>
+        
+        <!-- Admin Panel -->
+        <div class="admin-panel">
+            <h2>🔧 Pannello Amministrazione Entità</h2>
+            <div class="admin-controls">
+                <div class="admin-selector">
+                    <label for="admin-entity-type">Tipo di entità:</label>
+                    <select id="admin-entity-type" onchange="loadEntitiesForAdmin()">
+                        <option value="">-- Seleziona tipo --</option>
+                    </select>
+                    <span id="entity-count" class="entity-count"></span>
+                </div>
+                <button class="demo-btn secondary" onclick="refreshAdminList()">
+                    🔄 Aggiorna
+                </button>
+                <button class="demo-btn" onclick="addNewEntity()" id="add-entity-btn" style="display: none;">
+                    ➕ Aggiungi Entità
+                </button>
+                <button class="demo-btn secondary" onclick="addNewAttribute()" id="add-attribute-btn" style="display: none;">
+                    📋 Aggiungi Attributo
+                </button>
+            </div>
+            
+            <div id="admin-table-container" class="admin-table-container">
+                <p class="admin-placeholder">Seleziona un tipo di entità per visualizzare le entità esistenti</p>
+            </div>
+            
+            <div class="editable-hint">
+                💡 <strong>Suggerimento:</strong> Clicca su Nome o Email per modificarli inline. Le modifiche vengono salvate automaticamente.
+            </div>
+        </div>
+    </div>
+    
+    <!-- Load required dependencies -->
+    <script src="../services/EntityService.js"></script>
+    <script src="../services/SchemaService.js"></script>
+    <script src="../services/WebSocketService.js"></script>
+    <script src="../components/SimpleTableModule.js"></script>
+    
+    <script>
+        let tableModule = null;
+        
+        // Initialize WebSocketService for real-time sync
+        if (!window.WebSocketService) {
+            window.WebSocketService = new WebSocketService();
+        }
+        
+        // Connect WebSocket automatically
+        window.WebSocketService.connect().catch(error => {
+            console.warn('WebSocket connection failed:', error);
+        });
+        
+        // Initialize table on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initTable();
+            initAdminPanel();
+            initRealTimeSync();
+            
+            // Wait for WebSocket to be ready, then initialize SimpleTableModule real-time sync
+            setTimeout(() => {
+                if (tableModule && typeof tableModule.initRealTimeSync === 'function') {
+                    // console.log('🔄 Re-initializing SimpleTableModule real-time sync after WebSocket is ready');
+                    tableModule.initRealTimeSync();
+                    // console.log('✅ SimpleTableModule real-time sync re-initialized');
+                }
+            }, 2000);
+        });
+        
+        function initTable() {
+            const container = document.getElementById('table-container');
+            
+            // Create mock module instance
+            const mockModuleInstance = {
+                instanceId: 'demo-simple-' + Date.now(),
+                state: {},
+                updateState: async function(newState) {
+                    Object.assign(this.state, newState);
+                    console.log('State updated:', this.state);
+                    return Promise.resolve();
+                }
+            };
+            
+            // Force use of real services for WebSocket functionality
+            // The mock services don't make HTTP calls, so no WebSocket messages are sent
+            // console.log('🔄 Using REAL EntityService and SchemaService for WebSocket sync');
+            
+            // EntityService should already be loaded from EntityService.js
+            if (!window.EntityService) {
+                console.error('❌ Real EntityService not loaded! WebSocket sync will not work.');
+                window.EntityService = createMockEntityService();
+            } else {
+                // console.log('✅ Real EntityService is available for WebSocket sync');
+            }
+            
+            // SchemaService should already be loaded from SchemaService.js  
+            if (!window.SchemaService) {
+                console.error('❌ Real SchemaService not loaded! WebSocket sync will not work.');
+                window.SchemaService = createMockSchemaService();
+            } else {
+                // console.log('✅ Real SchemaService is available for WebSocket sync');
+            }
+            
+            // Create table module
+            tableModule = new SimpleTableModule(container, mockModuleInstance);
+            console.log('Simple table initialized');
+        }
+        
+        // Mock services (kept as fallback only)
+        function createMockEntityService() {
+            console.warn('⚠️ Using mock EntityService - WebSocket sync will not work!');
+            const entities = new Map();
+            let nextId = 1;
+            
+            // Add some demo data (these are only in memory, not in database)
+            const demoPersone = [
+                { id: 'p1', entityType: 'Persona', nome: 'Mario Rossi', email: 'mario@rossi.com', telefono: '3345050940' },
+                { id: 'p2', entityType: 'Persona', nome: 'Laura Bianchi', email: 'laura@bianchi.it', telefono: '3401234567' },
+                { id: 'p3', entityType: 'Persona', nome: 'Giuseppe Verdi', email: 'giuseppe@verdi.com', telefono: '3339876543' }
+            ];
+            
+            demoPersone.forEach(p => entities.set(p.id, p));
+            
+            return {
+                entities: entities,
+                
+                createEntity: async function(entityType, data) {
+                    const entity = {
+                        id: `entity_${nextId++}`,
+                        entityType,
+                        ...data,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    entities.set(entity.id, entity);
+                    
+                    return {
+                        success: true,
+                        data: entity
+                    };
+                },
+                
+                getEntity: function(entityId) {
+                    return entities.get(entityId);
+                },
+                
+                updateEntity: async function(entityId, updates) {
+                    const entity = entities.get(entityId);
+                    if (entity) {
+                        Object.assign(entity, updates);
+                        entity.modifiedAt = new Date().toISOString();
+                        return { success: true, data: entity };
+                    }
+                    return { success: false, error: 'Entity not found' };
+                },
+                
+                searchEntities: async function({ entityType, query, limit = 100 }) {
+                    const results = Array.from(entities.values())
+                        .filter(e => e.entityType === entityType);
+                    
+                    if (query) {
+                        return {
+                            success: true,
+                            data: results.filter(e => 
+                                Object.values(e).some(val => 
+                                    val && val.toString().toLowerCase().includes(query.toLowerCase())
+                                )
+                            ).slice(0, limit)
+                        };
+                    }
+                    
+                    return {
+                        success: true,
+                        data: results.slice(0, limit)
+                    };
+                }
+            };
+        }
+        
+        function createMockSchemaService() {
+            return {
+                getAvailableEntityTypes: async function() {
+                    return {
+                        success: true,
+                        data: ['Persona', 'Contact', 'Project', 'Task', 'Cliente', 'Prodotto']
+                    };
+                },
+                
+                getEntitySchema: async function(entityType) {
+                    const schemas = {
+                        Persona: {
+                            attributes: {
+                                nome: { type: 'string', required: true },
+                                cognome: { type: 'string', required: false },
+                                email: { type: 'email', required: false },
+                                telefono: { type: 'string', required: false },
+                                eta: { type: 'number', required: false },
+                                indirizzo: { type: 'string', required: false }
+                            }
+                        },
+                        Contact: {
+                            attributes: {
+                                name: { type: 'string', required: true },
+                                email: { type: 'email', required: false },
+                                phone: { type: 'string', required: false },
+                                company: { type: 'string', required: false }
+                            }
+                        }
+                    };
+                    
+                    return {
+                        success: true,
+                        data: schemas[entityType] || {
+                            attributes: {
+                                name: { type: 'string', required: true }
+                            }
+                        }
+                    };
+                }
+            };
+        }
+        
+        // Demo functions
+        function addSamplePersone() {
+            if (!tableModule) {
+                alert('Prima inizializza la tabella');
+                return;
+            }
+            
+            if (tableModule.entityType !== 'Persona') {
+                alert('Seleziona prima "Persona" come tipo di entità nella prima cella');
+                return;
+            }
+            
+            // Add more demo people
+            const newPersone = [
+                { nome: 'Anna Neri', email: 'anna@neri.com', telefono: '3456789012' },
+                { nome: 'Marco Gialli', email: 'marco@gialli.it', telefono: '3567890123' },
+                { nome: 'Sofia Blu', email: 'sofia@blu.com', telefono: '3678901234' }
+            ];
+            
+            newPersone.forEach(async (persona) => {
+                await window.EntityService.createEntity('Persona', persona);
+            });
+            
+            alert('Aggiunte 3 nuove persone. Ora puoi cercarle nella prima colonna!');
+        }
+        
+        function clearAndRestart() {
+            if (confirm('Sei sicuro di voler pulire tutto e ricominciare?')) {
+                const container = document.getElementById('table-container');
+                container.innerHTML = '';
+                
+                // Reset entity service
+                window.EntityService.entities.clear();
+                
+                // Reinitialize table
+                initTable();
+            }
+        }
+        
+        // ============================================
+        // ADMIN PANEL FUNCTIONS
+        // ============================================
+        
+        let currentAdminEntityType = null;
+        let currentSchemaAttributes = [];
+        let isAddingNewEntity = false;
+        
+        async function initAdminPanel() {
+            console.log('Initializing admin panel...');
+            await loadEntityTypesForAdmin();
+        }
+        
+        async function loadEntityTypesForAdmin() {
+            try {
+                const schemaService = window.SchemaService || createMockSchemaService();
+                const result = await schemaService.getAvailableEntityTypes();
+                const types = Array.isArray(result) ? result : (result.data || []);
+                
+                const select = document.getElementById('admin-entity-type');
+                select.innerHTML = '<option value="">-- Seleziona tipo --</option>';
+                
+                types.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    select.appendChild(option);
+                });
+                
+                console.log(`Admin: Caricati ${types.length} tipi di entità`);
+            } catch (error) {
+                console.error('Error loading entity types for admin:', error);
+            }
+        }
+        
+        async function loadEntitiesForAdmin() {
+            const select = document.getElementById('admin-entity-type');
+            const entityType = select.value;
+            const container = document.getElementById('admin-table-container');
+            const countSpan = document.getElementById('entity-count');
+            
+            if (!entityType) {
+                container.innerHTML = '<p class="admin-placeholder">Seleziona un tipo di entità per visualizzare le entità esistenti</p>';
+                countSpan.textContent = '';
+                currentAdminEntityType = null;
+                // Hide action buttons
+                document.getElementById('add-entity-btn').style.display = 'none';
+                document.getElementById('add-attribute-btn').style.display = 'none';
+                return;
+            }
+            
+            // Show action buttons
+            document.getElementById('add-entity-btn').style.display = 'inline-block';
+            document.getElementById('add-attribute-btn').style.display = 'inline-block';
+            
+            currentAdminEntityType = entityType;
+            
+            // Show loading
+            container.innerHTML = '<div class="loading-row">Caricamento entità...</div>';
+            countSpan.textContent = '';
+            
+            // Declare schemaAttributes outside try block
+            let schemaAttributes = [];
+            
+            try {
+                // Get schema to know available attributes - FORCE REFRESH to get latest schema
+                const schemaService = window.SchemaService || createMockSchemaService();
+                
+                // Clear schema cache to ensure we get the latest version
+                if (schemaService.clearCache) {
+                    schemaService.clearCache(entityType);
+                }
+                
+                const schemaResult = await schemaService.getEntitySchema(entityType);
+                const schema = schemaResult.data || schemaResult || {};
+                
+                if (schema.attributes) {
+                    if (Array.isArray(schema.attributes)) {
+                        schemaAttributes = schema.attributes.map(attr => attr.name || attr.attributeName).filter(Boolean);
+                    } else if (typeof schema.attributes === 'object') {
+                        schemaAttributes = Object.keys(schema.attributes);
+                    }
+                }
+                
+                // Remove duplicates from schema attributes
+                schemaAttributes = [...new Set(schemaAttributes)];
+                
+                // If no schema attributes found, use common defaults
+                if (schemaAttributes.length === 0) {
+                    console.warn(`No schema attributes found for ${entityType}, using defaults`);
+                    schemaAttributes = ['nome', 'email']; // Default fallback
+                }
+                
+                console.log(`Admin: Raw schema attributes for ${entityType}:`, schemaAttributes);
+                
+                // Set global variable for use in add functions
+                currentSchemaAttributes = [...schemaAttributes]; // Create copy to avoid reference issues
+                
+                // Get entities
+                const entityService = window.EntityService || createMockEntityService();
+                let entities = [];
+                
+                if (entityService.getEntities) {
+                    entities = await entityService.getEntities(entityType, true); // Force refresh
+                } else {
+                    console.warn('EntityService.getEntities not available, using mock data');
+                    entities = Array.from(entityService.entities.values()).filter(e => e.entityType === entityType);
+                }
+                
+                console.log(`Admin: Caricate ${entities.length} entità di tipo ${entityType}`);
+                console.log(`Admin: Schema attributes:`, schemaAttributes);
+                
+                // Update count
+                countSpan.textContent = `${entities.length} entità`;
+                
+                if (entities.length === 0) {
+                    container.innerHTML = '<p class="admin-placeholder">Nessuna entità trovata per questo tipo</p>';
+                    return;
+                }
+                
+                // Create bulk actions bar
+                const bulkActionsDiv = document.createElement('div');
+                bulkActionsDiv.className = 'bulk-actions hidden';
+                bulkActionsDiv.id = 'bulk-actions';
+                bulkActionsDiv.innerHTML = `
+                    <span class="selected-count" id="selected-count">0 elementi selezionati</span>
+                    <button class="select-all-btn" onclick="selectAllEntities()">Seleziona tutto</button>
+                    <button class="select-all-btn" onclick="deselectAllEntities()">Deseleziona tutto</button>
+                    <button class="bulk-delete-btn" onclick="bulkDeleteEntities()">🗑️ Elimina selezionati</button>
+                `;
+                
+                // Create table
+                const table = document.createElement('table');
+                table.className = 'admin-table';
+                
+                // Create header dynamically based on schema
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                
+                // Checkbox column
+                headerRow.innerHTML = `
+                    <th class="select-cell">
+                        <input type="checkbox" id="select-all-header" onchange="toggleSelectAll()" class="select-checkbox">
+                    </th>
+                    <th>ID</th>
+                `;
+                
+                // Add attribute columns with menu
+                schemaAttributes.forEach(attr => {
+                    const th = document.createElement('th');
+                    th.className = 'editable-cell attribute-header';
+                    th.innerHTML = `
+                        <div class="attribute-header-content">
+                            <span class="attribute-name">${attr.charAt(0).toUpperCase() + attr.slice(1)}</span>
+                            <div class="attribute-menu">
+                                <button class="menu-trigger" onclick="toggleAttributeMenu('${attr}', this)" title="Opzioni attributo">⋮</button>
+                                <div class="menu-dropdown" id="menu-${attr}" style="display: none;">
+                                    <div class="menu-item" onclick="renameAttribute('${attr}')">✏️ Rinomina</div>
+                                    <div class="menu-item delete" onclick="deleteAttribute('${attr}')">🗑️ Elimina</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    th.title = `Attributo intrinseco: ${attr}`;
+                    headerRow.appendChild(th);
+                });
+                
+                // Actions column
+                const actionsHeader = document.createElement('th');
+                actionsHeader.textContent = 'Azioni';
+                headerRow.appendChild(actionsHeader);
+                
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                // Create body
+                const tbody = document.createElement('tbody');
+                entities.forEach((entity, index) => {
+                    const row = document.createElement('tr');
+                    row.dataset.entityId = entity.id;
+                    
+                    // Checkbox cell
+                    const checkboxCell = document.createElement('td');
+                    checkboxCell.className = 'select-cell';
+                    checkboxCell.innerHTML = `
+                        <input type="checkbox" class="select-checkbox entity-checkbox" 
+                               data-entity-id="${entity.id}" 
+                               data-entity-name="${(entity.nome || entity.name || entity.id).replace(/"/g, '&quot;')}"
+                               onchange="updateSelectionCount()">
+                    `;
+                    row.appendChild(checkboxCell);
+                    
+                    // ID cell (readonly)
+                    const idCell = document.createElement('td');
+                    idCell.className = 'entity-id';
+                    idCell.title = entity.id;
+                    idCell.dataset.readonly = 'true';
+                    idCell.textContent = entity.id;
+                    row.appendChild(idCell);
+                    
+                    // Dynamic attribute cells
+                    schemaAttributes.forEach(attr => {
+                        const cell = document.createElement('td');
+                        cell.className = `entity-${attr} editable-cell`;
+                        cell.dataset.entityId = entity.id;
+                        cell.dataset.attribute = attr;
+                        cell.dataset.value = entity[attr] || '';
+                        cell.onclick = () => makeEditable(cell);
+                        cell.title = 'Clicca per modificare';
+                        cell.innerHTML = `${entity[attr] || '-'}<span class="save-indicator"></span>`;
+                        row.appendChild(cell);
+                    });
+                    
+                    // Actions cell
+                    const actionsCell = document.createElement('td');
+                    actionsCell.className = 'actions';
+                    actionsCell.innerHTML = `
+                        <button class="delete-btn" onclick="deleteEntityFromAdmin('${entity.id}', '${(entity.nome || entity.name || entity.id).replace(/'/g, '\\\'')}')" title="Elimina questa entità">
+                            🗑️ Elimina
+                        </button>
+                    `;
+                    row.appendChild(actionsCell);
+                    
+                    tbody.appendChild(row);
+                });
+                table.appendChild(tbody);
+                
+                container.innerHTML = '';
+                container.appendChild(bulkActionsDiv);
+                container.appendChild(table);
+                
+            } catch (error) {
+                console.error('Error loading entities for admin:', error);
+                container.innerHTML = '<p class="admin-placeholder">Errore nel caricamento delle entità</p>';
+                countSpan.textContent = 'Errore';
+            }
+        }
+        
+        async function deleteEntityFromAdmin(entityId, entityName) {
+            if (!confirm(`Sei sicuro di voler eliminare l'entità "${entityName}"?\n\nQuesta operazione non può essere annullata.`)) {
+                return;
+            }
+            
+            try {
+                const entityService = window.EntityService || createMockEntityService();
+                
+                if (entityService.deleteEntity) {
+                    await entityService.deleteEntity(entityId);
+                    console.log(`Admin: Entità ${entityId} eliminata con successo`);
+                } else {
+                    // Mock deletion
+                    entityService.entities.delete(entityId);
+                    console.log(`Admin: Mock deletion of entity ${entityId}`);
+                }
+                
+                // Refresh the list
+                await loadEntitiesForAdmin();
+                
+                // Clear cache if real service
+                if (entityService.clearTypeCache) {
+                    entityService.clearTypeCache(currentAdminEntityType);
+                }
+                
+                alert(`Entità "${entityName}" eliminata con successo!`);
+                
+            } catch (error) {
+                console.error('Error deleting entity:', error);
+                alert(`Errore nell'eliminazione dell'entità: ${error.message}`);
+            }
+        }
+        
+        async function refreshAdminList() {
+            if (currentAdminEntityType) {
+                // Clear cache first
+                const entityService = window.EntityService || createMockEntityService();
+                if (entityService.clearTypeCache) {
+                    entityService.clearTypeCache(currentAdminEntityType);
+                }
+                
+                await loadEntitiesForAdmin();
+            }
+        }
+        
+        // ============================================
+        // BULK SELECTION FUNCTIONS
+        // ============================================
+        
+        function updateSelectionCount() {
+            const checkboxes = document.querySelectorAll('.entity-checkbox');
+            const checkedBoxes = document.querySelectorAll('.entity-checkbox:checked');
+            const bulkActions = document.getElementById('bulk-actions');
+            const selectedCount = document.getElementById('selected-count');
+            const selectAllHeader = document.getElementById('select-all-header');
+            
+            const count = checkedBoxes.length;
+            
+            // Update count display
+            selectedCount.textContent = `${count} elementi selezionati`;
+            
+            // Show/hide bulk actions
+            if (count > 0) {
+                bulkActions.classList.remove('hidden');
+            } else {
+                bulkActions.classList.add('hidden');
+            }
+            
+            // Update header checkbox state
+            if (count === 0) {
+                selectAllHeader.indeterminate = false;
+                selectAllHeader.checked = false;
+            } else if (count === checkboxes.length) {
+                selectAllHeader.indeterminate = false;
+                selectAllHeader.checked = true;
+            } else {
+                selectAllHeader.indeterminate = true;
+                selectAllHeader.checked = false;
+            }
+            
+            // Update row highlighting
+            document.querySelectorAll('.admin-table tbody tr').forEach(row => {
+                const checkbox = row.querySelector('.entity-checkbox');
+                if (checkbox && checkbox.checked) {
+                    row.classList.add('selected');
+                } else {
+                    row.classList.remove('selected');
+                }
+            });
+        }
+        
+        function toggleSelectAll() {
+            const selectAllHeader = document.getElementById('select-all-header');
+            const checkboxes = document.querySelectorAll('.entity-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllHeader.checked;
+            });
+            
+            updateSelectionCount();
+        }
+        
+        function selectAllEntities() {
+            const checkboxes = document.querySelectorAll('.entity-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            updateSelectionCount();
+        }
+        
+        function deselectAllEntities() {
+            const checkboxes = document.querySelectorAll('.entity-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectionCount();
+        }
+        
+        async function bulkDeleteEntities() {
+            const checkedBoxes = document.querySelectorAll('.entity-checkbox:checked');
+            
+            if (checkedBoxes.length === 0) {
+                alert('Nessuna entità selezionata per l\'eliminazione.');
+                return;
+            }
+            
+            // Collect entity info
+            const entitiesToDelete = Array.from(checkedBoxes).map(checkbox => ({
+                id: checkbox.dataset.entityId,
+                name: checkbox.dataset.entityName
+            }));
+            
+            const entityNames = entitiesToDelete.map(e => e.name).join(', ');
+            const count = entitiesToDelete.length;
+            
+            const confirmed = confirm(
+                `Sei sicuro di voler eliminare ${count} entità?\n\n` +
+                `Entità da eliminare:\n${entityNames.substring(0, 200)}${entityNames.length > 200 ? '...' : ''}\n\n` +
+                `Questa operazione non può essere annullata.`
+            );
+            
+            if (!confirmed) {
+                return;
+            }
+            
+            // Show progress
+            const bulkActions = document.getElementById('bulk-actions');
+            const originalContent = bulkActions.innerHTML;
+            bulkActions.innerHTML = `
+                <span class="selected-count">Eliminazione in corso... 0/${count}</span>
+                <div style="font-size: 12px; color: #666;">Non chiudere la pagina</div>
+            `;
+            
+            let deletedCount = 0;
+            let errors = [];
+            
+            try {
+                const entityService = window.EntityService || createMockEntityService();
+                
+                // Delete entities one by one
+                for (const entity of entitiesToDelete) {
+                    try {
+                        if (entityService.deleteEntity) {
+                            await entityService.deleteEntity(entity.id);
+                        } else {
+                            // Mock deletion
+                            entityService.entities.delete(entity.id);
+                        }
+                        deletedCount++;
+                        
+                        // Update progress
+                        const progressSpan = bulkActions.querySelector('.selected-count');
+                        if (progressSpan) {
+                            progressSpan.textContent = `Eliminazione in corso... ${deletedCount}/${count}`;
+                        }
+                        
+                        console.log(`Bulk: Eliminata entità ${entity.id} (${deletedCount}/${count})`);
+                        
+                    } catch (error) {
+                        console.error(`Bulk: Errore eliminazione ${entity.id}:`, error);
+                        errors.push(`${entity.name}: ${error.message}`);
+                    }
+                }
+                
+                // Clear cache if real service
+                if (entityService.clearTypeCache && currentAdminEntityType) {
+                    entityService.clearTypeCache(currentAdminEntityType);
+                }
+                
+                // Refresh the list
+                await loadEntitiesForAdmin();
+                
+                // Show results
+                if (errors.length === 0) {
+                    alert(`✅ Eliminazione completata!\n\n${deletedCount} entità eliminate con successo.`);
+                } else {
+                    alert(
+                        `⚠️ Eliminazione parzialmente completata:\n\n` +
+                        `✅ ${deletedCount - errors.length} entità eliminate\n` +
+                        `❌ ${errors.length} errori:\n\n` +
+                        errors.slice(0, 5).join('\n') +
+                        (errors.length > 5 ? `\n... e altri ${errors.length - 5} errori` : '')
+                    );
+                }
+                
+            } catch (error) {
+                console.error('Bulk delete fatal error:', error);
+                alert(`❌ Errore critico durante l'eliminazione: ${error.message}`);
+                
+                // Restore original content and refresh
+                bulkActions.innerHTML = originalContent;
+                await loadEntitiesForAdmin();
+            }
+        }
+        
+        // ============================================
+        // INLINE EDITING FUNCTIONS
+        // ============================================
+        
+        let currentlyEditing = null;
+        
+        function makeEditable(cell) {
+            // Don't allow editing if already editing another cell
+            if (currentlyEditing && currentlyEditing !== cell) {
+                finishEditing(currentlyEditing, false);
+            }
+            
+            // Don't edit if this cell is readonly
+            if (cell.dataset.readonly === 'true') {
+                return;
+            }
+            
+            // Don't edit if already editing this cell
+            if (cell.classList.contains('editing')) {
+                return;
+            }
+            
+            currentlyEditing = cell;
+            const currentValue = cell.dataset.value || '';
+            const originalText = cell.innerHTML;
+            
+            // Create input field
+            const input = document.createElement('input');
+            input.type = cell.dataset.attribute === 'email' ? 'email' : 'text';
+            input.className = 'editable-input';
+            input.value = currentValue;
+            input.dataset.originalValue = currentValue;
+            input.dataset.originalHtml = originalText;
+            
+            // Set up event handlers
+            input.onblur = () => finishEditing(cell, true);
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    finishEditing(cell, true);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    finishEditing(cell, false);
+                }
+            };
+            
+            // Replace cell content with input
+            cell.classList.add('editing');
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            
+            // Focus and select text
+            input.focus();
+            input.select();
+        }
+        
+        async function finishEditing(cell, save) {
+            if (!cell || !cell.classList.contains('editing')) {
+                return;
+            }
+            
+            const input = cell.querySelector('.editable-input');
+            if (!input) {
+                return;
+            }
+            
+            const newValue = input.value.trim();
+            const originalValue = input.dataset.originalValue;
+            const originalHtml = input.dataset.originalHtml;
+            
+            currentlyEditing = null;
+            cell.classList.remove('editing');
+            
+            if (!save || newValue === originalValue) {
+                // Cancel or no change - restore original content
+                cell.innerHTML = originalHtml;
+                return;
+            }
+            
+            // Show saving indicator
+            const indicator = cell.querySelector('.save-indicator') || document.createElement('span');
+            indicator.className = 'save-indicator saving';
+            indicator.textContent = '💾';
+            
+            // Update display immediately for responsiveness
+            const displayValue = newValue || '-';
+            cell.innerHTML = `${displayValue}<span class="save-indicator saving">💾</span>`;
+            cell.dataset.value = newValue;
+            
+            try {
+                const entityId = cell.dataset.entityId;
+                const attributeName = cell.dataset.attribute;
+                
+                console.log(`Saving: ${entityId}.${attributeName} = "${newValue}"`);
+                
+                // Save to backend
+                const entityService = window.EntityService || createMockEntityService();
+                
+                if (entityService.updateEntityAttribute) {
+                    await entityService.updateEntityAttribute(entityId, attributeName, newValue);
+                } else if (entityService.updateEntity) {
+                    // Fallback for mock service
+                    await entityService.updateEntity(entityId, {
+                        [attributeName]: newValue
+                    });
+                } else {
+                    throw new Error('No update method available');
+                }
+                
+                // Show success indicator
+                const successIndicator = cell.querySelector('.save-indicator');
+                if (successIndicator) {
+                    successIndicator.className = 'save-indicator saved';
+                    successIndicator.textContent = '✅';
+                    
+                    // Hide after 2 seconds
+                    setTimeout(() => {
+                        if (successIndicator) {
+                            successIndicator.style.opacity = '0';
+                        }
+                    }, 2000);
+                }
+                
+                // Update checkbox data for bulk operations
+                const checkbox = cell.parentElement.querySelector('.entity-checkbox');
+                if (checkbox && attributeName === 'nome') {
+                    checkbox.dataset.entityName = newValue;
+                }
+                
+                console.log(`✅ Successfully saved: ${entityId}.${attributeName}`);
+                
+            } catch (error) {
+                console.error(`❌ Error saving: ${entityId}.${attributeName}:`, error);
+                
+                // Show error indicator
+                const errorIndicator = cell.querySelector('.save-indicator');
+                if (errorIndicator) {
+                    errorIndicator.className = 'save-indicator error';
+                    errorIndicator.textContent = '❌';
+                    errorIndicator.title = `Errore: ${error.message}`;
+                    
+                    // Keep error visible longer
+                    setTimeout(() => {
+                        if (errorIndicator) {
+                            errorIndicator.style.opacity = '0';
+                        }
+                    }, 5000);
+                }
+                
+                // Optionally restore original value on error
+                const restoreOriginal = confirm(
+                    `Errore nel salvataggio di "${attributeName}":\n${error.message}\n\nVuoi ripristinare il valore originale?`
+                );
+                
+                if (restoreOriginal) {
+                    cell.innerHTML = originalHtml;
+                    cell.dataset.value = originalValue;
+                }
+            }
+        }
+        
+        // Handle clicks outside editing cells
+        document.addEventListener('click', (e) => {
+            if (currentlyEditing && 
+                !currentlyEditing.contains(e.target) && 
+                !e.target.classList.contains('editable-cell')) {
+                finishEditing(currentlyEditing, true);
+            }
+        });
+        
+        // Handle escape key globally
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && currentlyEditing) {
+                finishEditing(currentlyEditing, false);
+            }
+        });
+        
+        // ============================================
+        // ADD NEW ENTITY & ATTRIBUTE FUNCTIONS
+        // ============================================
+        
+        function addNewEntity() {
+            if (!currentAdminEntityType || isAddingNewEntity) {
+                return;
+            }
+            
+            isAddingNewEntity = true;
+            
+            // Find table body
+            const tbody = document.querySelector('.admin-table tbody');
+            if (!tbody) return;
+            
+            // Create new entity row
+            const newRow = document.createElement('tr');
+            newRow.className = 'new-entity-row';
+            newRow.dataset.isNew = 'true';
+            
+            // Checkbox cell (disabled for new entity)
+            const checkboxCell = document.createElement('td');
+            checkboxCell.className = 'select-cell';
+            checkboxCell.innerHTML = '<span style="color: #999;">Nuovo</span>';
+            newRow.appendChild(checkboxCell);
+            
+            // ID cell (will be generated)
+            const idCell = document.createElement('td');
+            idCell.className = 'entity-id';
+            idCell.innerHTML = '<em style="color: #999;">Auto-generato</em>';
+            newRow.appendChild(idCell);
+            
+            // Attribute cells (editable)
+            currentSchemaAttributes.forEach(attr => {
+                const cell = document.createElement('td');
+                cell.className = `entity-${attr} editable-cell`;
+                cell.dataset.attribute = attr;
+                cell.dataset.value = '';
+                cell.onclick = () => makeEditableNewEntity(cell);
+                cell.title = 'Clicca per modificare';
+                cell.innerHTML = `<em style="color: #999;">Inserisci ${attr}...</em><span class="save-indicator"></span>`;
+                newRow.appendChild(cell);
+            });
+            
+            // Actions cell
+            const actionsCell = document.createElement('td');
+            actionsCell.className = 'actions';
+            actionsCell.innerHTML = `
+                <button class="save-new-entity-btn" onclick="saveNewEntity(this.parentElement.parentElement)" title="Salva nuova entità">
+                    💾 Salva
+                </button>
+                <button class="cancel-new-entity-btn" onclick="cancelNewEntity(this.parentElement.parentElement)" title="Annulla">
+                    ❌ Annulla
+                </button>
+            `;
+            newRow.appendChild(actionsCell);
+            
+            // Add to table (at top)
+            tbody.insertBefore(newRow, tbody.firstChild);
+            
+            // Focus first editable cell
+            setTimeout(() => {
+                const firstEditableCell = newRow.querySelector('.editable-cell');
+                if (firstEditableCell) {
+                    makeEditableNewEntity(firstEditableCell);
+                }
+            }, 100);
+            
+            // Update button state
+            const addBtn = document.getElementById('add-entity-btn');
+            addBtn.textContent = '⏳ Creazione in corso...';
+            addBtn.disabled = true;
+        }
+        
+        function makeEditableNewEntity(cell) {
+            // Don't edit if already editing another cell
+            if (currentlyEditing && currentlyEditing !== cell) {
+                finishEditing(currentlyEditing, false);
+            }
+            
+            if (cell.classList.contains('editing')) {
+                return;
+            }
+            
+            currentlyEditing = cell;
+            const currentValue = cell.dataset.value || '';
+            const attributeName = cell.dataset.attribute;
+            
+            // Create input field
+            const input = document.createElement('input');
+            input.type = attributeName === 'email' ? 'email' : 'text';
+            input.className = 'editable-input';
+            input.value = currentValue;
+            input.placeholder = `Inserisci ${attributeName}...`;
+            
+            // Set up event handlers
+            input.onblur = () => finishEditingNewEntity(cell, true);
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    finishEditingNewEntity(cell, true);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    finishEditingNewEntity(cell, false);
+                } else if (e.key === 'Tab') {
+                    // Allow tabbing to next field
+                    finishEditingNewEntity(cell, true);
+                }
+            };
+            
+            // Replace cell content with input
+            cell.classList.add('editing');
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            
+            // Focus and select text
+            input.focus();
+            if (currentValue) {
+                input.select();
+            }
+        }
+        
+        function finishEditingNewEntity(cell, save) {
+            if (!cell || !cell.classList.contains('editing')) {
+                return;
+            }
+            
+            const input = cell.querySelector('.editable-input');
+            if (!input) {
+                return;
+            }
+            
+            const newValue = input.value.trim();
+            const attributeName = cell.dataset.attribute;
+            
+            currentlyEditing = null;
+            cell.classList.remove('editing');
+            
+            if (save && newValue) {
+                // Update cell display and data
+                cell.innerHTML = `${newValue}<span class="save-indicator"></span>`;
+                cell.dataset.value = newValue;
+            } else {
+                // Restore placeholder
+                cell.innerHTML = `<em style="color: #999;">Inserisci ${attributeName}...</em><span class="save-indicator"></span>`;
+                cell.dataset.value = '';
+            }
+        }
+        
+        async function saveNewEntity(row) {
+            try {
+                // Collect data from row
+                const entityData = {};
+                let hasData = false;
+                
+                currentSchemaAttributes.forEach(attr => {
+                    const cell = row.querySelector(`[data-attribute="${attr}"]`);
+                    const value = cell ? cell.dataset.value : '';
+                    if (value) {
+                        entityData[attr] = value;
+                        hasData = true;
+                    }
+                });
+                
+                if (!hasData) {
+                    alert('Inserisci almeno un attributo per creare l\'entità.');
+                    return;
+                }
+                
+                console.log('Creating new entity:', entityData);
+                
+                // Create entity via service
+                const entityService = window.EntityService || createMockEntityService();
+                const result = await entityService.createEntity(currentAdminEntityType, entityData);
+                const newEntity = result.data || result;
+                
+                console.log('New entity created:', newEntity);
+                
+                // Remove the temporary row
+                row.remove();
+                
+                // Refresh the list to show the new entity
+                await loadEntitiesForAdmin();
+                
+                alert(`✅ Entità "${newEntity.nome || newEntity.name || newEntity.id}" creata con successo!`);
+                
+            } catch (error) {
+                console.error('Error creating new entity:', error);
+                alert(`❌ Errore nella creazione dell'entità: ${error.message}`);
+            } finally {
+                isAddingNewEntity = false;
+                
+                // Restore button
+                const addBtn = document.getElementById('add-entity-btn');
+                addBtn.textContent = '➕ Aggiungi Entità';
+                addBtn.disabled = false;
+            }
+        }
+        
+        function cancelNewEntity(row) {
+            if (confirm('Sei sicuro di voler annullare la creazione della nuova entità?')) {
+                row.remove();
+                isAddingNewEntity = false;
+                
+                // Restore button
+                const addBtn = document.getElementById('add-entity-btn');
+                addBtn.textContent = '➕ Aggiungi Entità';
+                addBtn.disabled = false;
+            }
+        }
+        
+        async function addNewAttribute() {
+            if (!currentAdminEntityType) {
+                alert('Seleziona prima un tipo di entità.');
+                return;
+            }
+            
+            const attributeName = prompt('Nome del nuovo attributo intrinseco:');
+            if (!attributeName || !attributeName.trim()) {
+                return;
+            }
+            
+            const cleanAttributeName = attributeName.trim().toLowerCase();
+            
+            // Check if attribute already exists
+            if (currentSchemaAttributes && currentSchemaAttributes.includes(cleanAttributeName)) {
+                alert(`❌ L'attributo "${cleanAttributeName}" esiste già nello schema di "${currentAdminEntityType}".\n\nAttributi esistenti: ${currentSchemaAttributes.join(', ')}`);
+                return;
+            }
+            
+            const attributeType = prompt('Tipo di attributo (string, email, number, date):', 'string');
+            if (!attributeType) {
+                return;
+            }
+            
+            // Validate attribute type
+            const validTypes = ['string', 'email', 'number', 'date'];
+            if (!validTypes.includes(attributeType)) {
+                alert(`❌ Tipo di attributo non valido: "${attributeType}"\n\nTipi validi: ${validTypes.join(', ')}`);
+                return;
+            }
+            
+            try {
+                console.log(`Adding new attribute: ${cleanAttributeName} (${attributeType}) to ${currentAdminEntityType}`);
+                
+                // Call the schema evolution API
+                const evolution = {
+                    addAttributes: {
+                        [cleanAttributeName]: {
+                            type: attributeType,
+                            description: `Attributo ${cleanAttributeName} aggiunto tramite admin interface`,
+                            defaultValue: attributeType === 'number' ? 0 : '',
+                            required: false
+                        }
+                    }
+                };
+                
+                const response = await fetch(`/api/schema/entity/${currentAdminEntityType}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ evolution })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Errore sconosciuto nell\'aggiornamento dello schema');
+                }
+                
+                console.log(`✅ Attributo "${cleanAttributeName}" aggiunto con successo allo schema di "${currentAdminEntityType}"`);
+                
+                // Clear all caches to force refresh
+                const schemaService = window.SchemaService || createMockSchemaService();
+                if (schemaService.clearCache) {
+                    schemaService.clearCache();
+                }
+                const entityService = window.EntityService || createMockEntityService();
+                if (entityService.clearAllCache) {
+                    entityService.clearAllCache();
+                }
+                
+                // Update local schema cache (avoid duplicates)
+                if (!currentSchemaAttributes.includes(cleanAttributeName)) {
+                    currentSchemaAttributes.push(cleanAttributeName);
+                }
+                
+                // Show success message
+                alert(`✅ Attributo "${cleanAttributeName}" aggiunto con successo!\n\nIl nuovo attributo è ora disponibile come attributo intrinseco per tutte le entità di tipo "${currentAdminEntityType}".\n\nLa tabella admin sarà ricaricata per mostrare la nuova colonna.`);
+                
+                // Force complete refresh to show new column
+                await loadEntitiesForAdmin();
+                
+            } catch (error) {
+                console.error('Error adding new attribute:', error);
+                alert(`❌ Errore nell'aggiunta dell'attributo: ${error.message}`);
+            }
+        }
+        
+        // ============================================
+        // ATTRIBUTE MENU FUNCTIONS
+        // ============================================
+        
+        function toggleAttributeMenu(attributeName, trigger) {
+            // Close all other menus first
+            document.querySelectorAll('.menu-dropdown').forEach(menu => {
+                if (menu.id !== `menu-${attributeName}`) {
+                    menu.style.display = 'none';
+                }
+            });
+            
+            const menu = document.getElementById(`menu-${attributeName}`);
+            if (menu.style.display === 'none') {
+                menu.style.display = 'block';
+            } else {
+                menu.style.display = 'none';
+            }
+            
+            // Close menu when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!menu.contains(e.target) && !trigger.contains(e.target)) {
+                        menu.style.display = 'none';
+                        document.removeEventListener('click', closeMenu);
+                    }
+                });
+            }, 0);
+        }
+        
+        async function renameAttribute(oldAttributeName) {
+            // Close menu
+            document.getElementById(`menu-${oldAttributeName}`).style.display = 'none';
+            
+            const newAttributeName = prompt(`Rinomina attributo "${oldAttributeName}":\n\nNuovo nome:`, oldAttributeName);
+            if (!newAttributeName || !newAttributeName.trim()) {
+                return;
+            }
+            
+            const cleanNewName = newAttributeName.trim().toLowerCase();
+            if (cleanNewName === oldAttributeName) {
+                alert('Il nuovo nome è uguale a quello attuale.');
+                return;
+            }
+            
+            // Check if new name already exists
+            if (currentSchemaAttributes && currentSchemaAttributes.includes(cleanNewName)) {
+                alert(`❌ L'attributo "${cleanNewName}" esiste già nello schema di "${currentAdminEntityType}".\n\nAttributi esistenti: ${currentSchemaAttributes.join(', ')}`);
+                return;
+            }
+            
+            const confirmed = confirm(
+                `Sei sicuro di voler rinominare l'attributo "${oldAttributeName}" in "${cleanNewName}"?\n\n` +
+                `Questo cambierà:\n` +
+                `• Lo schema del tipo "${currentAdminEntityType}"\n` +
+                `• Tutte le entità esistenti di questo tipo\n\n` +
+                `Questa operazione non può essere annullata.`
+            );
+            
+            if (!confirmed) {
+                return;
+            }
+            
+            try {
+                console.log(`Renaming attribute: ${oldAttributeName} -> ${cleanNewName} in ${currentAdminEntityType}`);
+                
+                // Call the schema evolution API for rename
+                const evolution = {
+                    renameAttributes: {
+                        [oldAttributeName]: cleanNewName
+                    }
+                };
+                
+                const response = await fetch(`/api/schema/entity/${currentAdminEntityType}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ evolution })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Errore sconosciuto nella rinomina dell\'attributo');
+                }
+                
+                console.log(`✅ Attributo "${oldAttributeName}" rinominato in "${cleanNewName}" con successo`);
+                
+                // Clear all caches to force refresh
+                const schemaService = window.SchemaService || createMockSchemaService();
+                if (schemaService.clearCache) {
+                    schemaService.clearCache();
+                }
+                const entityService = window.EntityService || createMockEntityService();
+                if (entityService.clearAllCache) {
+                    entityService.clearAllCache();
+                }
+                
+                // Update local schema cache
+                const index = currentSchemaAttributes.indexOf(oldAttributeName);
+                if (index !== -1) {
+                    currentSchemaAttributes[index] = cleanNewName;
+                }
+                
+                // Show success message
+                alert(`✅ Attributo rinominato con successo!\n\n"${oldAttributeName}" è ora "${cleanNewName}" per tutte le entità di tipo "${currentAdminEntityType}".\n\nLa tabella admin sarà ricaricata per mostrare le modifiche.`);
+                
+                // Force complete refresh
+                await loadEntitiesForAdmin();
+                
+            } catch (error) {
+                console.error('Error renaming attribute:', error);
+                alert(`❌ Errore nella rinomina dell'attributo: ${error.message}`);
+            }
+        }
+        
+        async function deleteAttribute(attributeName) {
+            // Close menu
+            document.getElementById(`menu-${attributeName}`).style.display = 'none';
+            
+            // Check if it's a core attribute that shouldn't be deleted
+            const coreAttributes = ['nome', 'id'];
+            if (coreAttributes.includes(attributeName)) {
+                alert(`❌ Non è possibile eliminare l'attributo "${attributeName}" perché è un attributo fondamentale del sistema.`);
+                return;
+            }
+            
+            const confirmed = confirm(
+                `⚠️ ATTENZIONE: Stai per eliminare definitivamente l'attributo "${attributeName}"!\n\n` +
+                `Questo comporterà:\n` +
+                `• Rimozione dell'attributo dallo schema di "${currentAdminEntityType}"\n` +
+                `• Perdita di tutti i dati di questo attributo da TUTTE le entità esistenti\n` +
+                `• L'attributo non sarà più disponibile per nuove entità\n\n` +
+                `⚠️ QUESTA OPERAZIONE NON PUÒ ESSERE ANNULLATA!\n\n` +
+                `Digita "${attributeName}" per confermare:`
+            );
+            
+            if (!confirmed) {
+                return;
+            }
+            
+            const confirmation = prompt(`Per confermare l'eliminazione, digita esattamente: ${attributeName}`);
+            if (confirmation !== attributeName) {
+                alert('Conferma non valida. Operazione annullata.');
+                return;
+            }
+            
+            try {
+                console.log(`Deleting attribute: ${attributeName} from ${currentAdminEntityType}`);
+                
+                // Call the schema evolution API for deletion
+                const evolution = {
+                    removeAttributes: [attributeName]
+                };
+                
+                const response = await fetch(`/api/schema/entity/${currentAdminEntityType}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ evolution })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Errore sconosciuto nell\'eliminazione dell\'attributo');
+                }
+                
+                console.log(`✅ Attributo "${attributeName}" eliminato con successo`);
+                
+                // Clear all caches to force refresh
+                const schemaService = window.SchemaService || createMockSchemaService();
+                if (schemaService.clearCache) {
+                    schemaService.clearCache();
+                }
+                const entityService = window.EntityService || createMockEntityService();
+                if (entityService.clearAllCache) {
+                    entityService.clearAllCache();
+                }
+                
+                // Update local schema cache
+                const index = currentSchemaAttributes.indexOf(attributeName);
+                if (index !== -1) {
+                    currentSchemaAttributes.splice(index, 1);
+                }
+                
+                // Show success message
+                alert(`✅ Attributo "${attributeName}" eliminato con successo!\n\nTutti i dati relativi a questo attributo sono stati rimossi da tutte le entità di tipo "${currentAdminEntityType}".\n\nLa tabella admin sarà ricaricata per mostrare le modifiche.`);
+                
+                // Force complete refresh
+                await loadEntitiesForAdmin();
+                
+            } catch (error) {
+                console.error('Error deleting attribute:', error);
+                alert(`❌ Errore nell'eliminazione dell'attributo: ${error.message}`);
+            }
+        }
+        
+        // ============================================
+        // REAL-TIME SYNCHRONIZATION
+        // ============================================
+        
+        let wsService = null;
+        let broadcastChannel = null;
+        
+        function initRealTimeSync() {
+            try {
+                // Initialize WebSocket connection
+                wsService = window.WebSocketService || new WebSocketService();
+                
+                // Initialize BroadcastChannel for cross-window sync
+                broadcastChannel = new BroadcastChannel('ssot-admin-sync');
+                
+                // Listen for WebSocket messages
+                wsService.subscribe('entity-changes', (message) => {
+                    // console.log('📡 WebSocket message received:', message);
+                    handleEntityChange(message);
+                });
+                
+                wsService.subscribe('schema-changes', (message) => {
+                    // console.log('📡 Schema change received:', message);
+                    handleSchemaChange(message);
+                });
+                
+                // Listen for entity creation messages
+                wsService.subscribe('change', (message) => {
+                    if (message.changeType === 'create') {
+                        console.log('🎯 [Admin] Entity created via AttributeSpace:', message);
+                        handleEntityCreated(message);
+                    } else {
+                        handleEntityChange(message);
+                    }
+                });
+                
+                // Listen for BroadcastChannel messages from other windows
+                broadcastChannel.addEventListener('message', (event) => {
+                    // console.log('📻 BroadcastChannel message:', event.data);
+                    handleCrossWindowSync(event.data);
+                });
+                
+                console.log('✅ Real-time sync initialized');
+                
+            } catch (error) {
+                console.error('❌ Error initializing real-time sync:', error);
+            }
+        }
+        
+        function handleEntityCreated(message) {
+            // Check if the change affects the currently displayed entity type
+            if (!currentAdminEntityType) return;
+            
+            const entityType = message.entityType;
+            if (entityType === currentAdminEntityType) {
+                console.log('🎯 [Admin] Refreshing admin table due to entity creation');
+                // Refresh the admin table to show the new entity
+                loadEntitiesForAdmin();
+            }
+        }
+        
+        function handleEntityChange(message) {
+            // Check if the change affects the currently displayed entity type
+            if (!currentAdminEntityType) return;
+            
+            const { entityType, entityId, attributeName, data } = message;
+            
+            if (entityType === currentAdminEntityType) {
+                console.log(`🔄 Entity change for ${entityType}: ${attributeName} = ${data?.newValue}`);
+                
+                // Refresh admin table to show updated data
+                loadEntitiesForAdmin();
+                
+                // Broadcast to other windows
+                broadcastToOtherWindows({
+                    type: 'entity-change',
+                    entityType,
+                    entityId,
+                    attributeName,
+                    data
+                });
+            }
+        }
+        
+        function handleSchemaChange(message) {
+            // Check if the schema change affects the currently displayed entity type
+            if (!currentAdminEntityType) return;
+            
+            const { entityType, evolution } = message.data || {};
+            
+            if (entityType === currentAdminEntityType) {
+                console.log(`🔄 Schema change for ${entityType}:`, evolution);
+                
+                // Clear caches to force refresh
+                const schemaService = window.SchemaService || createMockSchemaService();
+                if (schemaService.clearCache) {
+                    schemaService.clearCache();
+                }
+                
+                // Refresh admin table to show schema changes
+                loadEntitiesForAdmin();
+                
+                // Broadcast to other windows
+                broadcastToOtherWindows({
+                    type: 'schema-change',
+                    entityType,
+                    evolution
+                });
+            }
+        }
+        
+        function handleCrossWindowSync(data) {
+            if (!currentAdminEntityType) return;
+            
+            switch (data.type) {
+                case 'entity-change':
+                case 'schema-change':
+                    if (data.entityType === currentAdminEntityType) {
+                        console.log(`🔄 Cross-window sync: refreshing ${data.entityType} data`);
+                        loadEntitiesForAdmin();
+                    }
+                    break;
+                case 'admin-action':
+                    // Handle admin-specific actions (add, delete, bulk operations)
+                    if (data.entityType === currentAdminEntityType) {
+                        console.log(`🔄 Admin action sync: ${data.action}`);
+                        loadEntitiesForAdmin();
+                    }
+                    break;
+            }
+        }
+        
+        function broadcastToOtherWindows(data) {
+            if (broadcastChannel) {
+                broadcastChannel.postMessage(data);
+            }
+        }
+        
+        // Broadcast admin actions to other windows
+        function broadcastAdminAction(action, entityType) {
+            broadcastToOtherWindows({
+                type: 'admin-action',
+                action,
+                entityType,
+                timestamp: Date.now()
+            });
+        }
+        
+        // Override admin functions to include broadcasting
+        const originalDeleteEntityFromAdmin = deleteEntityFromAdmin;
+        window.deleteEntityFromAdmin = async function(entityId, entityName) {
+            const result = await originalDeleteEntityFromAdmin(entityId, entityName);
+            broadcastAdminAction('delete-entity', currentAdminEntityType);
+            return result;
+        };
+        
+        const originalBulkDeleteEntities = bulkDeleteEntities;
+        window.bulkDeleteEntities = async function() {
+            const result = await originalBulkDeleteEntities();
+            broadcastAdminAction('bulk-delete', currentAdminEntityType);
+            return result;
+        };
+        
+        const originalFinishEditing = finishEditing;
+        window.finishEditing = async function(cell, save) {
+            const result = await originalFinishEditing(cell, save);
+            if (save && cell.dataset.entityId) {
+                broadcastAdminAction('edit-entity', currentAdminEntityType);
+            }
+            return result;
+        };
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (wsService) {
+                wsService.disconnect();
+            }
+            if (broadcastChannel) {
+                broadcastChannel.close();
+            }
+        });
+    </script>
+</body>
+</html>

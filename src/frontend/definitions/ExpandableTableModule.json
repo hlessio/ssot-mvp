@@ -1,0 +1,359 @@
+{
+  "module_id": "expandable-table",
+  "version": "1.0.0",
+  "metadata": {
+    "name": "Tabella Espandibile",
+    "description": "Un modulo tabellare completamente dinamico che permette di visualizzare e modificare collezioni di entità, aggiungendo colonne per attributi in modo dinamico e creando nuovi attributi contestuali.",
+    "category": "Data Management",
+    "author": "SSOT-4000 System",
+    "tags": ["table", "dynamic", "expandable", "entities", "attributes"],
+    "icon": "📊",
+    "complexity": "advanced",
+    "features": [
+      "Creazione dinamica di colonne",
+      "Attributi contestuali e intrinseci",
+      "Auto-discovery degli attributi",
+      "Editing in-place delle celle",
+      "Sincronizzazione real-time",
+      "Selezione multipla righe",
+      "Persistenza configurazione"
+    ]
+  },
+  "configuration": {
+    "tableName": {
+      "type": "text",
+      "default": "Tabella Espandibile",
+      "label": "Nome Tabella",
+      "description": "Nome personalizzato per questa tabella",
+      "editable": true
+    },
+    "selectedEntityType": {
+      "type": "entity_type_selector",
+      "default": null,
+      "label": "Tipo Entità",
+      "description": "Tipo di entità da visualizzare nella tabella",
+      "required": true,
+      "editable": true
+    },
+    "permissions": {
+      "type": "permissions_object",
+      "default": {
+        "canAddRows": true,
+        "canEditRows": true,
+        "canDeleteRows": true,
+        "canAddColumns": true,
+        "canEditColumns": true
+      },
+      "label": "Permessi",
+      "description": "Controlli di accesso per le operazioni sulla tabella"
+    },
+    "autoLoadEntities": {
+      "type": "boolean",
+      "default": true,
+      "label": "Caricamento Automatico",
+      "description": "Carica automaticamente le entità esistenti del tipo selezionato"
+    },
+    "maxEntitiesPerPage": {
+      "type": "number",
+      "default": 100,
+      "label": "Entità per Pagina",
+      "description": "Numero massimo di entità da visualizzare",
+      "min": 10,
+      "max": 1000
+    },
+    "enableRealTimeSync": {
+      "type": "boolean",
+      "default": true,
+      "label": "Sincronizzazione Real-time",
+      "description": "Abilita aggiornamenti automatici via WebSocket"
+    }
+  },
+  "slots": {
+    "module_name": {
+      "path": "configuration.tableName",
+      "type": "text",
+      "editable": true,
+      "label": "Nome Modulo Tabella",
+      "placeholder": "Inserisci un nome per questa tabella..."
+    },
+    "entity_type": {
+      "path": "configuration.selectedEntityType",
+      "type": "entity_type_selector",
+      "editable": true,
+      "label": "Tipo Entità",
+      "placeholder": "Seleziona tipo entità..."
+    }
+  },
+  "layout": {
+    "type": "custom_component",
+    "component": "expandable-table-module",
+    "container_class": "expandable-table-container",
+    "elements": [
+      {
+        "element": "div",
+        "attributes": { 
+          "class": "expandable-table-wrapper",
+          "data-module-type": "expandable-table"
+        },
+        "children": [
+          {
+            "element": "div",
+            "attributes": { "class": "table-header-section" },
+            "children": [
+              {
+                "element": "input",
+                "attributes": { 
+                  "type": "text", 
+                  "class": "table-name-input",
+                  "placeholder": "Nome tabella..."
+                },
+                "slot": "module_name"
+              },
+              {
+                "element": "div",
+                "attributes": { "class": "table-actions-bar" },
+                "children": [
+                  {
+                    "element": "button",
+                    "attributes": { 
+                      "class": "btn-add-row",
+                      "data-action": "add-row"
+                    },
+                    "content": "➕ Nuova Riga"
+                  },
+                  {
+                    "element": "button",
+                    "attributes": { 
+                      "class": "btn-add-column",
+                      "data-action": "add-column"
+                    },
+                    "content": "➕ Nuova Colonna"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "element": "div",
+            "attributes": { "class": "entity-type-section" },
+            "children": [
+              {
+                "element": "div",
+                "attributes": { "class": "entity-type-selector-container" },
+                "children": [
+                  {
+                    "element": "input",
+                    "attributes": { 
+                      "type": "text", 
+                      "class": "entity-type-input",
+                      "placeholder": "Seleziona tipo entità..."
+                    },
+                    "slot": "entity_type"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "element": "div",
+            "attributes": { 
+              "class": "dynamic-table-container",
+              "data-expandable-table": "true"
+            },
+            "children": [
+              {
+                "element": "table",
+                "attributes": { "class": "expandable-table" },
+                "children": [
+                  { 
+                    "element": "thead", 
+                    "attributes": { "class": "table-header" }
+                  },
+                  { 
+                    "element": "tbody", 
+                    "attributes": { "class": "table-body" }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "styling": {
+    "theme": "modern",
+    "variables": {
+      "primary_color": "#4CAF50",
+      "secondary_color": "#667eea",
+      "background_color": "#ffffff",
+      "border_color": "#e9ecef",
+      "text_color": "#495057",
+      "hover_color": "#f8f9fa"
+    },
+    "custom": {
+      "table_header_background": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      "table_header_color": "#ffffff",
+      "cell_padding": "12px",
+      "border_radius": "12px",
+      "box_shadow": "0 4px 20px rgba(0,0,0,0.1)"
+    }
+  },
+  "behavior": {
+    "script": "expandable-table-module.js",
+    "class_name": "ExpandableTableModule",
+    "initialization": {
+      "auto_init": true,
+      "wait_for_dom": true,
+      "dependencies": ["EntityService", "SchemaService", "WebSocketService"]
+    },
+    "events": {
+      "on_entity_type_selected": "selectEntityType",
+      "on_column_added": "handleColumnAdded",
+      "on_row_added": "handleRowAdded",
+      "on_cell_edited": "handleCellEdit",
+      "on_configuration_changed": "saveConfiguration"
+    },
+    "real_time": {
+      "websocket_subscriptions": [
+        "entity-updated",
+        "entity-created", 
+        "entity-deleted",
+        "schema-updated"
+      ],
+      "broadcast_events": [
+        "table-configuration-changed",
+        "column-added",
+        "row-added"
+      ]
+    }
+  },
+  "capabilities": {
+    "entity_operations": {
+      "create": true,
+      "read": true,
+      "update": true,
+      "delete": true,
+      "bulk_operations": true
+    },
+    "schema_operations": {
+      "discover_attributes": true,
+      "create_attributes": true,
+      "evolve_schema": true,
+      "contextual_attributes": true
+    },
+    "ui_features": {
+      "inline_editing": true,
+      "column_management": true,
+      "row_selection": true,
+      "search_filter": false,
+      "sorting": false,
+      "pagination": false
+    },
+    "integration": {
+      "module_instances": true,
+      "websocket_sync": true,
+      "cross_window_sync": true,
+      "context_inheritance": true
+    }
+  },
+  "data_model": {
+    "primary_entity": "dynamic",
+    "contextual_attributes": {
+      "storage_pattern": "_ctx_{moduleInstanceId}_{attributeName}",
+      "metadata_tracking": true,
+      "source_attribution": true
+    },
+    "column_types": [
+      {
+        "type": "intrinsic",
+        "description": "Attributi dell'entità stessa",
+        "icon": "🟢",
+        "editable": true
+      },
+      {
+        "type": "contextual", 
+        "description": "Attributi specifici del contesto tabella",
+        "icon": "🟡",
+        "editable": true
+      }
+    ],
+    "data_types": [
+      "string",
+      "number", 
+      "boolean",
+      "date",
+      "email",
+      "url",
+      "phone"
+    ]
+  },
+  "user_interface": {
+    "sections": [
+      {
+        "name": "Header",
+        "description": "Nome tabella e azioni principali",
+        "components": ["table-name-input", "action-buttons"]
+      },
+      {
+        "name": "Type Selector",
+        "description": "Selezione tipo entità con autocomplete",
+        "components": ["entity-type-input", "suggestions-dropdown"]
+      },
+      {
+        "name": "Table",
+        "description": "Tabella dinamica con colonne espandibili",
+        "components": ["table-header", "table-body", "add-column-controls"]
+      }
+    ],
+    "modals": [
+      {
+        "name": "Add Column",
+        "description": "Configurazione nuova colonna",
+        "fields": ["attribute-name", "column-type", "data-type"]
+      },
+      {
+        "name": "Add Row",
+        "description": "Creazione nuova entità",
+        "fields": "dynamic_based_on_columns"
+      }
+    ]
+  },
+  "performance": {
+    "lazy_loading": false,
+    "virtual_scrolling": false,
+    "debounced_save": true,
+    "debounce_delay": 1500,
+    "max_entities_warning": 500,
+    "batch_operations": true
+  },
+  "accessibility": {
+    "keyboard_navigation": true,
+    "screen_reader_support": true,
+    "aria_labels": true,
+    "focus_management": true,
+    "color_contrast": "WCAG_AA"
+  },
+  "compatibility": {
+    "ssot_version": "4.0.0",
+    "browser_support": ["Chrome 90+", "Firefox 88+", "Safari 14+", "Edge 90+"],
+    "mobile_responsive": true,
+    "touch_support": true
+  },
+  "documentation": {
+    "user_guide": "docs/modules/expandable-table-user-guide.md",
+    "developer_guide": "docs/modules/expandable-table-developer-guide.md",
+    "api_reference": "docs/api/expandable-table-api.md",
+    "examples": [
+      "examples/expandable-table-contact-management.html",
+      "examples/expandable-table-project-tracking.html",
+      "examples/expandable-table-custom-entities.html"
+    ]
+  },
+  "testing": {
+    "unit_tests": "tests/unit/expandable-table-module.test.js",
+    "integration_tests": "tests/integration/expandable-table-workflow.test.js",
+    "e2e_tests": "tests/e2e/expandable-table-scenarios.test.js",
+    "coverage_target": 90
+  }
+}

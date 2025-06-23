@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Table Module - Test Page</title>
+    <link rel="stylesheet" href="../components/dynamic-table-module.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .page-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .page-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .test-controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .control-input {
+            padding: 6px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .table-container {
+            height: calc(100vh - 200px);
+            min-height: 600px;
+            padding: 20px;
+        }
+
+        .info-panel {
+            margin-top: 20px;
+            padding: 16px;
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            border-radius: 4px;
+        }
+
+        .info-panel h4 {
+            margin-bottom: 8px;
+            color: #1976d2;
+        }
+
+        .info-panel p {
+            font-size: 14px;
+            line-height: 1.4;
+            color: #0d47a1;
+        }
+
+        .debug-info {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+        }
+
+        .debug-info pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #dc3545;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #28a745;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .feature-item {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 4px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .logs-container {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 11px;
+            margin-top: 12px;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .log-timestamp {
+            color: #888;
+        }
+
+        .log-info { color: #00ff00; }
+        .log-warn { color: #ffff00; }
+        .log-error { color: #ff0000; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <span>📋</span>
+                Dynamic Table Module Test
+                <span class="status-badge" id="moduleStatus">Initializing...</span>
+            </div>
+            <div class="connection-status">
+                <div class="status-dot" id="connectionDot"></div>
+                <span id="connectionStatus">Disconnected</span>
+            </div>
+        </div>
+
+        <!-- Test Controls -->
+        <div class="test-controls">
+            <div class="control-group">
+                <label>Table Name:</label>
+                <input type="text" class="control-input" id="testTableName" value="Test Equipment Table" placeholder="Enter table name...">
+            </div>
+            
+            <div class="control-group">
+                <label>Entity Type:</label>
+                <select class="control-input" id="testEntityType">
+                    <option value="">Select type...</option>
+                    <option value="Contact">Contact</option>
+                    <option value="Equipment">Equipment</option>
+                    <option value="Task">Task</option>
+                    <option value="Project">Project</option>
+                    <option value="Note">Note</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <button class="btn btn-primary" onclick="initializeTable()">🚀 Initialize Table</button>
+                <button class="btn btn-success" onclick="addSampleData()">📊 Add Sample Data</button>
+                <button class="btn btn-warning" onclick="clearTable()">🗑️ Clear Table</button>
+                <button class="btn btn-danger" onclick="resetTest()">🔄 Reset Test</button>
+            </div>
+
+            <div class="control-group">
+                <button class="btn btn-primary" onclick="toggleDebug()">🐛 Toggle Debug</button>
+                <button class="btn btn-primary" onclick="exportConfig()">💾 Export Config</button>
+                <button class="btn btn-primary" onclick="testWebSocket()">📡 Test WebSocket</button>
+            </div>
+        </div>
+
+        <!-- Main Table Container -->
+        <div class="table-container" id="tableContainer">
+            <!-- Dynamic Table Module will be rendered here -->
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel">
+            <h4>🔧 How to Test the Dynamic Table Module</h4>
+            <div class="feature-list">
+                <div class="feature-item">📝 <strong>Initialize:</strong> Set table name and entity type</div>
+                <div class="feature-item">➕ <strong>Add Rows:</strong> Click "Add Row" button</div>
+                <div class="feature-item">📋 <strong>Add Columns:</strong> Click "Add Column" and configure</div>
+                <div class="feature-item">✏️ <strong>Edit Cells:</strong> Click on any cell to edit inline</div>
+                <div class="feature-item">🟢 <strong>Intrinsic:</strong> Green border = entity attributes</div>
+                <div class="feature-item">🟡 <strong>Relational:</strong> Yellow border = custom attributes</div>
+                <div class="feature-item">🔄 <strong>Real-time:</strong> Changes sync automatically</div>
+                <div class="feature-item">💾 <strong>Auto-save:</strong> Changes saved after 2 seconds</div>
+            </div>
+        </div>
+
+        <!-- Debug Info -->
+        <div class="debug-info" id="debugInfo" style="display: none;">
+            <h4>🐛 Debug Information</h4>
+            <div id="debugContent">
+                <pre id="debugData">Debug mode not active</pre>
+            </div>
+            <div class="logs-container" id="logsContainer">
+                <div class="log-entry log-info">
+                    <span class="log-timestamp">[00:00:00]</span> Debug console initialized
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Services -->
+    <script src="../services/EntityService.js"></script>
+    <script src="../services/SchemaService.js"></script>
+    <script src="../services/WebSocketService.js"></script>
+    
+    <!-- Load Dynamic Table Module -->
+    <script src="../components/dynamic-table-module.js"></script>
+
+    <script>
+        // Global state
+        let dynamicTableInstance = null;
+        let debugMode = false;
+        let testData = {
+            sampleRows: [
+                { name: "Camera RED 8K", type: "Camera", status: "Available", cost: "5000" },
+                { name: "Steadicam Operator", type: "Crew", status: "Booked", cost: "800" },
+                { name: "Lighting Kit Pro", type: "Lighting", status: "Maintenance", cost: "1200" },
+                { name: "Audio Boom", type: "Audio", status: "Available", cost: "300" }
+            ],
+            sampleColumns: [
+                { name: "Name", type: "intrinsic", sourceAttribute: "name" },
+                { name: "Equipment Type", type: "relational", relationalKey: "equipment_type" },
+                { name: "Status", type: "relational", relationalKey: "status" },
+                { name: "Daily Cost", type: "relational", relationalKey: "daily_cost" }
+            ]
+        };
+
+        // Initialize page
+        function initializePage() {
+            log('info', 'Page initialized');
+            updateStatus('Ready');
+            
+            // Setup WebSocket if available
+            if (window.WebSocketService) {
+                try {
+                    window.WebSocketService.connect('ws://localhost:3000');
+                    window.WebSocketService.addEventListener('open', () => {
+                        updateConnectionStatus(true);
+                        log('info', 'WebSocket connected successfully');
+                    });
+                    window.WebSocketService.addEventListener('close', () => {
+                        updateConnectionStatus(false);
+                        log('warn', 'WebSocket disconnected');
+                    });
+                    window.WebSocketService.addEventListener('error', (error) => {
+                        log('error', 'WebSocket error: ' + error.message);
+                    });
+                } catch (error) {
+                    log('error', 'Failed to initialize WebSocket: ' + error.message);
+                }
+            }
+
+            // Initialize services
+            if (window.EntityService) {
+                log('info', 'EntityService available');
+            }
+            if (window.SchemaService) {
+                log('info', 'SchemaService available');
+            }
+        }
+
+        // Initialize the Dynamic Table
+        function initializeTable() {
+            const tableName = document.getElementById('testTableName').value;
+            const entityType = document.getElementById('testEntityType').value;
+
+            if (!tableName || !entityType) {
+                alert('Please enter both table name and entity type');
+                return;
+            }
+
+            log('info', `Initializing table: ${tableName} for entity type: ${entityType}`);
+
+            try {
+                // Clear existing instance
+                if (dynamicTableInstance) {
+                    dynamicTableInstance.destroy();
+                }
+
+                // Create new Dynamic Table instance
+                const container = document.getElementById('tableContainer');
+                container.innerHTML = ''; // Clear container
+
+                const config = {
+                    tableName: tableName,
+                    rowEntityType: entityType,
+                    contextEntityId: 'test-context-' + Date.now(),
+                    contextEntityType: 'TestContext',
+                    permissions: {
+                        canAddRows: true,
+                        canEditRows: true,
+                        canDeleteRows: true,
+                        canAddColumns: true,
+                        canEditColumns: true
+                    }
+                };
+
+                dynamicTableInstance = new DynamicTableModule(container, config);
+                
+                updateStatus('Table Initialized');
+                log('info', 'Dynamic Table instance created successfully');
+                
+                if (debugMode) {
+                    updateDebugInfo();
+                }
+
+            } catch (error) {
+                log('error', 'Failed to initialize table: ' + error.message);
+                updateStatus('Error');
+            }
+        }
+
+        // Add sample data to test the table
+        async function addSampleData() {
+            if (!dynamicTableInstance) {
+                alert('Please initialize the table first');
+                return;
+            }
+
+            log('info', 'Adding sample data to table');
+
+            try {
+                // Add sample columns first
+                for (const col of testData.sampleColumns) {
+                    log('info', `Adding column: ${col.name} (${col.type})`);
+                    dynamicTableInstance.addColumn(col.name, col.type, col.sourceAttribute);
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Delay for visual effect
+                }
+
+                // Simulate adding rows (this would normally create entities)
+                log('info', 'Sample columns added. In a real scenario, you would now add rows which would create entities.');
+                updateStatus('Sample Data Added');
+
+            } catch (error) {
+                log('error', 'Failed to add sample data: ' + error.message);
+            }
+        }
+
+        // Clear the table
+        function clearTable() {
+            if (!dynamicTableInstance) {
+                alert('No table to clear');
+                return;
+            }
+
+            if (confirm('Are you sure you want to clear the table?')) {
+                try {
+                    dynamicTableInstance.destroy();
+                    dynamicTableInstance = null;
+                    document.getElementById('tableContainer').innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><h3>Table Cleared</h3><p>Click "Initialize Table" to create a new table</p></div>';
+                    updateStatus('Cleared');
+                    log('info', 'Table cleared successfully');
+                } catch (error) {
+                    log('error', 'Error clearing table: ' + error.message);
+                }
+            }
+        }
+
+        // Reset the entire test
+        function resetTest() {
+            if (confirm('This will reset the entire test. Continue?')) {
+                clearTable();
+                document.getElementById('testTableName').value = 'Test Equipment Table';
+                document.getElementById('testEntityType').value = '';
+                updateStatus('Reset');
+                log('info', 'Test reset completed');
+            }
+        }
+
+        // Toggle debug mode
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const debugInfo = document.getElementById('debugInfo');
+            debugInfo.style.display = debugMode ? 'block' : 'none';
+            
+            if (debugMode) {
+                updateDebugInfo();
+                log('info', 'Debug mode enabled');
+            } else {
+                log('info', 'Debug mode disabled');
+            }
+        }
+
+        // Export current configuration
+        function exportConfig() {
+            if (!dynamicTableInstance) {
+                alert('No table to export');
+                return;
+            }
+
+            try {
+                const config = dynamicTableInstance.getConfiguration();
+                const exportData = {
+                    timestamp: new Date().toISOString(),
+                    config: config,
+                    tableInstance: 'DynamicTableModule',
+                    version: '1.0.0'
+                };
+
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `dynamic-table-config-${Date.now()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                log('info', 'Configuration exported successfully');
+            } catch (error) {
+                log('error', 'Failed to export configuration: ' + error.message);
+            }
+        }
+
+        // Test WebSocket connection
+        function testWebSocket() {
+            if (window.WebSocketService) {
+                try {
+                    const testMessage = {
+                        type: 'test',
+                        timestamp: Date.now(),
+                        message: 'Dynamic Table Module test message'
+                    };
+                    
+                    window.WebSocketService.send(JSON.stringify(testMessage));
+                    log('info', 'Test WebSocket message sent');
+                } catch (error) {
+                    log('error', 'WebSocket test failed: ' + error.message);
+                }
+            } else {
+                log('warn', 'WebSocket service not available');
+            }
+        }
+
+        // Update status badge
+        function updateStatus(status) {
+            document.getElementById('moduleStatus').textContent = status;
+        }
+
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            const dot = document.getElementById('connectionDot');
+            const status = document.getElementById('connectionStatus');
+            
+            if (connected) {
+                dot.classList.add('connected');
+                status.textContent = 'Connected';
+            } else {
+                dot.classList.remove('connected');
+                status.textContent = 'Disconnected';
+            }
+        }
+
+        // Logging function
+        function log(level, message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${level}`;
+            logEntry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> ${message}`;
+            
+            const container = document.getElementById('logsContainer');
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+
+            // Keep only last 50 log entries
+            while (container.children.length > 50) {
+                container.removeChild(container.firstChild);
+            }
+
+            console.log(`[DynamicTable Test] ${level.toUpperCase()}: ${message}`);
+        }
+
+        // Update debug information
+        function updateDebugInfo() {
+            if (!debugMode) return;
+
+            const debugData = {
+                instance: !!dynamicTableInstance,
+                config: dynamicTableInstance ? dynamicTableInstance.getConfiguration() : null,
+                services: {
+                    entityService: !!window.EntityService,
+                    schemaService: !!window.SchemaService,
+                    webSocketService: !!window.WebSocketService
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            document.getElementById('debugData').textContent = JSON.stringify(debugData, null, 2);
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializePage);
+        } else {
+            initializePage();
+        }
+
+        // Update debug info every 5 seconds if in debug mode
+        setInterval(() => {
+            if (debugMode) {
+                updateDebugInfo();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

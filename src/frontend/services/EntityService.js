@@ -301,6 +301,8 @@ class EntityService {
                 throw new Error(`Errore nell'eliminazione entità (Status: ${response.status})`);
             }
 
+            const result = await response.json();
+            
             // Rimuovi da cache
             this.invalidateEntityCache(entityId);
 

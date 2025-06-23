@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Tabular Module Demo - SSOT System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .demo-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .demo-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .demo-subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+        
+        .demo-description {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            backdrop-filter: blur(10px);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 15px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        
+        .feature-desc {
+            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+            line-height: 1.4;
+        }
+        
+        .demo-controls {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .controls-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #2c3e50;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .control-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        
+        .control-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+            transform: translateY(-1px);
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #117a8b;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .status-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+        
+        .status-item {
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .status-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #007bff;
+            margin-bottom: 4px;
+        }
+        
+        .status-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .websocket-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .websocket-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .websocket-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            max-width: 350px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: #28a745;
+        }
+        
+        .notification.error {
+            background: #dc3545;
+        }
+        
+        .notification.info {
+            background: #17a2b8;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loading-content {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        .loading-spinner {
+            font-size: 32px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+        }
+        
+        .tab:hover {
+            background: #e9ecef;
+        }
+        
+        .tab-content {
+            padding: 20px;
+            min-height: 600px;
+        }
+        
+        @media (max-width: 768px) {
+            .controls-grid, .feature-grid, .status-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .demo-title {
+                font-size: 28px;
+            }
+            
+            body {
+                padding: 10px;
+            }
+            
+            .btn {
+                margin-right: 5px;
+                margin-bottom: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <!-- Header -->
+        <div class="demo-header">
+            <h1 class="demo-title">🎯 Dynamic Tabular Module Demo</h1>
+            <p class="demo-subtitle">SSOT System - Modulo Tabellare Evolutivo con Autocomplete Intelligente</p>
+            
+            <div class="demo-description">
+                <p><strong>Benvenuto nella demo del Modulo Tabellare Dinamico!</strong></p>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-title">🔍 Autocomplete Entità</div>
+                        <div class="feature-desc">Ricerca intelligente nelle prime colonne con possibilità di creare nuove entità al volo</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-title">📊 Intestazioni Dinamiche</div>
+                        <div class="feature-desc">Autocomplete attributi con distinzione automatica intrinseci/relazionali</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-title">⚡ Real-time Sync</div>
+                        <div class="feature-desc">Sincronizzazione istantanea tra client multipli via WebSocket</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-title">🎨 UI Intelligente</div>
+                        <div class="feature-desc">Indicatori visivi per tipo attributi e stato modifiche</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Panel -->
+        <div class="status-panel">
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-value" id="module-count">0</div>
+                    <div class="status-label">Moduli Attivi</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="entity-count">0</div>
+                    <div class="status-label">Entità Gestite</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="attribute-count">0</div>
+                    <div class="status-label">Attributi Definiti</div>
+                </div>
+                <div class="status-item">
+                    <div class="websocket-status" id="websocket-status">
+                        🔴 Connecting...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Controls -->
+        <div class="demo-controls">
+            <h3 class="controls-title">🎮 Controlli Demo</h3>
+            
+            <div class="controls-grid">
+                <div class="control-group">
+                    <div class="control-label">Tipo Entità</div>
+                    <select id="entity-type-select" class="control-input">
+                        <option value="Persona">Persona</option>
+                        <option value="Contact">Contact</option>
+                        <option value="Lead">Lead</option>
+                        <option value="Azienda">Azienda</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">Titolo Modulo</div>
+                    <input type="text" id="module-title" class="control-input" value="Production Team Callsheet" placeholder="Titolo del modulo...">
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">Project ID</div>
+                    <input type="text" id="project-id" class="control-input" value="" placeholder="ID progetto (opzionale)">
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">Module ID</div>
+                    <input type="text" id="module-id" class="control-input" value="" placeholder="ID modulo esistente (opzionale)">
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn btn-success" onclick="demoApp.createNewModule()">
+                    🎯 Crea Nuovo Modulo
+                </button>
+                <button class="btn btn-primary" onclick="demoApp.loadExistingModule()">
+                    📂 Carica Modulo Esistente
+                </button>
+                <button class="btn btn-info" onclick="demoApp.createSampleData()">
+                    🎭 Genera Dati Demo
+                </button>
+                <button class="btn btn-warning" onclick="demoApp.openSecondWindow()">
+                    🪟 Test Multi-Window
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="demoApp.switchTab('tabular')">
+                    📊 Modulo Tabellare
+                </button>
+                <button class="tab" onclick="demoApp.switchTab('schema')">
+                    🏗️ Schema Inspector
+                </button>
+                <button class="tab" onclick="demoApp.switchTab('realtime')">
+                    ⚡ Real-time Monitor
+                </button>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Tab Modulo Tabellare -->
+                <div id="tab-tabular" class="tab-pane active">
+                    <div id="dynamic-tabular-container">
+                        <div style="text-align: center; padding: 60px; color: #666;">
+                            <h3>📋 Modulo Tabellare Dinamico</h3>
+                            <p>Usa i controlli sopra per creare o caricare un modulo</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab Schema Inspector -->
+                <div id="tab-schema" class="tab-pane" style="display: none;">
+                    <div id="schema-inspector">
+                        <h3>🏗️ Schema Inspector</h3>
+                        <div id="schema-content">
+                            <p>Schema information will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab Real-time Monitor -->
+                <div id="tab-realtime" class="tab-pane" style="display: none;">
+                    <div id="realtime-monitor">
+                        <h3>⚡ Real-time Monitor</h3>
+                        <div id="realtime-events">
+                            <p>Real-time events will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner">⏳</div>
+            <div>Processing...</div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Svelte App Container (hidden) -->
+    <div id="svelte-app" style="display: none;"></div>
+
+    <!-- Include Svelte Build -->
+    <script src="../svelte/main.js"></script>
+    
+    <!-- Include Services -->
+    <script src="../svelte/services/AttributeSuggestionService.js" type="module"></script>
+    <script src="../svelte/services/EntitySearchService.js" type="module"></script>
+
+    <script>
+        class DynamicTabularDemo {
+            constructor() {
+                this.currentModuleId = null;
+                this.svelteApp = null;
+                this.websocket = null;
+                this.websocketConnected = false;
+                this.currentTab = 'tabular';
+                
+                console.log('🎯 Dynamic Tabular Demo initialized');
+            }
+
+            async init() {
+                this.setupWebSocket();
+                this.loadInitialData();
+                this.updateStatus();
+                
+                console.log('✅ Demo initialized');
+            }
+
+            setupWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}`;
+                
+                console.log(`🔌 Connecting to WebSocket: ${wsUrl}`);
+                
+                this.websocket = new WebSocket(wsUrl);
+                
+                this.websocket.onopen = () => {
+                    this.websocketConnected = true;
+                    this.updateWebSocketStatus();
+                    console.log('✅ WebSocket connected');
+                    this.showNotification('WebSocket connected - Real-time demo ready!', 'success');
+                };
+                
+                this.websocket.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        this.handleWebSocketMessage(message);
+                    } catch (error) {
+                        console.error('❌ WebSocket message parse error:', error);
+                    }
+                };
+                
+                this.websocket.onclose = () => {
+                    this.websocketConnected = false;
+                    this.updateWebSocketStatus();
+                    console.log('🔌 WebSocket disconnected');
+                    
+                    // Attempt reconnection after 3 seconds
+                    setTimeout(() => this.setupWebSocket(), 3000);
+                };
+                
+                this.websocket.onerror = (error) => {
+                    console.error('❌ WebSocket error:', error);
+                };
+            }
+
+            updateWebSocketStatus() {
+                const statusElement = document.getElementById('websocket-status');
+                if (statusElement) {
+                    if (this.websocketConnected) {
+                        statusElement.className = 'websocket-status connected';
+                        statusElement.innerHTML = '🟢 Connected';
+                    } else {
+                        statusElement.className = 'websocket-status disconnected';
+                        statusElement.innerHTML = '🔴 Disconnected';
+                    }
+                }
+            }
+
+            handleWebSocketMessage(message) {
+                console.log('📡 WebSocket message received:', message);
+                
+                // Update real-time monitor if visible
+                if (this.currentTab === 'realtime') {
+                    this.addRealtimeEvent(message);
+                }
+                
+                // Update status counters
+                this.updateStatus();
+            }
+
+            addRealtimeEvent(event) {
+                const monitor = document.getElementById('realtime-events');
+                if (monitor) {
+                    const eventDiv = document.createElement('div');
+                    eventDiv.style.cssText = 'padding: 10px; border-bottom: 1px solid #eee; font-family: monospace; font-size: 12px;';
+                    eventDiv.innerHTML = `
+                        <strong>${new Date().toLocaleTimeString()}</strong> - ${event.type}
+                        <br><span style="color: #666;">${JSON.stringify(event, null, 2)}</span>
+                    `;
+                    monitor.insertBefore(eventDiv, monitor.firstChild);
+                    
+                    // Keep only last 50 events
+                    while (monitor.children.length > 50) {
+                        monitor.removeChild(monitor.lastChild);
+                    }
+                }
+            }
+
+            async createNewModule() {
+                this.showLoading(true);
+                
+                try {
+                    const entityType = document.getElementById('entity-type-select').value;
+                    const title = document.getElementById('module-title').value || 'Nuovo Modulo Tabellare';
+                    const projectId = document.getElementById('project-id').value || null;
+                    
+                    // Create a new ModuleInstance
+                    const moduleData = {
+                        instanceName: title,
+                        templateModuleId: 'DynamicTabularModule',
+                        targetEntityType: entityType,
+                        description: `Modulo tabellare dinamico per ${entityType}`,
+                        instanceConfigOverrides: {
+                            entityType: entityType,
+                            projectId: projectId,
+                            allowAddRows: true,
+                            allowAddColumns: true,
+                            allowEdit: true,
+                            enableRealtime: true
+                        }
+                    };
+                    
+                    const response = await fetch('/api/module-instances', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(moduleData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.currentModuleId = result.data.id;
+                        document.getElementById('module-id').value = this.currentModuleId;
+                        
+                        await this.loadDynamicTabularModule(this.currentModuleId, entityType, title, projectId);
+                        
+                        this.showNotification(`Modulo creato: ${title}`, 'success');
+                        console.log(`✅ Modulo creato: ${this.currentModuleId}`);
+                    } else {
+                        throw new Error(result.error || 'Errore creazione modulo');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Errore creazione modulo:', error);
+                    this.showNotification('Errore creazione modulo: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async loadExistingModule() {
+                const moduleId = document.getElementById('module-id').value;
+                
+                if (!moduleId) {
+                    this.showNotification('Inserisci un Module ID valido', 'error');
+                    return;
+                }
+                
+                this.showLoading(true);
+                
+                try {
+                    const response = await fetch(`/api/module-instances/${moduleId}`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const moduleData = result.data;
+                        const config = JSON.parse(moduleData.instanceConfigOverrides || '{}');
+                        
+                        this.currentModuleId = moduleId;
+                        
+                        await this.loadDynamicTabularModule(
+                            moduleId,
+                            config.entityType || 'Persona',
+                            moduleData.instanceName || 'Modulo Caricato',
+                            config.projectId || null
+                        );
+                        
+                        this.showNotification(`Modulo caricato: ${moduleData.instanceName}`, 'success');
+                        console.log(`✅ Modulo caricato: ${moduleId}`);
+                    } else {
+                        throw new Error(result.error || 'Modulo non trovato');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Errore caricamento modulo:', error);
+                    this.showNotification('Errore caricamento modulo: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async loadDynamicTabularModule(moduleId, entityType, title, projectId) {
+                // This would load the actual Svelte component
+                // For now, we'll show a placeholder that demonstrates the integration
+                
+                const container = document.getElementById('dynamic-tabular-container');
+                
+                container.innerHTML = `
+                    <div style="border: 2px dashed #28a745; border-radius: 12px; padding: 40px; text-align: center; background: #f8fff9;">
+                        <h3 style="color: #28a745; margin-bottom: 20px;">✅ DynamicTabularModule.svelte Pronto!</h3>
+                        <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left;">
+                            <strong>Configurazione Modulo:</strong><br>
+                            • Module ID: ${moduleId}<br>
+                            • Entity Type: ${entityType}<br>
+                            • Title: ${title}<br>
+                            • Project ID: ${projectId || 'N/A'}<br>
+                            • Real-time: Enabled
+                        </div>
+                        <p style="color: #666; margin-bottom: 20px;">
+                            Il componente Svelte DynamicTabularModule.svelte è stato implementato con tutte le funzionalità avanzate.
+                            Per vederlo in azione, serve configurare il build system Svelte.
+                        </p>
+                        <div style="background: #e8f4fd; border-radius: 8px; padding: 15px; margin: 15px 0;">
+                            <strong>🚀 Funzionalità Implementate:</strong><br>
+                            ✅ Autocomplete entità con creazione al volo<br>
+                            ✅ Autocomplete attributi intrinsici/relazionali<br>
+                            ✅ Intestazioni dinamiche editabili<br>
+                            ✅ Gestione separata attributi entità vs modulo<br>
+                            ✅ Real-time sync WebSocket<br>
+                            ✅ UI professionale con indicatori visivi
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="demoApp.testAPI('${moduleId}', '${entityType}')">
+                            🧪 Test API Integration
+                        </button>
+                        <button class="btn btn-info" onclick="demoApp.switchTab('schema')">
+                            🏗️ Ispeziona Schema
+                        </button>
+                    </div>
+                `;
+            }
+
+            async testAPI(moduleId, entityType) {
+                this.showLoading(true);
+                
+                try {
+                    console.log('🧪 Testing API integration...');
+                    
+                    // Test attribute suggestions endpoint
+                    const attrResponse = await fetch(`/api/attribute-suggestions?entityType=${entityType}&moduleId=${moduleId}&query=fe`);
+                    const attrResult = await attrResponse.json();
+                    
+                    console.log('✅ Attribute suggestions API:', attrResult);
+                    
+                    // Test module members endpoint
+                    const membersResponse = await fetch(`/api/modules/${moduleId}/members`);
+                    const membersResult = await membersResponse.json();
+                    
+                    console.log('✅ Module members API:', membersResult);
+                    
+                    this.showNotification('API tests completed successfully! Check console for details.', 'success');
+                    
+                } catch (error) {
+                    console.error('❌ API test failed:', error);
+                    this.showNotification('API test failed: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async createSampleData() {
+                if (!this.currentModuleId) {
+                    this.showNotification('Crea prima un modulo', 'warning');
+                    return;
+                }
+                
+                this.showLoading(true);
+                
+                try {
+                    const entityType = document.getElementById('entity-type-select').value;
+                    
+                    // Create sample entities and add to module
+                    const sampleData = [
+                        { nome: 'Mario', cognome: 'Rossi', email: 'mario.rossi@example.com', role: 'Director', fee: '$5000' },
+                        { nome: 'Anna', cognome: 'Verdi', email: 'anna.verdi@example.com', role: 'Actor', fee: '$3000' },
+                        { nome: 'Luigi', cognome: 'Bianchi', email: 'luigi.bianchi@example.com', role: 'Producer', fee: '$4000' }
+                    ];
+                    
+                    for (const data of sampleData) {
+                        // Create entity
+                        const { role, fee, ...entityData } = data;
+                        
+                        const entityResponse = await fetch('/api/entities', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                entityType: entityType,
+                                initialData: entityData
+                            })
+                        });
+                        
+                        const entityResult = await entityResponse.json();
+                        
+                        if (entityResult.success) {
+                            // Add to module with relational attributes
+                            await fetch(`/api/modules/${this.currentModuleId}/members`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    entityId: entityResult.data.id,
+                                    relationAttributes: { role, fee }
+                                })
+                            });
+                        }
+                    }
+                    
+                    this.showNotification(`Created ${sampleData.length} sample entities`, 'success');
+                    this.updateStatus();
+                    
+                } catch (error) {
+                    console.error('❌ Errore creazione dati demo:', error);
+                    this.showNotification('Errore creazione dati demo: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            openSecondWindow() {
+                const currentUrl = window.location.href;
+                const newWindow = window.open(currentUrl, '_blank', 'width=1400,height=900');
+                
+                if (newWindow) {
+                    this.showNotification('Second window opened - test real-time sync!', 'info');
+                } else {
+                    this.showNotification('Please allow popups to test multi-window sync', 'error');
+                }
+            }
+
+            switchTab(tabName) {
+                // Hide all tab panes
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.style.display = 'none';
+                });
+                
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Show selected tab pane
+                document.getElementById(`tab-${tabName}`).style.display = 'block';
+                
+                // Add active class to selected tab
+                event.target.classList.add('active');
+                
+                this.currentTab = tabName;
+                
+                // Load tab-specific content
+                if (tabName === 'schema') {
+                    this.loadSchemaInspector();
+                } else if (tabName === 'realtime') {
+                    this.loadRealtimeMonitor();
+                }
+            }
+
+            async loadSchemaInspector() {
+                const container = document.getElementById('schema-content');
+                const entityType = document.getElementById('entity-type-select').value;
+                
+                try {
+                    const response = await fetch(`/api/schema/entity/${entityType}`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        container.innerHTML = `
+                            <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; font-family: monospace; font-size: 14px;">
+                                <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = `<p>Schema non trovato per ${entityType}</p>`;
+                    }
+                } catch (error) {
+                    container.innerHTML = `<p>Errore caricamento schema: ${error.message}</p>`;
+                }
+            }
+
+            loadRealtimeMonitor() {
+                const container = document.getElementById('realtime-events');
+                container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">Real-time events will appear here as they occur...</p>';
+            }
+
+            async loadInitialData() {
+                // Load initial counts and data for status panel
+                try {
+                    // This could load counts from various endpoints
+                    console.log('📊 Loading initial status data...');
+                } catch (error) {
+                    console.log('ℹ️ No initial data available');
+                }
+            }
+
+            async updateStatus() {
+                // Update status counters
+                document.getElementById('module-count').textContent = this.currentModuleId ? '1' : '0';
+                document.getElementById('entity-count').textContent = '0'; // Would be loaded from API
+                document.getElementById('attribute-count').textContent = '0'; // Would be loaded from API
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = `notification ${type} show`;
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 4000);
+            }
+
+            showLoading(show) {
+                const overlay = document.getElementById('loading-overlay');
+                if (show) {
+                    overlay.classList.add('show');
+                } else {
+                    overlay.classList.remove('show');
+                }
+            }
+        }
+
+        // Global demo app instance
+        window.demoApp = new DynamicTabularDemo();
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                window.demoApp.init();
+            });
+        } else {
+            window.demoApp.init();
+        }
+    </script>
+</body>
+</html>

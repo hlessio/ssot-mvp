@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Tabular Module Demo - SSOT System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .demo-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .demo-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .demo-subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+        
+        .demo-description {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            backdrop-filter: blur(10px);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 15px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        
+        .feature-desc {
+            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+            line-height: 1.4;
+        }
+        
+        .demo-controls {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .controls-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #2c3e50;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .control-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        
+        .control-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+            transform: translateY(-1px);
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #117a8b;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .status-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+        
+        .status-item {
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .status-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #007bff;
+            margin-bottom: 4px;
+        }
+        
+        .status-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            min-height: 600px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            max-width: 350px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: #28a745;
+        }
+        
+        .notification.error {
+            background: #dc3545;
+        }
+        
+        .notification.info {
+            background: #17a2b8;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loading-content {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        .loading-spinner {
+            font-size: 32px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .controls-grid, .feature-grid, .status-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .demo-title {
+                font-size: 28px;
+            }
+            
+            body {
+                padding: 10px;
+            }
+            
+            .btn {
+                margin-right: 5px;
+                margin-bottom: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <!-- Header -->
+        <div class="demo-header">
+            <h1 class="demo-title">🎯 Enhanced Tabular Module Demo</h1>
+            <p class="demo-subtitle">SSOT System - Modulo Tabellare con UX Step-by-Step Guidata</p>
+            
+            <div class="demo-description">
+                <p><strong>🚀 Benvenuto nella demo del Modulo Tabellare Completamente Rinnovato!</strong></p>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-title">🎯 Setup Guidato</div>
+                        <div class="feature-desc">Workflow step-by-step: prima selezioni il tipo di entità, poi costruisci la tabella</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-title">📊 Layout Orizzontale</div>
+                        <div class="feature-desc">Prima colonna = tipo entità, colonne successive = attributi con auto-popolamento</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-title">🏷️ Badge Intelligenti</div>
+                        <div class="feature-desc">Distinzione visiva tra attributi BASE, Intrinseci (I) e Relazionali (R)</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-title">⚡ Smart Autocomplete</div>
+                        <div class="feature-desc">Suggerimenti contestuali per tipi entità e attributi con creazione al volo</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Panel -->
+        <div class="status-panel">
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-value" id="setup-status">❌</div>
+                    <div class="status-label">Setup Completato</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="entity-type">-</div>
+                    <div class="status-label">Tipo Entità</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="column-count">0</div>
+                    <div class="status-label">Colonne Definite</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="row-count">0</div>
+                    <div class="status-label">Righe Inserite</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Controls -->
+        <div class="demo-controls">
+            <h3 class="controls-title">🎮 Controlli Demo</h3>
+            
+            <div class="controls-grid">
+                <div class="control-group">
+                    <div class="control-label">Titolo Modulo</div>
+                    <input type="text" id="module-title" class="control-input" value="Team Production Demo" placeholder="Titolo del modulo...">
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">Project ID</div>
+                    <input type="text" id="project-id" class="control-input" value="" placeholder="ID progetto (opzionale)">
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">Module ID</div>
+                    <input type="text" id="module-id" class="control-input" value="" placeholder="ID modulo esistente (opzionale)" readonly>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">Modalità</div>
+                    <select id="demo-mode" class="control-input">
+                        <option value="new">Nuovo Modulo (UX Guidata)</option>
+                        <option value="existing">Carica Modulo Esistente</option>
+                        <option value="preset">Preset con Tipo Preselezionato</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn btn-success" onclick="demoApp.startDemo()">
+                    🎯 Avvia Demo
+                </button>
+                <button class="btn btn-primary" onclick="demoApp.createSampleData()">
+                    🎭 Genera Dati Test
+                </button>
+                <button class="btn btn-info" onclick="demoApp.showWorkflow()">
+                    📖 Mostra Workflow
+                </button>
+                <button class="btn btn-warning" onclick="demoApp.resetDemo()">
+                    🔄 Reset Demo
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div id="tabular-module-container">
+                <div style="text-align: center; padding: 80px 40px; color: #666;">
+                    <div style="font-size: 64px; margin-bottom: 20px; opacity: 0.7;">🎯</div>
+                    <h3 style="margin-bottom: 16px; color: #495057;">Enhanced Tabular Module</h3>
+                    <p style="font-size: 18px; margin-bottom: 30px; opacity: 0.8;">Usa i controlli sopra per avviare la demo del nuovo modulo tabellare</p>
+                    <div style="background: #e8f4fd; border-radius: 8px; padding: 20px; margin: 20px auto; max-width: 500px; text-align: left;">
+                        <strong>🚀 Funzionalità Implementate:</strong><br>
+                        ✅ Setup guidato con Entity Type Selector<br>
+                        ✅ Layout orizzontale intelligente<br>
+                        ✅ Auto-popolamento attributi<br>
+                        ✅ Badge visivi per tipi di colonna<br>
+                        ✅ SmartInput evoluto per ogni fase<br>
+                        ✅ Progressive disclosure del workflow
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner">⏳</div>
+            <div>Processing...</div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Svelte App Container (hidden) -->
+    <div id="svelte-app" style="display: none;"></div>
+
+    <!-- Include Svelte Build -->
+    <script src="../svelte/main.js"></script>
+    
+    <!-- Include Services -->
+    <script src="../svelte/services/AttributeSuggestionService.js" type="module"></script>
+    <script src="../svelte/services/EntitySearchService.js" type="module"></script>
+
+    <script>
+        class EnhancedTabularDemo {
+            constructor() {
+                this.currentModuleId = null;
+                this.svelteApp = null;
+                this.currentModule = null;
+                
+                console.log('🎯 Enhanced Tabular Demo initialized');
+            }
+
+            async init() {
+                this.updateStatus();
+                console.log('✅ Enhanced Demo initialized');
+            }
+
+            async startDemo() {
+                this.showLoading(true);
+                
+                try {
+                    const mode = document.getElementById('demo-mode').value;
+                    const title = document.getElementById('module-title').value || 'Nuovo Modulo Enhanced';
+                    const projectId = document.getElementById('project-id').value || null;
+                    
+                    switch (mode) {
+                        case 'new':
+                            await this.createNewEnhancedModule(title, projectId);
+                            break;
+                        case 'existing':
+                            await this.loadExistingModule();
+                            break;
+                        case 'preset':
+                            await this.createPresetModule(title, projectId);
+                            break;
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Errore avvio demo:', error);
+                    this.showNotification('Errore avvio demo: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async createNewEnhancedModule(title, projectId) {
+                // Crea un nuovo ModuleInstance senza entityType preimpostato
+                const moduleData = {
+                    instanceName: title,
+                    templateModuleId: 'DynamicTabularModule',
+                    targetEntityType: null, // NON impostiamo il tipo - deve essere selezionato dall'utente
+                    description: `Modulo tabellare enhanced con UX step-by-step`,
+                    instanceConfigOverrides: {
+                        projectId: projectId,
+                        allowAddRows: true,
+                        allowAddColumns: true,
+                        allowEdit: true,
+                        enableRealtime: true
+                    }
+                };
+                
+                const response = await fetch('/api/module-instances', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(moduleData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.currentModuleId = result.data.id;
+                    document.getElementById('module-id').value = this.currentModuleId;
+                    
+                    await this.renderEnhancedModule({
+                        moduleId: this.currentModuleId,
+                        title: title,
+                        projectId: projectId,
+                        entityTypeContext: null // Lascia che l'utente selezioni
+                    });
+                    
+                    this.showNotification(`✅ Modulo enhanced creato: ${title}`, 'success');
+                    console.log(`✅ Modulo enhanced creato: ${this.currentModuleId}`);
+                } else {
+                    throw new Error(result.error || 'Errore creazione modulo');
+                }
+            }
+
+            async createPresetModule(title, projectId) {
+                // Crea modulo con tipo entità già preimpostato (per testing)
+                const moduleData = {
+                    instanceName: title,
+                    templateModuleId: 'DynamicTabularModule', 
+                    targetEntityType: 'Persona', // Tipo preimpostato
+                    description: `Modulo tabellare preset con tipo Persona`,
+                    instanceConfigOverrides: {
+                        entityType: 'Persona',
+                        projectId: projectId,
+                        allowAddRows: true,
+                        allowAddColumns: true,
+                        allowEdit: true,
+                        enableRealtime: true
+                    }
+                };
+                
+                const response = await fetch('/api/module-instances', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(moduleData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.currentModuleId = result.data.id;
+                    document.getElementById('module-id').value = this.currentModuleId;
+                    
+                    await this.renderEnhancedModule({
+                        moduleId: this.currentModuleId,
+                        title: title,
+                        projectId: projectId,
+                        entityTypeContext: 'Persona' // Tipo preimpostato
+                    });
+                    
+                    this.showNotification(`✅ Modulo preset creato: ${title}`, 'success');
+                    console.log(`✅ Modulo preset creato: ${this.currentModuleId}`);
+                } else {
+                    throw new Error(result.error || 'Errore creazione modulo preset');
+                }
+            }
+
+            async loadExistingModule() {
+                const moduleId = document.getElementById('module-id').value;
+                
+                if (!moduleId) {
+                    this.showNotification('Inserisci un Module ID valido', 'error');
+                    return;
+                }
+                
+                const response = await fetch(`/api/module-instances/${moduleId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const moduleData = result.data;
+                    const config = JSON.parse(moduleData.instanceConfigOverrides || '{}');
+                    
+                    this.currentModuleId = moduleId;
+                    
+                    await this.renderEnhancedModule({
+                        moduleId: moduleId,
+                        title: moduleData.instanceName || 'Modulo Caricato',
+                        projectId: config.projectId || null,
+                        entityTypeContext: config.entityType || moduleData.targetEntityType || null
+                    });
+                    
+                    this.showNotification(`✅ Modulo caricato: ${moduleData.instanceName}`, 'success');
+                    console.log(`✅ Modulo caricato: ${moduleId}`);
+                } else {
+                    throw new Error(result.error || 'Modulo non trovato');
+                }
+            }
+
+            async renderEnhancedModule(config) {
+                const container = document.getElementById('tabular-module-container');
+                
+                // Simula il rendering del componente Svelte Enhanced
+                container.innerHTML = `
+                    <div style="border: 3px solid #28a745; border-radius: 12px; background: #f8fff9; overflow: hidden;">
+                        <!-- Simulazione Entity Type Selector -->
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center; color: white;">
+                            <h4 style="font-size: 24px; margin-bottom: 12px;">🎯 Seleziona Tipo di Entità</h4>
+                            <p style="margin-bottom: 30px; opacity: 0.9;">Prima di iniziare, scegli che tipo di entità vuoi gestire in questa tabella.</p>
+                            <div style="background: rgba(255,255,255,0.9); border-radius: 8px; padding: 15px; margin: 20px auto; max-width: 400px;">
+                                <select onchange="demoApp.handleEntityTypeChange(this.value)" style="width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 16px;">
+                                    <option value="">Seleziona tipo entità...</option>
+                                    <option value="Persona">Persona</option>
+                                    <option value="Contact">Contact</option>
+                                    <option value="Lead">Lead</option>
+                                    <option value="Azienda">Azienda</option>
+                                    <option value="Progetto">Progetto</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                                <button onclick="demoApp.selectEntityType('Persona')" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer;">Persona</button>
+                                <button onclick="demoApp.selectEntityType('Contact')" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer;">Contact</button>
+                                <button onclick="demoApp.selectEntityType('Azienda')" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer;">Azienda</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Area tabella (nascosta finché non si seleziona tipo) -->
+                        <div id="table-area" style="display: none; padding: 20px;">
+                            <div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #e1e5e9; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h3 style="color: #2c3e50;">📊 ${config.title}</h3>
+                                    <span id="selected-type" style="background: #e8f4fd; color: #0066cc; padding: 2px 8px; border-radius: 12px; font-size: 14px; font-weight: 500;"></span>
+                                </div>
+                                <div>
+                                    <button onclick="demoApp.addColumn()" style="background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-right: 10px; cursor: pointer;">➕ Colonna</button>
+                                    <button onclick="demoApp.addRow()" style="background: #27ae60; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">➕ Riga</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Simulazione tabella orizzontale -->
+                            <div style="overflow-x: auto;">
+                                <table id="dynamic-table" style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                                    <thead id="table-head">
+                                        <!-- Headers dinamici -->
+                                    </thead>
+                                    <tbody id="table-body">
+                                        <!-- Righe dinamiche -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Se entityTypeContext è preimpostato, mostra direttamente la tabella
+                if (config.entityTypeContext) {
+                    this.selectEntityType(config.entityTypeContext);
+                }
+                
+                this.updateStatus();
+            }
+
+            selectEntityType(entityType) {
+                console.log(`🎯 Entity type selezionato: ${entityType}`);
+                
+                // Mostra area tabella
+                document.getElementById('table-area').style.display = 'block';
+                document.getElementById('selected-type').textContent = entityType;
+                
+                // Inizializza tabella con prima colonna (tipo entità)
+                this.initializeTable(entityType);
+                
+                // Aggiorna status
+                document.getElementById('setup-status').textContent = '✅';
+                document.getElementById('entity-type').textContent = entityType;
+                
+                this.showNotification(`✅ Tipo entità selezionato: ${entityType}`, 'success');
+            }
+
+            handleEntityTypeChange(entityType) {
+                if (entityType) {
+                    this.selectEntityType(entityType);
+                }
+            }
+
+            initializeTable(entityType) {
+                const tableHead = document.getElementById('table-head');
+                const tableBody = document.getElementById('table-body');
+                
+                // Crea header con prima colonna (tipo entità)
+                tableHead.innerHTML = `
+                    <tr>
+                        <th style="background: #2c3e50; color: white; padding: 12px; min-width: 200px; text-align: left;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span>${entityType}</span>
+                                <span style="background: rgba(52, 152, 219, 0.3); border: 1px solid rgba(52, 152, 219, 0.5); padding: 2px 6px; border-radius: 8px; font-size: 0.8em;">BASE</span>
+                            </div>
+                        </th>
+                        <th style="background: #f8f9fa; text-align: center; padding: 8px;">
+                            <button onclick="demoApp.addColumn()" style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">➕ Attributo</button>
+                        </th>
+                        <th style="background: #e74c3c; color: white; padding: 12px; width: 100px; text-align: center;">Azioni</th>
+                    </tr>
+                `;
+                
+                // Aggiungi riga per aggiungere nuove entità
+                tableBody.innerHTML = `
+                    <tr style="background: #f8fff9;">
+                        <td colspan="3" style="text-align: center; padding: 15px;">
+                            <button onclick="demoApp.addRow()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; cursor: pointer; box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);">➕ Aggiungi nuovo ${entityType}</button>
+                        </td>
+                    </tr>
+                `;
+                
+                this.updateColumnCount();
+            }
+
+            addColumn() {
+                const attributeName = prompt('Nome attributo (es. email, telefono, fee, ruolo):');
+                if (!attributeName) return;
+                
+                const isIntrinsic = ['nome', 'name', 'email', 'telefono', 'phone', 'indirizzo'].includes(attributeName.toLowerCase());
+                const tableHead = document.getElementById('table-head');
+                const headerRow = tableHead.querySelector('tr');
+                
+                // Rimuovi pulsante "aggiungi attributo" e "azioni"
+                const addButton = headerRow.children[headerRow.children.length - 2];
+                const actionsHeader = headerRow.children[headerRow.children.length - 1];
+                headerRow.removeChild(addButton);
+                headerRow.removeChild(actionsHeader);
+                
+                // Aggiungi nuova colonna attributo
+                const newHeader = document.createElement('th');
+                newHeader.style.cssText = `background: ${isIntrinsic ? '#3d6db7' : '#8e44ad'}; color: white; padding: 12px; min-width: 150px; text-align: left;`;
+                newHeader.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span>${attributeName}</span>
+                        <span style="background: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.4); padding: 2px 6px; border-radius: 8px; font-size: 0.8em;">
+                            ${isIntrinsic ? 'I' : 'R'}
+                        </span>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove(); demoApp.updateColumnCount();" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.8em;">✕</button>
+                    </div>
+                `;
+                headerRow.appendChild(newHeader);
+                
+                // Ripristina pulsanti
+                headerRow.appendChild(addButton);
+                headerRow.appendChild(actionsHeader);
+                
+                // Aggiungi cella vuota a tutte le righe esistenti
+                const tableBody = document.getElementById('table-body');
+                Array.from(tableBody.children).forEach(row => {
+                    if (row.children.length > 1) {
+                        const newCell = document.createElement('td');
+                        newCell.style.cssText = `padding: 12px; border-left: 3px solid ${isIntrinsic ? '#3d6db7' : '#8e44ad'};`;
+                        newCell.innerHTML = `<input type="text" placeholder="${attributeName}..." style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">`;
+                        
+                        // Inserisci prima delle azioni
+                        const actionsCell = row.children[row.children.length - 1];
+                        row.insertBefore(newCell, actionsCell);
+                    } else {
+                        // Riga add - aggiorna colspan
+                        row.children[0].colSpan = headerRow.children.length;
+                    }
+                });
+                
+                this.updateColumnCount();
+                this.showNotification(`✅ Colonna "${attributeName}" aggiunta (${isIntrinsic ? 'Intrinseca' : 'Relazionale'})`, 'success');
+            }
+
+            addRow() {
+                const tableBody = document.getElementById('table-body');
+                const tableHead = document.getElementById('table-head');
+                const headerRow = tableHead.querySelector('tr');
+                const columnCount = headerRow.children.length;
+                
+                // Rimuovi riga "add" temporaneamente
+                const addRow = tableBody.children[tableBody.children.length - 1];
+                tableBody.removeChild(addRow);
+                
+                // Crea nuova riga dati
+                const newRow = document.createElement('tr');
+                newRow.style.cssText = 'background: #fff3cd; transition: background-color 0.3s;';
+                
+                // Crea celle per ogni colonna
+                for (let i = 0; i < columnCount - 1; i++) { // -1 per escludere colonna azioni
+                    const cell = document.createElement('td');
+                    cell.style.padding = '12px';
+                    
+                    if (i === 0) {
+                        // Prima colonna - selezione entità
+                        const entityType = document.getElementById('selected-type').textContent;
+                        cell.style.cssText += 'border-left: 3px solid #2c3e50; font-weight: 500; background: #f8f9fa;';
+                        cell.innerHTML = `<input type="text" placeholder="Seleziona ${entityType}..." style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">`;
+                    } else {
+                        // Colonne attributi
+                        const header = headerRow.children[i];
+                        const isIntrinsic = header.style.background.includes('61, 109, 183') || header.style.background.includes('#3d6db7');
+                        cell.style.cssText += `border-left: 3px solid ${isIntrinsic ? '#3d6db7' : '#8e44ad'};`;
+                        cell.innerHTML = `<input type="text" placeholder="..." style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">`;
+                    }
+                    
+                    newRow.appendChild(cell);
+                }
+                
+                // Aggiungi colonna azioni
+                const actionsCell = document.createElement('td');
+                actionsCell.style.cssText = 'text-align: center; padding: 12px;';
+                actionsCell.innerHTML = `
+                    <div style="display: flex; gap: 5px; justify-content: center;">
+                        <button onclick="this.closest('tr').style.background='#d4edda'; this.disabled=true; this.textContent='💾✓';" style="background: none; border: none; font-size: 1.1em; cursor: pointer; padding: 4px;">💾</button>
+                        <button onclick="this.closest('tr').remove(); demoApp.updateRowCount();" style="background: none; border: none; font-size: 1.1em; cursor: pointer; padding: 4px;">🗑️</button>
+                    </div>
+                `;
+                newRow.appendChild(actionsCell);
+                
+                // Aggiungi riga alla tabella
+                tableBody.appendChild(newRow);
+                
+                // Ripristina riga "add"
+                tableBody.appendChild(addRow);
+                
+                this.updateRowCount();
+                this.showNotification(`✅ Nuova riga aggiunta`, 'success');
+            }
+
+            async createSampleData() {
+                if (!document.getElementById('table-area') || document.getElementById('table-area').style.display === 'none') {
+                    this.showNotification('Prima seleziona un tipo di entità', 'warning');
+                    return;
+                }
+                
+                // Aggiungi colonne esempio
+                this.addColumnProgrammatic('email', true);
+                this.addColumnProgrammatic('telefono', true);
+                this.addColumnProgrammatic('ruolo', false);
+                this.addColumnProgrammatic('fee', false);
+                
+                // Aggiungi righe esempio
+                const sampleData = [
+                    ['Mario Rossi', 'mario@example.com', '+39 333 1234', 'Director', '$5000'],
+                    ['Anna Verdi', 'anna@example.com', '+39 320 5678', 'Actor', '$3000'],
+                    ['Luigi Bianchi', 'luigi@example.com', '+39 347 9012', 'Producer', '$4000']
+                ];
+                
+                sampleData.forEach(rowData => {
+                    this.addRowProgrammatic(rowData);
+                });
+                
+                this.showNotification(`✅ Dati demo generati: 4 colonne, 3 righe`, 'success');
+            }
+
+            addColumnProgrammatic(attributeName, isIntrinsic) {
+                const tableHead = document.getElementById('table-head');
+                const headerRow = tableHead.querySelector('tr');
+                
+                // Rimuovi pulsante "aggiungi attributo" e "azioni"
+                const addButton = headerRow.children[headerRow.children.length - 2];
+                const actionsHeader = headerRow.children[headerRow.children.length - 1];
+                headerRow.removeChild(addButton);
+                headerRow.removeChild(actionsHeader);
+                
+                // Aggiungi nuova colonna attributo
+                const newHeader = document.createElement('th');
+                newHeader.style.cssText = `background: ${isIntrinsic ? '#3d6db7' : '#8e44ad'}; color: white; padding: 12px; min-width: 150px; text-align: left;`;
+                newHeader.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span>${attributeName}</span>
+                        <span style="background: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.4); padding: 2px 6px; border-radius: 8px; font-size: 0.8em;">
+                            ${isIntrinsic ? 'I' : 'R'}
+                        </span>
+                    </div>
+                `;
+                headerRow.appendChild(newHeader);
+                
+                // Ripristina pulsanti
+                headerRow.appendChild(addButton);
+                headerRow.appendChild(actionsHeader);
+                
+                // Aggiungi cella vuota a tutte le righe esistenti
+                const tableBody = document.getElementById('table-body');
+                Array.from(tableBody.children).forEach(row => {
+                    if (row.children.length > 1) {
+                        const newCell = document.createElement('td');
+                        newCell.style.cssText = `padding: 12px; border-left: 3px solid ${isIntrinsic ? '#3d6db7' : '#8e44ad'};`;
+                        newCell.innerHTML = `<input type="text" placeholder="${attributeName}..." style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">`;
+                        
+                        // Inserisci prima delle azioni
+                        const actionsCell = row.children[row.children.length - 1];
+                        row.insertBefore(newCell, actionsCell);
+                    } else {
+                        // Riga add - aggiorna colspan
+                        row.children[0].colSpan = headerRow.children.length;
+                    }
+                });
+                
+                this.updateColumnCount();
+            }
+
+            addRowProgrammatic(data) {
+                const tableBody = document.getElementById('table-body');
+                const tableHead = document.getElementById('table-head');
+                const headerRow = tableHead.querySelector('tr');
+                const columnCount = headerRow.children.length;
+                
+                // Rimuovi riga "add" temporaneamente
+                const addRow = tableBody.children[tableBody.children.length - 1];
+                tableBody.removeChild(addRow);
+                
+                // Crea nuova riga dati
+                const newRow = document.createElement('tr');
+                newRow.style.cssText = 'background: #d4edda; transition: background-color 0.3s;';
+                
+                // Crea celle per ogni colonna
+                for (let i = 0; i < columnCount - 1; i++) { // -1 per escludere colonna azioni
+                    const cell = document.createElement('td');
+                    cell.style.padding = '12px';
+                    
+                    if (i === 0) {
+                        // Prima colonna - selezione entità
+                        cell.style.cssText += 'border-left: 3px solid #2c3e50; font-weight: 500; background: #f8f9fa;';
+                        cell.innerHTML = `<input type="text" value="${data[i] || ''}" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">`;
+                    } else {
+                        // Colonne attributi
+                        const header = headerRow.children[i];
+                        const isIntrinsic = header.style.background.includes('61, 109, 183') || header.style.background.includes('#3d6db7');
+                        cell.style.cssText += `border-left: 3px solid ${isIntrinsic ? '#3d6db7' : '#8e44ad'};`;
+                        cell.innerHTML = `<input type="text" value="${data[i] || ''}" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">`;
+                    }
+                    
+                    newRow.appendChild(cell);
+                }
+                
+                // Aggiungi colonna azioni
+                const actionsCell = document.createElement('td');
+                actionsCell.style.cssText = 'text-align: center; padding: 12px;';
+                actionsCell.innerHTML = `
+                    <div style="display: flex; gap: 5px; justify-content: center;">
+                        <button disabled style="background: none; border: none; font-size: 1.1em; cursor: pointer; padding: 4px;">💾✓</button>
+                        <button onclick="this.closest('tr').remove(); demoApp.updateRowCount();" style="background: none; border: none; font-size: 1.1em; cursor: pointer; padding: 4px;">🗑️</button>
+                    </div>
+                `;
+                newRow.appendChild(actionsCell);
+                
+                // Aggiungi riga alla tabella
+                tableBody.appendChild(newRow);
+                
+                // Ripristina riga "add"
+                tableBody.appendChild(addRow);
+                
+                this.updateRowCount();
+            }
+
+            showWorkflow() {
+                alert(`🎯 WORKFLOW ENHANCED TABULAR MODULE
+
+FASE 1: Setup Obbligatorio
+• L'utente DEVE selezionare un tipo di entità
+• Solo dopo la selezione appare la tabella
+
+FASE 2: Costruzione Dinamica  
+• Prima colonna = tipo entità selezionato (BASE)
+• Colonne successive = attributi (I/R)
+• Auto-popolamento quando si aggiunge colonna
+
+FASE 3: Gestione Intelligente
+• Badge visivi: BASE (blu), I (intrinseco), R (relazionale)
+• SmartInput per ogni fase del workflow
+• Progressive disclosure delle funzionalità
+
+CARATTERISTICHE INNOVATIVE:
+✅ Layout orizzontale intuitivo
+✅ UX step-by-step guidata  
+✅ Distinzione automatica attributi
+✅ Auto-popolamento righe esistenti
+✅ Interface progressivamente rivelata`);
+            }
+
+            resetDemo() {
+                document.getElementById('tabular-module-container').innerHTML = `
+                    <div style="text-align: center; padding: 80px 40px; color: #666;">
+                        <div style="font-size: 64px; margin-bottom: 20px; opacity: 0.7;">🎯</div>
+                        <h3 style="margin-bottom: 16px; color: #495057;">Enhanced Tabular Module</h3>
+                        <p style="font-size: 18px; margin-bottom: 30px; opacity: 0.8;">Demo resettata - Usa i controlli sopra per riavviare</p>
+                    </div>
+                `;
+                
+                this.currentModuleId = null;
+                document.getElementById('module-id').value = '';
+                document.getElementById('setup-status').textContent = '❌';
+                document.getElementById('entity-type').textContent = '-';
+                document.getElementById('column-count').textContent = '0';
+                document.getElementById('row-count').textContent = '0';
+                
+                this.showNotification('🔄 Demo resettata', 'info');
+            }
+
+            updateColumnCount() {
+                const tableHead = document.getElementById('table-head');
+                if (tableHead) {
+                    const headerRow = tableHead.querySelector('tr');
+                    if (headerRow) {
+                        // Conta colonne escludendo "aggiungi" e "azioni"
+                        const count = headerRow.children.length - 2;
+                        document.getElementById('column-count').textContent = count;
+                    }
+                }
+            }
+
+            updateRowCount() {
+                const tableBody = document.getElementById('table-body');
+                if (tableBody) {
+                    // Conta righe escludendo la riga "add"
+                    const count = tableBody.children.length - 1;
+                    document.getElementById('row-count').textContent = Math.max(0, count);
+                }
+            }
+
+            updateStatus() {
+                // Status counters sono aggiornati dalle funzioni specifiche
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = `notification ${type} show`;
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 4000);
+            }
+
+            showLoading(show) {
+                const overlay = document.getElementById('loading-overlay');
+                if (show) {
+                    overlay.classList.add('show');
+                } else {
+                    overlay.classList.remove('show');
+                }
+            }
+        }
+
+        // Global demo app instance
+        window.demoApp = new EnhancedTabularDemo();
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                window.demoApp.init();
+            });
+        } else {
+            window.demoApp.init();
+        }
+    </script>
+</body>
+</html>

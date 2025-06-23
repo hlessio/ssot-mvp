@@ -437,15 +437,16 @@ class EvolvedServer {
             // Invia solo ai client con sottoscrizioni matching
             this.broadcastToSubscribedClients(message);
             
-            console.log('🔄🔄🔄 WEBSOCKET BROADCASTING:', {
-                entityType: changeNotification.entityType,
-                entityId: changeNotification.entityId,
-                attributeName: changeNotification.attributeName,
-                newValue: changeNotification.newValue,
-                changeType: changeNotification.changeType,
-                clients: this.clients.size,
-                message: message
-            });
+            // Removed verbose logging for performance - uncomment for debugging
+            // console.log('🔄🔄🔄 WEBSOCKET BROADCASTING:', {
+            //     entityType: changeNotification.entityType,
+            //     entityId: changeNotification.entityId,
+            //     attributeName: changeNotification.attributeName,
+            //     newValue: changeNotification.newValue,
+            //     changeType: changeNotification.changeType,
+            //     clients: this.clients.size,
+            //     message: message
+            // });
         });
 
         // Sottoscrizione 2: Eventi relazioni
@@ -613,7 +614,19 @@ class EvolvedServer {
                 
                 const newEntity = await this.entityEngine.createEntity(entityType, initialData, options);
                 
-                // Notifica via WebSocket per sincronizzazione real-time
+                // Notifica AttributeSpace per real-time sync
+                if (this.attributeSpace && newEntity) {
+                    this.attributeSpace.notifyChange({
+                        type: 'entity',
+                        entityType: entityType,
+                        entityId: newEntity.id,
+                        changeType: 'create',
+                        newValue: newEntity,
+                        timestamp: Date.now()
+                    });
+                }
+                
+                // Notifica via WebSocket per sincronizzazione real-time - DEPRECATED, AttributeSpace handles this now
                 this.broadcastMessage({
                     type: 'entity-created',
                     data: {
@@ -652,11 +665,34 @@ class EvolvedServer {
                 
                 await this.entityEngine.setEntityAttribute(entityId, attributeName, value, options);
                 
-                // Notifica via WebSocket
+                // Get entity type for WebSocket notification
+                let entityType = null;
+                try {
+                    const entity = await this.entityEngine.getEntity(entityId);
+                    entityType = entity?.entityType;
+                } catch (error) {
+                    console.warn('Could not get entity type for WebSocket notification:', error);
+                }
+                
+                // Notifica AttributeSpace per real-time sync
+                if (this.attributeSpace && entityType) {
+                    this.attributeSpace.notifyChange({
+                        type: 'entity',
+                        entityType: entityType,
+                        entityId: entityId,
+                        attributeName: attributeName,
+                        newValue: value,
+                        changeType: 'update',
+                        timestamp: Date.now()
+                    });
+                }
+                
+                // Notifica via WebSocket - DEPRECATED, AttributeSpace handles this now
                 this.broadcastMessage({
                     type: 'attribute-updated',
                     data: {
                         entityId,
+                        entityType,
                         attributeName,
                         newValue: value
                     },
@@ -1074,6 +1110,18 @@ class EvolvedServer {
                     newEntity = await this.entityEngine_MVP.createEntity(entityType, entityData);
                 }
                 
+                // Notifica AttributeSpace per real-time sync
+                if (this.attributeSpace && newEntity) {
+                    this.attributeSpace.notifyChange({
+                        type: 'entity',
+                        entityType: entityType,
+                        entityId: newEntity.id,
+                        changeType: 'create',
+                        newValue: newEntity,
+                        timestamp: Date.now()
+                    });
+                }
+                
                 res.status(201).json({
                     success: true,
                     data: newEntity,
@@ -1110,6 +1158,41 @@ class EvolvedServer {
                     await this.entityEngine_MVP.setEntityAttribute(entityId, attributeName, value);
                 }
                 
+                // Get entity type for WebSocket notification
+                let entityType = null;
+                try {
+                    const engine = this.enableEvolvedFeatures ? this.entityEngine : this.entityEngine_MVP;
+                    const entity = await engine.getEntity(entityId);
+                    entityType = entity?.entityType;
+                } catch (error) {
+                    console.warn('Could not get entity type for WebSocket notification:', error);
+                }
+                
+                // Notifica AttributeSpace per real-time sync
+                if (this.attributeSpace && entityType) {
+                    this.attributeSpace.notifyChange({
+                        type: 'entity',
+                        entityType: entityType,
+                        entityId: entityId,
+                        attributeName: attributeName,
+                        newValue: value,
+                        changeType: 'update',
+                        timestamp: Date.now()
+                    });
+                }
+                
+                // Notifica via WebSocket (same as evolved endpoint) - DEPRECATED, AttributeSpace handles this now
+                this.broadcastMessage({
+                    type: 'attribute-updated',
+                    data: {
+                        entityId,
+                        entityType,
+                        attributeName,
+                        newValue: value
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
                 res.json({
                     success: true,
                     message: `Attributo ${attributeName} aggiornato`,
@@ -1117,6 +1200,75 @@ class EvolvedServer {
                 });
             } catch (error) {
                 console.error('Errore nell\'aggiornamento attributo:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // DELETE /api/entity/:entityId - Elimina un'entità
+        this.app.delete('/api/entity/:entityId', async (req, res) => {
+            try {
+                const { entityId } = req.params;
+                
+                console.log(`🗑️ [Server] Eliminazione entità: ${entityId}`);
+                
+                // Verifica che l'entità esista
+                let entity;
+                try {
+                    if (this.enableEvolvedFeatures) {
+                        entity = await this.entityEngine.getEntity(entityId);
+                    } else {
+                        entity = await this.entityEngine_MVP.getEntity(entityId);
+                    }
+                } catch (error) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Entità non trovata'
+                    });
+                }
+                
+                if (!entity) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Entità non trovata'
+                    });
+                }
+                
+                // Elimina l'entità usando il metodo appropriato
+                if (this.enableEvolvedFeatures) {
+                    await this.entityEngine.deleteEntity(entityId);
+                } else {
+                    // Per MVP, elimina direttamente dal database
+                    const deleteQuery = `
+                        MATCH (e:Entity {id: $entityId})
+                        DETACH DELETE e
+                    `;
+                    await this.neo4jDao.executeQuery(deleteQuery, { entityId });
+                }
+                
+                // Notifica eliminazione via WebSocket
+                this.broadcastMessage({
+                    type: 'entity-deleted',
+                    data: {
+                        entityId: entityId,
+                        entityType: entity.entityType
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                console.log(`✅ [Server] Entità ${entityId} eliminata con successo`);
+                
+                res.json({
+                    success: true,
+                    message: 'Entità eliminata con successo',
+                    entityId: entityId,
+                    engine: this.enableEvolvedFeatures ? 'evolved' : 'mvp'
+                });
+                
+            } catch (error) {
+                console.error(`❌ [Server] Errore eliminazione entità ${req.params.entityId}:`, error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -1883,6 +2035,85 @@ class EvolvedServer {
                 });
             } catch (error) {
                 console.error('❌ Errore eliminazione relazione:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // ============================================
+        // ADMIN ENDPOINTS - TEMPORARY FOR CLEANUP
+        // ============================================
+        
+        // POST /api/admin/cleanup-duplicates - Clean duplicate entities
+        this.app.post('/api/admin/cleanup-duplicates', async (req, res) => {
+            try {
+                const { entityType } = req.body;
+                console.log(`🧹 [Admin] Inizio pulizia duplicati per tipo: ${entityType}`);
+                
+                // Get all entities of this type using existing endpoint logic
+                const query = `
+                    MATCH (e:Entity {entityType: $entityType})
+                    RETURN e
+                    ORDER BY e.created ASC
+                `;
+                const result = await this.neo4jDao.executeQuery(query, { entityType });
+                const entities = result.map(record => record.e.properties);
+                console.log(`📊 [Admin] Trovate ${entities.length} entità di tipo ${entityType}`);
+                
+                // Group by name (case insensitive)
+                const groups = new Map();
+                entities.forEach(entity => {
+                    const name = (entity.nome || entity.name || '').trim().toLowerCase();
+                    if (!name) return; // Skip entities without names
+                    
+                    if (!groups.has(name)) {
+                        groups.set(name, []);
+                    }
+                    groups.get(name).push(entity);
+                });
+                
+                let deletedCount = 0;
+                let keptCount = 0;
+                
+                // For each group, keep the first one and delete the rest
+                for (const [name, group] of groups) {
+                    if (group.length > 1) {
+                        console.log(`🔍 [Admin] Gruppo "${name}": ${group.length} duplicati`);
+                        
+                        // Keep the first entity, delete the others
+                        const [keep, ...toDelete] = group;
+                        keptCount++;
+                        
+                        for (const entity of toDelete) {
+                            const deleteQuery = `
+                                MATCH (e:Entity {id: $entityId})
+                                DETACH DELETE e
+                            `;
+                            await this.neo4jDao.executeQuery(deleteQuery, { entityId: entity.id });
+                            deletedCount++;
+                            console.log(`🗑️ [Admin] Eliminata entità duplicata: ${entity.id}`);
+                        }
+                    } else {
+                        keptCount++;
+                    }
+                }
+                
+                console.log(`✅ [Admin] Pulizia completata: ${deletedCount} eliminati, ${keptCount} mantenuti`);
+                
+                res.json({
+                    success: true,
+                    message: `Pulizia completata per ${entityType}`,
+                    data: {
+                        deleted: deletedCount,
+                        kept: keptCount,
+                        originalCount: entities.length
+                    }
+                });
+                
+            } catch (error) {
+                console.error('❌ [Admin] Errore pulizia duplicati:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
