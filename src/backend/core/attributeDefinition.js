@@ -22,6 +22,11 @@ class AttributeDefinition {
         // Limiti numerici
         this.min = definition.min || null;
         this.max = definition.max || null;
+        
+        // ✨ NUOVO: UI Metadata per architettura a rendering semantico
+        this.uiMetadata = this.initializeUIMetadata(definition.uiMetadata || {});
+        this.renderingHints = this.initializeRenderingHints(definition.renderingHints || {});
+        this.displaySettings = this.initializeDisplaySettings(definition.displaySettings || {});
     }
 
     /**
@@ -150,6 +155,177 @@ class AttributeDefinition {
     }
 
     /**
+     * ✨ NUOVO: Inizializza i metadati UI per il rendering semantico
+     * @param {object} uiMetadata - Metadati UI forniti
+     * @returns {object} Metadati UI normalizzati
+     */
+    initializeUIMetadata(uiMetadata) {
+        return {
+            // Componente UI da utilizzare per il rendering
+            component: uiMetadata.component || this.getDefaultComponent(),
+            
+            // Label da mostrare nell'interfaccia
+            label: uiMetadata.label || this.name,
+            
+            // Placeholder per input
+            placeholder: uiMetadata.placeholder || `Inserisci ${this.name}...`,
+            
+            // Larghezza suggerita (auto, small, medium, large)
+            width: uiMetadata.width || 'auto',
+            
+            // Validazione real-time
+            validation: {
+                realtime: uiMetadata.validation?.realtime || false,
+                debounceMs: uiMetadata.validation?.debounceMs || 300,
+                showErrors: uiMetadata.validation?.showErrors !== false
+            },
+            
+            // Dipendenze da altri attributi
+            dependsOn: uiMetadata.dependsOn || [],
+            
+            // Ordinamento per gruppi
+            order: uiMetadata.order || 0,
+            
+            // Gruppo logico (per organizzazione UI)
+            group: uiMetadata.group || 'default'
+        };
+    }
+
+    /**
+     * ✨ NUOVO: Inizializza i rendering hints per il layout
+     * @param {object} renderingHints - Hints di rendering forniti
+     * @returns {object} Rendering hints normalizzati
+     */
+    initializeRenderingHints(renderingHints) {
+        return {
+            // Priorità di visualizzazione (high, medium, low)
+            priority: renderingHints.priority || 'medium',
+            
+            // Raggruppamento logico per UI
+            grouping: renderingHints.grouping || 'general',
+            
+            // Formato di visualizzazione preferito
+            displayFormat: renderingHints.displayFormat || 'auto',
+            
+            // Condizioni per la visualizzazione
+            conditional: {
+                showIf: renderingHints.conditional?.showIf || null,
+                hideIf: renderingHints.conditional?.hideIf || null,
+                enableIf: renderingHints.conditional?.enableIf || null
+            },
+            
+            // Suggerimenti per la responsività
+            responsive: {
+                mobile: renderingHints.responsive?.mobile || 'auto',
+                tablet: renderingHints.responsive?.tablet || 'auto',
+                desktop: renderingHints.responsive?.desktop || 'auto'
+            }
+        };
+    }
+
+    /**
+     * ✨ NUOVO: Inizializza le impostazioni di visualizzazione
+     * @param {object} displaySettings - Impostazioni di display fornite
+     * @returns {object} Display settings normalizzati
+     */
+    initializeDisplaySettings(displaySettings) {
+        return {
+            // Icona associata all'attributo
+            icon: displaySettings.icon || this.getDefaultIcon(),
+            
+            // Tooltip descrittivo
+            tooltip: displaySettings.tooltip || this.description,
+            
+            // Formato di visualizzazione dei valori
+            valueFormat: displaySettings.valueFormat || this.getDefaultValueFormat(),
+            
+            // Stile personalizzato
+            style: displaySettings.style || {},
+            
+            // CSS classes aggiuntive
+            cssClasses: displaySettings.cssClasses || [],
+            
+            // Modalità di editing (inline, modal, disabled)
+            editMode: displaySettings.editMode || 'inline',
+            
+            // Configurazioni specifiche per liste/autocomplete
+            listConfig: {
+                searchable: displaySettings.listConfig?.searchable !== false,
+                creatable: displaySettings.listConfig?.creatable !== false,
+                multiSelect: displaySettings.listConfig?.multiSelect || false,
+                pageSize: displaySettings.listConfig?.pageSize || 10
+            }
+        };
+    }
+
+    /**
+     * ✨ NUOVO: Determina il componente UI di default basato sul tipo
+     * @returns {string} Nome del componente UI di default
+     */
+    getDefaultComponent() {
+        const componentMap = {
+            'string': 'TextInput',
+            'text': 'TextArea',
+            'number': 'NumberInput',
+            'email': 'EmailInput',
+            'date': 'DateInput',
+            'boolean': 'Checkbox',
+            'select': 'SelectInput',
+            'reference': 'EntityAutocomplete',
+            'percentage': 'PercentageInput',
+            'json': 'JsonEditor'
+        };
+        
+        return componentMap[this.type] || 'TextInput';
+    }
+
+    /**
+     * ✨ NUOVO: Determina l'icona di default basata sul tipo e nome
+     * @returns {string} Nome dell'icona di default
+     */
+    getDefaultIcon() {
+        // Icone basate sul nome comune
+        const nameIcons = {
+            'nome': 'user',
+            'email': 'mail',
+            'telefono': 'phone',
+            'indirizzo': 'map-pin',
+            'data': 'calendar',
+            'prezzo': 'dollar-sign',
+            'stato': 'check-circle'
+        };
+        
+        // Icone basate sul tipo
+        const typeIcons = {
+            'email': 'mail',
+            'date': 'calendar',
+            'boolean': 'check-square',
+            'reference': 'link',
+            'percentage': 'percent'
+        };
+        
+        return nameIcons[this.name.toLowerCase()] || 
+               typeIcons[this.type] || 
+               'edit-3';
+    }
+
+    /**
+     * ✨ NUOVO: Determina il formato di visualizzazione dei valori
+     * @returns {object} Configurazione di formato
+     */
+    getDefaultValueFormat() {
+        const formatMap = {
+            'percentage': { type: 'percentage', decimals: 0, suffix: '%' },
+            'email': { type: 'email', linkify: true },
+            'date': { type: 'date', format: 'DD/MM/YYYY' },
+            'number': { type: 'number', decimals: 2 },
+            'reference': { type: 'reference', showLabel: true }
+        };
+        
+        return formatMap[this.type] || { type: 'text' };
+    }
+
+    /**
      * Applica una regola di validazione personalizzata
      * @param {string} rule - La regola da applicare
      * @param {any} value - Il valore da validare
@@ -202,7 +378,78 @@ class AttributeDefinition {
             cardinalityForReference: this.cardinalityForReference,
             options: this.options,
             min: this.min,
-            max: this.max
+            max: this.max,
+            // ✨ NUOVO: Include UI metadata per architettura semantica
+            uiMetadata: this.uiMetadata,
+            renderingHints: this.renderingHints,
+            displaySettings: this.displaySettings
+        };
+    }
+
+    /**
+     * ✨ NUOVO: Restituisce solo i metadati UI per il frontend
+     * @returns {object} Solo i metadati UI necessari per il rendering
+     */
+    getUIMetadata() {
+        return {
+            component: this.uiMetadata.component,
+            label: this.uiMetadata.label,
+            placeholder: this.uiMetadata.placeholder,
+            width: this.uiMetadata.width,
+            validation: this.uiMetadata.validation,
+            group: this.uiMetadata.group,
+            order: this.uiMetadata.order,
+            icon: this.displaySettings.icon,
+            tooltip: this.displaySettings.tooltip,
+            valueFormat: this.displaySettings.valueFormat,
+            editMode: this.displaySettings.editMode,
+            priority: this.renderingHints.priority,
+            grouping: this.renderingHints.grouping,
+            conditional: this.renderingHints.conditional
+        };
+    }
+
+    /**
+     * ✨ NUOVO: Valida la configurazione UI metadata
+     * @returns {object} Risultato della validazione UI
+     */
+    validateUIMetadata() {
+        const validComponents = [
+            'TextInput', 'TextArea', 'NumberInput', 'EmailInput', 
+            'DateInput', 'Checkbox', 'SelectInput', 'EntityAutocomplete', 
+            'PercentageInput', 'JsonEditor'
+        ];
+        
+        const errors = [];
+        const warnings = [];
+        
+        // Valida componente
+        if (!validComponents.includes(this.uiMetadata.component)) {
+            warnings.push(`Componente UI non riconosciuto: ${this.uiMetadata.component}`);
+        }
+        
+        // Valida larghezza
+        const validWidths = ['auto', 'small', 'medium', 'large'];
+        if (!validWidths.includes(this.uiMetadata.width)) {
+            errors.push(`Larghezza non valida: ${this.uiMetadata.width}`);
+        }
+        
+        // Valida priorità
+        const validPriorities = ['high', 'medium', 'low'];
+        if (!validPriorities.includes(this.renderingHints.priority)) {
+            errors.push(`Priorità non valida: ${this.renderingHints.priority}`);
+        }
+        
+        // Valida modalità di editing
+        const validEditModes = ['inline', 'modal', 'disabled'];
+        if (!validEditModes.includes(this.displaySettings.editMode)) {
+            errors.push(`Modalità di editing non valida: ${this.displaySettings.editMode}`);
+        }
+        
+        return {
+            valid: errors.length === 0,
+            errors: errors,
+            warnings: warnings
         };
     }
 

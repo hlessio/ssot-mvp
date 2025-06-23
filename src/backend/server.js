@@ -1007,10 +1007,89 @@ class EvolvedServer {
         // ENDPOINT ESISTENTI MVP (per compatibilità)
         // ============================================
 
-        // GET /api/entities/:entityType - Ottiene tutte le entità di un tipo
+        // GET /api/entities/search - Ricerca generale entità (endpoint dedicato per evitare conflitti)
+        this.app.get('/api/entities/search', async (req, res) => {
+            try {
+                const { search, entityType, limit = 50, offset = 0 } = req.query;
+                
+                let entities = [];
+                
+                if (entityType) {
+                    // Ricerca per tipo specifico
+                    if (this.enableEvolvedFeatures) {
+                        entities = await this.entityEngine.getAllEntities(entityType);
+                    } else {
+                        entities = await this.entityEngine_MVP.getAllEntities(entityType);
+                    }
+                } else {
+                    // Ricerca cross-entity type
+                    const commonTypes = ['Persona', 'Contact', 'Project', 'ModuleInstance'];
+                    for (const type of commonTypes) {
+                        try {
+                            let typeEntities;
+                            if (this.enableEvolvedFeatures) {
+                                typeEntities = await this.entityEngine.getAllEntities(type);
+                            } else {
+                                typeEntities = await this.entityEngine_MVP.getAllEntities(type);
+                            }
+                            entities = entities.concat(typeEntities);
+                        } catch (error) {
+                            // Ignora errori per tipi non esistenti
+                            console.log(`Tipo ${type} non trovato, saltando...`);
+                        }
+                    }
+                }
+                
+                // Applica filtro di ricerca se presente
+                if (search && search.trim().length > 0) {
+                    const searchTerm = search.toLowerCase().trim();
+                    entities = entities.filter(entity => {
+                        // Cerca nei campi comuni
+                        const searchFields = [
+                            entity.nome, entity.name, entity.title, entity.titolo,
+                            entity.cognome, entity.surname, entity.email, 
+                            entity.telefono, entity.phone, entity.ragioneSociale,
+                            entity.companyName, entity.description, entity.descrizione
+                        ].filter(Boolean);
+                        
+                        return searchFields.some(field => 
+                            field && field.toString().toLowerCase().includes(searchTerm)
+                        );
+                    });
+                }
+                
+                // Applica paginazione
+                const startIndex = parseInt(offset);
+                const limitNum = parseInt(limit);
+                const paginatedEntities = entities.slice(startIndex, startIndex + limitNum);
+                
+                res.json({
+                    success: true,
+                    data: paginatedEntities,
+                    count: paginatedEntities.length,
+                    total: entities.length,
+                    search: search || null,
+                    entityType: entityType || 'all',
+                    pagination: {
+                        offset: startIndex,
+                        limit: limitNum,
+                        hasMore: startIndex + limitNum < entities.length
+                    }
+                });
+            } catch (error) {
+                console.error('Errore nella ricerca entità:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // GET /api/entities/:entityType - Ottiene tutte le entità di un tipo (mantenuto per compatibilità)
         this.app.get('/api/entities/:entityType', async (req, res) => {
             try {
                 const { entityType } = req.params;
+                const { search, limit = 50, offset = 0 } = req.query;
                 
                 // Usa EntityEngine evoluto se abilitato, altrimenti MVP
                 let entities;
@@ -1020,10 +1099,39 @@ class EvolvedServer {
                     entities = await this.entityEngine_MVP.getAllEntities(entityType);
                 }
                 
+                // Applica filtro di ricerca se presente
+                if (search && search.trim().length > 0) {
+                    const searchTerm = search.toLowerCase().trim();
+                    entities = entities.filter(entity => {
+                        const searchFields = [
+                            entity.nome, entity.name, entity.title, entity.titolo,
+                            entity.cognome, entity.surname, entity.email, 
+                            entity.telefono, entity.phone, entity.ragioneSociale,
+                            entity.companyName, entity.description, entity.descrizione
+                        ].filter(Boolean);
+                        
+                        return searchFields.some(field => 
+                            field && field.toString().toLowerCase().includes(searchTerm)
+                        );
+                    });
+                }
+                
+                // Applica paginazione
+                const startIndex = parseInt(offset);
+                const limitNum = parseInt(limit);
+                const paginatedEntities = entities.slice(startIndex, startIndex + limitNum);
+                
                 res.json({
                     success: true,
-                    data: entities,
-                    count: entities.length,
+                    data: paginatedEntities,
+                    count: paginatedEntities.length,
+                    total: entities.length,
+                    search: search || null,
+                    pagination: {
+                        offset: startIndex,
+                        limit: limitNum,
+                        hasMore: startIndex + limitNum < entities.length
+                    },
                     engine: this.enableEvolvedFeatures ? 'evolved' : 'mvp'
                 });
             } catch (error) {
@@ -1331,10 +1439,12 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/schema/entity/:entityType - Recupera schema entità
+        // GET /api/schema/entity/:entityType - Recupera schema entità con UI metadata
         this.app.get('/api/schema/entity/:entityType', async (req, res) => {
             try {
                 const { entityType } = req.params;
+                const { includeUIMetadata, format } = req.query;
+                
                 const schema = this.schemaManager.getEntitySchema(entityType);
                 
                 if (!schema) {
@@ -1343,13 +1453,163 @@ class EvolvedServer {
                         error: `Schema non trovato per il tipo ${entityType}`
                     });
                 }
+
+                let responseData = schema;
+
+                // ✨ NUOVO: Support per formato specifico UI semantica
+                if (format === 'semantic-ui') {
+                    responseData = this.formatSchemaForSemanticUI(schema, entityType);
+                } else if (includeUIMetadata === 'true' || includeUIMetadata === '1') {
+                    // Include metadati UI espliciti in formato esteso
+                    responseData = this.enrichSchemaWithUIMetadata(schema, entityType);
+                }
                 
                 res.json({
                     success: true,
-                    data: schema
+                    data: responseData,
+                    meta: {
+                        entityType,
+                        includesUIMetadata: includeUIMetadata === 'true' || format === 'semantic-ui',
+                        format: format || 'standard'
+                    }
                 });
             } catch (error) {
                 console.error('❌ Errore recupero schema entità:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // ✨ NUOVO: GET /api/schema/entity/:entityType/ui-metadata - Endpoint specifico per UI metadata
+        this.app.get('/api/schema/entity/:entityType/ui-metadata', async (req, res) => {
+            try {
+                const { entityType } = req.params;
+                const { attributes } = req.query; // Lista specifica di attributi (opzionale)
+                
+                const schema = this.schemaManager.getEntitySchema(entityType);
+                
+                if (!schema) {
+                    return res.status(404).json({
+                        success: false,
+                        error: `Schema non trovato per il tipo ${entityType}`
+                    });
+                }
+
+                const uiMetadata = {};
+                const targetAttributes = attributes ? attributes.split(',') : Object.keys(schema.attributes || {});
+
+                // Estrai metadati UI per ogni attributo richiesto
+                targetAttributes.forEach(attrName => {
+                    const attrDef = schema.attributes?.[attrName];
+                    if (attrDef && attrDef.getUIMetadata) {
+                        uiMetadata[attrName] = attrDef.getUIMetadata();
+                    } else if (attrDef) {
+                        // Fallback per attributi senza metodi UI metadata
+                        uiMetadata[attrName] = {
+                            component: attrDef.uiMetadata?.component || this.getDefaultComponentForType(attrDef.type),
+                            label: attrDef.uiMetadata?.label || attrName,
+                            type: attrDef.type || 'string',
+                            icon: attrDef.displaySettings?.icon || this.getDefaultIconForType(attrDef.type),
+                            placeholder: attrDef.uiMetadata?.placeholder || `Inserisci ${attrName}...`,
+                            priority: attrDef.renderingHints?.priority || 'medium',
+                            group: attrDef.uiMetadata?.group || 'default',
+                            order: attrDef.uiMetadata?.order || 0
+                        };
+                    }
+                });
+
+                res.json({
+                    success: true,
+                    data: {
+                        entityType,
+                        attributes: uiMetadata,
+                        entityDisplayConfig: {
+                            displayLabel: schema.displayLabel || entityType,
+                            displayField: schema.displayField || 'nome',
+                            defaultComponent: 'EntityCard',
+                            listComponent: 'EntityTable'
+                        }
+                    },
+                    meta: {
+                        entityType,
+                        attributeCount: Object.keys(uiMetadata).length,
+                        requestedAttributes: attributes ? targetAttributes : null
+                    }
+                });
+
+            } catch (error) {
+                console.error('❌ Errore recupero UI metadata:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                    data: null
+                });
+            }
+        });
+
+        // ✨ NUOVO: PUT /api/schema/entity/:entityType/ui-metadata - Aggiorna UI metadata
+        this.app.put('/api/schema/entity/:entityType/ui-metadata', async (req, res) => {
+            try {
+                const { entityType } = req.params;
+                const { attributeName, uiMetadata } = req.body;
+
+                if (!attributeName || !uiMetadata) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'attributeName e uiMetadata sono richiesti'
+                    });
+                }
+
+                const schema = this.schemaManager.getEntitySchema(entityType);
+                if (!schema) {
+                    return res.status(404).json({
+                        success: false,
+                        error: `Schema non trovato per il tipo ${entityType}`
+                    });
+                }
+
+                const attrDef = schema.attributes?.[attributeName];
+                if (!attrDef) {
+                    return res.status(404).json({
+                        success: false,
+                        error: `Attributo ${attributeName} non trovato nel schema ${entityType}`
+                    });
+                }
+
+                // Aggiorna i metadati UI dell'attributo
+                if (attrDef.uiMetadata) {
+                    Object.assign(attrDef.uiMetadata, uiMetadata);
+                } else {
+                    attrDef.uiMetadata = uiMetadata;
+                }
+
+                // Salva lo schema aggiornato
+                await this.schemaManager.persistSchema(entityType, schema);
+
+                // Notifica cambiamento via WebSocket
+                this.broadcastMessage({
+                    type: 'ui-metadata-updated',
+                    data: {
+                        entityType,
+                        attributeName,
+                        uiMetadata: attrDef.getUIMetadata ? attrDef.getUIMetadata() : uiMetadata
+                    },
+                    timestamp: new Date().toISOString()
+                });
+
+                res.json({
+                    success: true,
+                    data: {
+                        entityType,
+                        attributeName,
+                        updatedUIMetadata: attrDef.getUIMetadata ? attrDef.getUIMetadata() : uiMetadata
+                    }
+                });
+
+            } catch (error) {
+                console.error('❌ Errore aggiornamento UI metadata:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -2657,6 +2917,254 @@ class EvolvedServer {
             console.error('❌ Errore durante arresto server:', error);
             throw error;
         }
+    }
+
+    /**
+     * ✨ HELPER: Ottiene icona di default basata sul tipo di attributo
+     * @param {string} type - Tipo dell'attributo
+     * @returns {string} Nome dell'icona
+     */
+    getDefaultIconForType(type) {
+        const iconMap = {
+            'string': 'type',
+            'text': 'file-text',
+            'number': 'hash',
+            'email': 'mail',
+            'date': 'calendar',
+            'boolean': 'check-square',
+            'select': 'list',
+            'reference': 'link',
+            'percentage': 'percent',
+            'json': 'code'
+        };
+        
+        return iconMap[type] || 'edit-3';
+    }
+
+
+    /**
+     * ✨ HELPER: Capitalizza la prima lettera di una stringa
+     * @param {string} str - Stringa da capitalizzare
+     * @returns {string} Stringa capitalizzata
+     */
+    capitalizeFirst(str) {
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    /**
+     * ✨ HELPER: Ottiene componente UI di default per tipo (alias di getDefaultIconForType)
+     * @param {string} type - Tipo dell'attributo
+     * @returns {string} Nome del componente UI di default
+     */
+    getDefaultComponentForType(type) {
+        const componentMap = {
+            'string': 'TextInput',
+            'text': 'TextArea',
+            'number': 'NumberInput',
+            'email': 'EmailInput',
+            'date': 'DateInput',
+            'boolean': 'Checkbox',
+            'select': 'SelectInput',
+            'reference': 'EntityAutocomplete',
+            'percentage': 'PercentageInput',
+            'json': 'JsonEditor'
+        };
+        
+        return componentMap[type] || 'TextInput';
+    }
+
+    /**
+     * ✨ HELPER: Formatta schema per UI semantica con metadati completi
+     * @param {Object} schema - Schema originale
+     * @param {string} entityType - Tipo di entità
+     * @returns {Object} Schema formattato per UI semantica
+     */
+    formatSchemaForSemanticUI(schema, entityType) {
+        const semanticSchema = {
+            entityType: entityType,
+            displayConfig: {
+                displayLabel: schema.displayLabel || this.capitalizeFirst(entityType),
+                displayField: schema.displayField || 'nome',
+                icon: schema.icon || this.getDefaultIconForType('entity'),
+                defaultView: 'table',
+                supportedViews: ['table', 'cards', 'form'],
+                searchable: true,
+                sortable: true,
+                creatable: true,
+                editable: true,
+                deletable: true
+            },
+            attributes: {},
+            groups: {},
+            renderingHints: {
+                priority: 'high',
+                defaultSort: schema.displayField || 'nome',
+                defaultFilters: [],
+                bulkOperations: ['edit', 'delete'],
+                exportFormats: ['csv', 'json']
+            }
+        };
+
+        // Processa ogni attributo
+        if (schema.attributes) {
+            Object.entries(schema.attributes).forEach(([attrName, attrDef]) => {
+                const uiMetadata = attrDef.getUIMetadata ? attrDef.getUIMetadata() : {
+                    component: this.getDefaultComponentForType(attrDef.type),
+                    label: attrName,
+                    icon: this.getDefaultIconForType(attrDef.type),
+                    priority: 'medium',
+                    group: 'default'
+                };
+
+                semanticSchema.attributes[attrName] = {
+                    name: attrName,
+                    type: attrDef.type || 'string',
+                    required: attrDef.required || false,
+                    description: attrDef.description || '',
+                    ...uiMetadata,
+                    validation: {
+                        required: attrDef.required || false,
+                        rules: attrDef.validationRules || [],
+                        min: attrDef.min,
+                        max: attrDef.max,
+                        options: attrDef.options
+                    }
+                };
+
+                // Raggruppa attributi per groups
+                const groupName = uiMetadata.group || 'default';
+                if (!semanticSchema.groups[groupName]) {
+                    semanticSchema.groups[groupName] = {
+                        label: this.capitalizeFirst(groupName),
+                        order: this.getGroupOrder(groupName),
+                        collapsible: groupName !== 'default',
+                        attributes: []
+                    };
+                }
+                semanticSchema.groups[groupName].attributes.push(attrName);
+            });
+        }
+
+        // Ordina attributi in ogni gruppo
+        Object.values(semanticSchema.groups).forEach(group => {
+            group.attributes.sort((a, b) => {
+                const attrA = semanticSchema.attributes[a];
+                const attrB = semanticSchema.attributes[b];
+                return (attrA.order || 0) - (attrB.order || 0);
+            });
+        });
+
+        return semanticSchema;
+    }
+
+    /**
+     * ✨ HELPER: Arricchisce schema con metadati UI estesi
+     * @param {Object} schema - Schema originale
+     * @param {string} entityType - Tipo di entità
+     * @returns {Object} Schema arricchito
+     */
+    enrichSchemaWithUIMetadata(schema, entityType) {
+        const enrichedSchema = JSON.parse(JSON.stringify(schema)); // Deep clone
+
+        // Aggiungi metadati a livello di entità
+        enrichedSchema.uiMetadata = {
+            displayLabel: schema.displayLabel || this.capitalizeFirst(entityType),
+            displayField: schema.displayField || 'nome',
+            icon: schema.icon || 'database',
+            color: schema.color || '#3b82f6',
+            description: schema.description || `Entità di tipo ${entityType}`,
+            category: schema.category || 'general'
+        };
+
+        // Arricchisci ogni attributo con metadati UI completi
+        if (enrichedSchema.attributes) {
+            Object.entries(enrichedSchema.attributes).forEach(([attrName, attrDef]) => {
+                // Se l'attributo ha già metodi UI, usa quelli
+                if (attrDef.getUIMetadata) {
+                    enrichedSchema.attributes[attrName].fullUIMetadata = attrDef.getUIMetadata();
+                } else {
+                    // Altrimenti genera metadati UI completi
+                    enrichedSchema.attributes[attrName].fullUIMetadata = {
+                        component: attrDef.uiMetadata?.component || this.getDefaultComponentForType(attrDef.type),
+                        label: attrDef.uiMetadata?.label || this.capitalizeFirst(attrName),
+                        placeholder: attrDef.uiMetadata?.placeholder || `Inserisci ${attrName}...`,
+                        icon: attrDef.displaySettings?.icon || this.getDefaultIconForType(attrDef.type),
+                        tooltip: attrDef.displaySettings?.tooltip || attrDef.description,
+                        priority: attrDef.renderingHints?.priority || 'medium',
+                        group: attrDef.uiMetadata?.group || 'default',
+                        order: attrDef.uiMetadata?.order || 0,
+                        width: attrDef.uiMetadata?.width || 'auto',
+                        validation: {
+                            realtime: attrDef.uiMetadata?.validation?.realtime || false,
+                            debounceMs: attrDef.uiMetadata?.validation?.debounceMs || 300,
+                            showErrors: attrDef.uiMetadata?.validation?.showErrors !== false
+                        },
+                        conditional: attrDef.renderingHints?.conditional || {},
+                        listConfig: attrDef.displaySettings?.listConfig || {
+                            searchable: true,
+                            creatable: true,
+                            multiSelect: false
+                        }
+                    };
+                }
+
+                // Aggiungi metadati di validazione arricchiti
+                enrichedSchema.attributes[attrName].validationMetadata = {
+                    required: attrDef.required || false,
+                    type: attrDef.type || 'string',
+                    rules: attrDef.validationRules || [],
+                    constraints: {
+                        min: attrDef.min,
+                        max: attrDef.max,
+                        options: attrDef.options,
+                        pattern: this.getValidationPattern(attrDef.type)
+                    }
+                };
+            });
+        }
+
+        return enrichedSchema;
+    }
+
+    /**
+     * ✨ HELPER: Ottiene ordinamento per gruppi UI
+     * @param {string} groupName - Nome del gruppo
+     * @returns {number} Ordinamento numerico
+     */
+    getGroupOrder(groupName) {
+        const groupOrder = {
+            'default': 0,
+            'basic': 10,
+            'contact': 20,
+            'personal': 30,
+            'professional': 40,
+            'financial': 50,
+            'dates': 60,
+            'location': 70,
+            'metadata': 80,
+            'advanced': 90,
+            'system': 100
+        };
+        
+        return groupOrder[groupName] || 50;
+    }
+
+    /**
+     * ✨ HELPER: Ottiene pattern di validazione per tipo
+     * @param {string} type - Tipo dell'attributo
+     * @returns {string|null} Pattern regex se disponibile
+     */
+    getValidationPattern(type) {
+        const patterns = {
+            'email': '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+            'phone': '^[\\+]?[1-9][\\d\\s\\-\\(\\)]{7,15}$',
+            'url': '^https?:\\/\\/.+',
+            'number': '^\\d+(\\.\\d+)?$',
+            'percentage': '^(100|[1-9]?\\d)$'
+        };
+        
+        return patterns[type] || null;
     }
 }
 

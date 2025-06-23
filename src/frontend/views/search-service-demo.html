@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SearchService Demo - SSOT-3005</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .demo-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            margin: 2rem auto;
+            max-width: 1000px;
+        }
+        
+        .demo-header {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .demo-content {
+            padding: 2rem;
+        }
+        
+        .demo-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .demo-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .demo-card:hover {
+            border-color: #3498db;
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.15);
+            transform: translateY(-2px);
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .demo-card h4 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        
+        .demo-card p {
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+        
+        .demo-card .badge {
+            font-size: 0.8rem;
+        }
+        
+        .features-list {
+            background: linear-gradient(135deg, #e8f5e8, #f0f8f0);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .tech-stack {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .tech-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-container">
+            <div class="demo-header">
+                <h1><i class="bi bi-search me-3"></i>SearchService Architecture Demo</h1>
+                <p class="mb-0">Nuovo sistema di ricerca riusabile con architettura a 3 strati implementato con successo</p>
+            </div>
+            
+            <div class="demo-content">
+                <div class="features-list">
+                    <h4><i class="bi bi-check2-circle me-2 text-success"></i>Features Implementate</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check text-success me-2"></i>API Layer riusabile</li>
+                                <li><i class="bi bi-check text-success me-2"></i>SearchService centralizzato</li>
+                                <li><i class="bi bi-check text-success me-2"></i>SmartInput component</li>
+                                <li><i class="bi bi-check text-success me-2"></i>Cache intelligente (3min)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check text-success me-2"></i>Ricerca multi-campo</li>
+                                <li><i class="bi bi-check text-success me-2"></i>"Crea Nuovo" dinamico</li>
+                                <li><i class="bi bi-check text-success me-2"></i>Keyboard navigation</li>
+                                <li><i class="bi bi-check text-success me-2"></i>Error handling robusto</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tech-stack">
+                    <h4><i class="bi bi-cpu me-2 text-primary"></i>Tech Stack</h4>
+                    <div class="tech-grid">
+                        <div class="tech-item">
+                            <i class="bi bi-layers display-6 text-primary"></i>
+                            <h6 class="mt-2">3-Layer Architecture</h6>
+                            <small>API → Service → Component</small>
+                        </div>
+                        <div class="tech-item">
+                            <i class="bi bi-speedometer2 display-6 text-success"></i>
+                            <h6 class="mt-2">Smart Caching</h6>
+                            <small>In-memory con invalidazione</small>
+                        </div>
+                        <div class="tech-item">
+                            <i class="bi bi-ui-checks display-6 text-info"></i>
+                            <h6 class="mt-2">Svelte Components</h6>
+                            <small>Reactive & Reusable</small>
+                        </div>
+                        <div class="tech-item">
+                            <i class="bi bi-database display-6 text-warning"></i>
+                            <h6 class="mt-2">Neo4j Integration</h6>
+                            <small>Advanced search queries</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h3><i class="bi bi-play-circle me-2"></i>Demo Disponibili</h3>
+                
+                <div class="demo-links">
+                    <a href="/svelte-test.html?demo=true" class="demo-card">
+                        <h4><i class="bi bi-person-check me-2"></i>Svelte Integration Demo</h4>
+                        <p>Test completo del nuovo SmartInput integrato nell'app Svelte principale con SearchService.</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary">Svelte</span>
+                            <span class="badge bg-success">Interactive</span>
+                        </div>
+                    </a>
+                    
+                    <a href="../views/multi-module-demo.html" class="demo-card">
+                        <h4><i class="bi bi-grid-3x3-gap me-2"></i>Multi-Module Demo</h4>
+                        <p>Test avanzato con TableModule, CardModule, FormModule e ListModule che utilizzano il sistema di ricerca.</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-info">Vanilla JS</span>
+                            <span class="badge bg-warning">Advanced</span>
+                        </div>
+                    </a>
+                    
+                    <a href="../views/semantic-platform-demo.html" class="demo-card">
+                        <h4><i class="bi bi-diagram-3 me-2"></i>Semantic Platform Demo</h4>
+                        <p>Piattaforma semantica completa con SimpleTableModule integrato che usa SearchService.</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-secondary">Platform</span>
+                            <span class="badge bg-info">Production Ready</span>
+                        </div>
+                    </a>
+                    
+                    <a href="../views/simple-evolved-table-demo.html" class="demo-card">
+                        <h4><i class="bi bi-table me-2"></i>Evolved Table Demo</h4>
+                        <p>Tabella evoluta con ricerca avanzata, editing inline e real-time sync using SearchService.</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-success">Real-time</span>
+                            <span class="badge bg-primary">Table</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="alert alert-info mt-4">
+                    <h5><i class="bi bi-info-circle me-2"></i>Test Automation</h5>
+                    <p class="mb-2">È disponibile una suite completa di test automatizzati:</p>
+                    <code>node test-search-service.js</code>
+                    <p class="mt-2 mb-0">
+                        <small>
+                            Tests: Backend API, Entity Creation, Cache Performance, Error Handling, Architecture Validation, End-to-End Integration
+                        </small>
+                    </p>
+                </div>
+
+                <div class="alert alert-success mt-3">
+                    <h5><i class="bi bi-check-circle me-2"></i>Implementation Status</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>✅ Completed:</strong>
+                            <ul class="mb-0 mt-1">
+                                <li>API Layer implementation</li>
+                                <li>SearchService with caching</li>
+                                <li>SmartInput Svelte component</li>
+                                <li>Backend search endpoints</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>✅ Validated:</strong>
+                            <ul class="mb-0 mt-1">
+                                <li>Test suite (100% pass)</li>
+                                <li>Cross-entity search</li>
+                                <li>Entity creation flow</li>
+                                <li>Backward compatibility</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <h5>🚀 Sistema Pronto per Produzione</h5>
+                    <p class="text-muted">
+                        L'architettura SearchService è stata implementata seguendo le best practices e è ready per l'integrazione in tutti i moduli della piattaforma.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

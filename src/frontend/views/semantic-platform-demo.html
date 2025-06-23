@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Piattaforma a Rendering Semantico | SSOT-3005</title>
+    
+    <!-- Stili Bootstrap per prototipazione rapida -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Stili custom per la demo -->
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #6b7280;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --background-color: #f8fafc;
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .demo-header {
+            background: linear-gradient(135deg, var(--primary-color), #1e40af);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .demo-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            border: none;
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s ease;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .semantic-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+
+        .semantic-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        .semantic-table-header {
+            background-color: #f8fafc;
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .semantic-input {
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .semantic-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-connected {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .status-disconnected {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .api-response {
+            background: #1f2937;
+            color: #f9fafb;
+            border-radius: 6px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .semantic-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .demo-section {
+            margin-bottom: 3rem;
+        }
+
+        .semantic-component {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            background: white;
+            margin-bottom: 1rem;
+        }
+
+        .component-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .component-title {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .component-subtitle {
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header della Demo -->
+    <header class="demo-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="mb-3">
+                        <i class="bi bi-palette me-2"></i>
+                        Demo Piattaforma a Rendering Semantico
+                    </h1>
+                    <p class="lead mb-4">
+                        Architettura dinamica data-driven con UI metadata, rendering semantico e ricerca intelligente
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-database me-1"></i>Schema Auto-descrittivi
+                        </span>
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-cpu me-1"></i>Rendering Dinamico
+                        </span>
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-lightning me-1"></i>Real-time Sync
+                        </span>
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-search me-1"></i>Smart Search
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Status Connection -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="demo-card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-activity me-2"></i>Status Sistema
+                        </h5>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div>
+                                <strong>Backend:</strong>
+                                <span id="backend-status" class="status-indicator status-disconnected ms-2">
+                                    <i class="bi bi-circle-fill me-1"></i>Checking...
+                                </span>
+                            </div>
+                            <div>
+                                <strong>WebSocket:</strong>
+                                <span id="websocket-status" class="status-indicator status-disconnected ms-2">
+                                    <i class="bi bi-circle-fill me-1"></i>Disconnected
+                                </span>
+                            </div>
+                            <div>
+                                <strong>Schema API:</strong>
+                                <span id="schema-status" class="status-indicator status-disconnected ms-2">
+                                    <i class="bi bi-circle-fill me-1"></i>Not Tested
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Section 1: Schema UI Metadata -->
+        <section class="demo-section">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="mb-4">
+                        <i class="bi bi-palette me-2"></i>
+                        1. Schema con UI Metadata
+                    </h2>
+                </div>
+            </div>
+
+            <div class="semantic-grid">
+                <!-- Schema Loader -->
+                <div>
+                    <div class="semantic-component">
+                        <div class="component-header">
+                            <div>
+                                <div class="component-title">Carica Schema</div>
+                                <div class="component-subtitle">Test endpoint /api/schema/entity con UI metadata</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="schemaEntityType" class="form-label">Tipo Entità</label>
+                            <select id="schemaEntityType" class="form-select semantic-input">
+                                <option value="Persona">Persona</option>
+                                <option value="Contact">Contact</option>
+                                <option value="Progetto">Progetto</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="schemaFormat" class="form-label">Formato Schema</label>
+                            <select id="schemaFormat" class="form-select semantic-input">
+                                <option value="standard">Standard</option>
+                                <option value="semantic-ui">Semantico UI</option>
+                                <option value="ui-metadata-only">Solo UI Metadata</option>
+                            </select>
+                        </div>
+
+                        <button id="loadSchema" class="btn btn-primary w-100">
+                            <i class="bi bi-download me-2"></i>Carica Schema
+                        </button>
+
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Formati diversi per diversi use cases del frontend
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schema Display -->
+                <div>
+                    <div class="semantic-component">
+                        <div class="component-header">
+                            <div>
+                                <div class="component-title">Schema Risultante</div>
+                                <div class="component-subtitle" id="schema-subtitle">
+                                    Schema con metadati UI per rendering dinamico
+                                </div>
+                            </div>
+                            <div id="schema-loading" class="loading-spinner" style="display: none;"></div>
+                        </div>
+
+                        <div id="schema-container">
+                            <div class="text-muted text-center py-4">
+                                <i class="bi bi-file-earmark-code" style="font-size: 2rem;"></i>
+                                <div class="mt-2">Seleziona un tipo di entità e carica lo schema</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Demo Section 2: Dynamic Rendering -->
+        <section class="demo-section">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="mb-4">
+                        <i class="bi bi-gear me-2"></i>
+                        2. Rendering Dinamico Semantico
+                    </h2>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="semantic-component">
+                        <div class="component-header">
+                            <div>
+                                <div class="component-title">Modulo Tabellare Dinamico</div>
+                                <div class="component-subtitle">
+                                    Componente che si adatta automaticamente al schema con UI metadata
+                                </div>
+                            </div>
+                            <button id="refresh-table" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                            </button>
+                        </div>
+
+                        <!-- Dynamic Table Container -->
+                        <div id="dynamic-table-container">
+                            <div class="text-center py-5">
+                                <div class="loading-spinner mb-3"></div>
+                                <div class="text-muted">Caricamento componente dinamico...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Demo Section 3: Real-time Updates -->
+        <section class="demo-section">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="mb-4">
+                        <i class="bi bi-lightning me-2"></i>
+                        3. Aggiornamenti Real-time
+                    </h2>
+                </div>
+            </div>
+
+            <div class="semantic-grid">
+                <!-- WebSocket Monitor -->
+                <div>
+                    <div class="semantic-component">
+                        <div class="component-header">
+                            <div>
+                                <div class="component-title">Monitor WebSocket</div>
+                                <div class="component-subtitle">Eventi real-time del sistema</div>
+                            </div>
+                            <button id="clear-events" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-trash me-1"></i>Clear
+                            </button>
+                        </div>
+
+                        <div id="websocket-events" style="max-height: 300px; overflow-y: auto;">
+                            <!-- Eventi WebSocket qui -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Actions -->
+                <div>
+                    <div class="semantic-component">
+                        <div class="component-header">
+                            <div>
+                                <div class="component-title">Test Actions</div>
+                                <div class="component-subtitle">Trigger eventi per testare real-time</div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button id="test-entity-create" class="btn btn-outline-success">
+                                <i class="bi bi-plus-circle me-2"></i>Crea Entità Test
+                            </button>
+                            
+                            <button id="test-schema-evolution" class="btn btn-outline-info">
+                                <i class="bi bi-diagram-3 me-2"></i>Evolvi Schema
+                            </button>
+                            
+                            <button id="test-ui-metadata-update" class="btn btn-outline-warning">
+                                <i class="bi bi-palette me-2"></i>Aggiorna UI Metadata
+                            </button>
+                        </div>
+
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Queste azioni triggereranno eventi WebSocket visibili nel monitor
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Core Services -->
+    <script src="../services/WebSocketService.js"></script>
+    <script src="../services/EntityService.js"></script>
+    <script src="../services/SchemaService.js"></script>
+    
+    <!-- Dynamic Table Module -->
+    <script src="../components/SimpleTableModule.js"></script>
+
+    <!-- Demo Script -->
+    <script>
+        class SemanticPlatformDemo {
+            constructor() {
+                this.websocketService = new WebSocketService();
+                this.entityService = new EntityService();
+                this.schemaService = window.SchemaService || null;
+                
+                this.init();
+            }
+
+            async init() {
+                console.log('🎨 Inizializzazione Demo Piattaforma Semantica');
+                
+                // Inizializza servizi
+                await this.initializeServices();
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Check system status
+                await this.checkSystemStatus();
+                
+                // Setup WebSocket monitoring
+                this.setupWebSocketMonitoring();
+                
+                // Initialize dynamic table
+                this.initializeDynamicTable();
+                
+                console.log('✅ Demo inizializzata con successo');
+            }
+
+            async initializeServices() {
+                try {
+                    // Connetti WebSocket
+                    await this.websocketService.connect();
+                    this.updateStatus('websocket-status', true, 'Connected');
+                    
+                } catch (error) {
+                    console.error('❌ Errore inizializzazione servizi:', error);
+                    this.updateStatus('websocket-status', false, 'Connection Error');
+                }
+            }
+
+            setupEventListeners() {
+                // Schema Loading
+                document.getElementById('loadSchema').addEventListener('click', () => {
+                    this.loadSchemaWithMetadata();
+                });
+
+                // Real-time actions
+                document.getElementById('test-entity-create').addEventListener('click', () => {
+                    this.testEntityCreate();
+                });
+
+                document.getElementById('test-schema-evolution').addEventListener('click', () => {
+                    this.testSchemaEvolution();
+                });
+
+                document.getElementById('test-ui-metadata-update').addEventListener('click', () => {
+                    this.testUIMetadataUpdate();
+                });
+
+                // Utility buttons
+                document.getElementById('clear-events').addEventListener('click', () => {
+                    document.getElementById('websocket-events').innerHTML = '';
+                });
+
+                document.getElementById('refresh-table').addEventListener('click', () => {
+                    this.initializeDynamicTable();
+                });
+
+            }
+
+            async checkSystemStatus() {
+                // Test Backend
+                try {
+                    const response = await fetch('/api/schema/entities');
+                    if (response.ok) {
+                        this.updateStatus('backend-status', true, 'Connected');
+                    } else {
+                        this.updateStatus('backend-status', false, `HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    this.updateStatus('backend-status', false, 'Connection Error');
+                }
+
+                // Test Schema API
+                try {
+                    const response = await fetch('/api/schema/entity/Persona?format=semantic-ui');
+                    if (response.ok) {
+                        this.updateStatus('schema-status', true, 'Available');
+                    } else {
+                        this.updateStatus('schema-status', false, `HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    this.updateStatus('schema-status', false, 'Error');
+                }
+
+                // Test UI Metadata endpoint
+                try {
+                    const response = await fetch('/api/schema/entity/Persona/ui-metadata');
+                    if (response.ok) {
+                        console.log('✅ UI Metadata endpoint disponibile');
+                    } else {
+                        console.warn(`⚠️ UI Metadata endpoint: HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    console.warn('⚠️ UI Metadata endpoint error:', error.message);
+                }
+            }
+
+            updateStatus(elementId, isConnected, text) {
+                const element = document.getElementById(elementId);
+                element.className = `status-indicator ${isConnected ? 'status-connected' : 'status-disconnected'} ms-2`;
+                element.innerHTML = `<i class="bi bi-circle-fill me-1"></i>${text}`;
+            }
+
+            async loadSchemaWithMetadata() {
+                const entityType = document.getElementById('schemaEntityType').value;
+                const format = document.getElementById('schemaFormat').value;
+
+                const loadingElement = document.getElementById('schema-loading');
+                const containerElement = document.getElementById('schema-container');
+                const subtitleElement = document.getElementById('schema-subtitle');
+
+                loadingElement.style.display = 'block';
+                subtitleElement.textContent = 'Caricamento schema...';
+
+                try {
+                    let url = `/api/schema/entity/${entityType}`;
+                    
+                    if (format === 'semantic-ui') {
+                        url += '?format=semantic-ui';
+                    } else if (format === 'ui-metadata-only') {
+                        url = `/api/schema/entity/${entityType}/ui-metadata`;
+                    } else {
+                        url += '?includeUIMetadata=true';
+                    }
+
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    this.displaySchema(result, format);
+                    subtitleElement.textContent = `Schema ${entityType} (${format})`;
+
+                } catch (error) {
+                    console.error('❌ Errore caricamento schema:', error);
+                    containerElement.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Errore: ${error.message}
+                        </div>
+                    `;
+                    subtitleElement.textContent = 'Errore nel caricamento';
+                } finally {
+                    loadingElement.style.display = 'none';
+                }
+            }
+
+            displaySchema(result, format) {
+                const container = document.getElementById('schema-container');
+                
+                if (format === 'semantic-ui') {
+                    this.displaySemanticUISchema(result.data, container);
+                } else {
+                    container.innerHTML = `<div class="api-response">${JSON.stringify(result, null, 2)}</div>`;
+                }
+            }
+
+            displaySemanticUISchema(schema, container) {
+                if (!schema.attributes) {
+                    container.innerHTML = `
+                        <div class="text-muted text-center py-3">
+                            <i class="bi bi-database"></i>
+                            <div class="mt-2">Schema senza attributi</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Configurazione Display</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Label:</strong> ${schema.displayConfig?.displayLabel || 'N/A'}</li>
+                                <li><strong>Field:</strong> ${schema.displayConfig?.displayField || 'N/A'}</li>
+                                <li><strong>Views:</strong> ${schema.displayConfig?.supportedViews?.join(', ') || 'N/A'}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Rendering Hints</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Priorità:</strong> ${schema.renderingHints?.priority || 'N/A'}</li>
+                                <li><strong>Sort Default:</strong> ${schema.renderingHints?.defaultSort || 'N/A'}</li>
+                                <li><strong>Bulk Ops:</strong> ${schema.renderingHints?.bulkOperations?.join(', ') || 'N/A'}</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+
+                // Raggruppa attributi
+                if (schema.groups) {
+                    Object.entries(schema.groups).forEach(([groupName, group]) => {
+                        html += `
+                            <div class="mb-3">
+                                <h6 class="text-primary">${group.label} (${group.attributes.length})</h6>
+                                <div class="row">
+                                    ${group.attributes.map(attrName => {
+                                        const attr = schema.attributes[attrName];
+                                        return `
+                                            <div class="col-md-6 mb-2">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-${attr.icon || 'circle'} me-2 text-muted"></i>
+                                                    <div>
+                                                        <strong>${attr.label}</strong>
+                                                        <small class="text-muted d-block">${attr.component} | ${attr.type}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += `
+                        <div class="api-response">${JSON.stringify(schema, null, 2)}</div>
+                    `;
+                }
+
+                container.innerHTML = html;
+            }
+
+            setupWebSocketMonitoring() {
+                const eventsContainer = document.getElementById('websocket-events');
+
+                // Subscribe to all events
+                this.websocketService.subscribe('*', (message) => {
+                    this.addWebSocketEvent(message, eventsContainer);
+                });
+
+                // Add initial message
+                this.addWebSocketEvent({
+                    type: 'system',
+                    data: { message: 'WebSocket monitoring attivato' },
+                    timestamp: new Date().toISOString()
+                }, eventsContainer);
+            }
+
+            addWebSocketEvent(message, container) {
+                const timestamp = new Date(message.timestamp || Date.now()).toLocaleTimeString();
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'mb-2 p-2 border rounded';
+                eventDiv.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong class="text-primary">${message.type}</strong>
+                            <small class="text-muted ms-2">${timestamp}</small>
+                        </div>
+                        <i class="bi bi-${this.getEventIcon(message.type)} text-muted"></i>
+                    </div>
+                    <div class="mt-1">
+                        <small>${this.formatEventData(message.data)}</small>
+                    </div>
+                `;
+
+                container.insertBefore(eventDiv, container.firstChild);
+
+                // Limit to 10 events
+                while (container.children.length > 10) {
+                    container.removeChild(container.lastChild);
+                }
+            }
+
+            getEventIcon(type) {
+                const icons = {
+                    'system': 'gear',
+                    'entity-created': 'plus-circle',
+                    'entity-updated': 'pencil',
+                    'schema-evolved': 'diagram-3',
+                    'ui-metadata-updated': 'palette'
+                };
+                return icons[type] || 'circle';
+            }
+
+            formatEventData(data) {
+                if (!data) return 'No data';
+                if (typeof data === 'string') return data;
+                if (data.message) return data.message;
+                if (data.entityType) return `Entity: ${data.entityType}`;
+                return JSON.stringify(data).substring(0, 100) + '...';
+            }
+
+            async testEntityCreate() {
+                try {
+                    const testEntity = {
+                        entityType: 'Persona',
+                        nome: `Test-${Date.now()}`,
+                        email: `test${Date.now()}@example.com`
+                    };
+
+                    const result = await this.entityService.createEntity('Persona', testEntity);
+                    console.log('✅ Entità test creata:', result);
+
+                } catch (error) {
+                    console.error('❌ Errore creazione entità test:', error);
+                }
+            }
+
+            async testSchemaEvolution() {
+                try {
+                    const evolution = {
+                        attributes: {
+                            [`testAttr_${Date.now()}`]: {
+                                type: 'string',
+                                description: 'Attributo test aggiunto via demo',
+                                uiMetadata: {
+                                    label: 'Test Attribute',
+                                    component: 'TextInput',
+                                    group: 'test'
+                                }
+                            }
+                        }
+                    };
+
+                    const response = await fetch('/api/schema/entity/Persona', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ evolution })
+                    });
+
+                    if (response.ok) {
+                        console.log('✅ Schema evoluto con successo');
+                    } else {
+                        console.error('❌ Errore evoluzione schema');
+                    }
+
+                } catch (error) {
+                    console.error('❌ Errore test evoluzione schema:', error);
+                }
+            }
+
+            async testUIMetadataUpdate() {
+                try {
+                    const uiMetadata = {
+                        label: `Label Aggiornata ${Date.now()}`,
+                        component: 'TextArea',
+                        priority: 'high'
+                    };
+
+                    const response = await fetch('/api/schema/entity/Persona/ui-metadata', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            attributeName: 'nome',
+                            uiMetadata: uiMetadata
+                        })
+                    });
+
+                    if (response.ok) {
+                        console.log('✅ UI Metadata aggiornato con successo');
+                    } else {
+                        console.error('❌ Errore aggiornamento UI metadata');
+                    }
+
+                } catch (error) {
+                    console.error('❌ Errore test UI metadata:', error);
+                }
+            }
+
+            initializeDynamicTable() {
+                console.log('🧩 Inizializzazione Modulo Tabellare Dinamico');
+                
+                const container = document.getElementById('dynamic-table-container');
+                if (!container) {
+                    console.error('❌ Container tabella dinamica non trovato');
+                    return;
+                }
+
+                // Ensure services are available
+                if (!window.EntityService) {
+                    window.EntityService = this.entityService;
+                }
+
+                try {
+                    // Clear container
+                    container.innerHTML = '';
+                    
+                    // Create table module instance
+                    this.dynamicTableModule = new SimpleTableModule(container, null);
+                    
+                    console.log('✅ Modulo tabellare dinamico inizializzato');
+                    
+                    // Add instruction text
+                    const instruction = document.createElement('div');
+                    instruction.className = 'alert alert-info mt-3';
+                    instruction.innerHTML = `
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Istruzioni:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Prima cella: Digita un tipo di entità (es. "Persona", "Contact")</li>
+                            <li>Header colonne: Aggiungi attributi desiderati</li>
+                            <li>Prima colonna: Cerca entità esistenti o creane di nuove</li>
+                            <li>Editing in tempo reale con sincronizzazione automatica</li>
+                        </ul>
+                    `;
+                    container.appendChild(instruction);
+                    
+                } catch (error) {
+                    console.error('❌ Errore inizializzazione tabella dinamica:', error);
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Errore caricamento modulo tabellare: ${error.message}
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Initialize demo when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new SemanticPlatformDemo();
+        });
+    </script>
+</body>
+</html>

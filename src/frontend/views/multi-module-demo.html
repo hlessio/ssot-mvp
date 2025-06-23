@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Multi-Modulo Real-time | SSOT-3005</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --background-color: #f8fafc;
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .demo-header {
+            background: linear-gradient(135deg, var(--primary-color), #1e40af);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .module-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            border: none;
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            min-height: 400px;
+        }
+
+        .module-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        .module-card.syncing {
+            border: 2px solid var(--success-color);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .atomic-slot {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .atomic-slot.updated {
+            border-color: var(--success-color);
+            background-color: rgba(16, 185, 129, 0.05);
+            animation: pulse-green 1s ease-out;
+        }
+
+        @keyframes pulse-green {
+            0% { background-color: rgba(16, 185, 129, 0.2); }
+            100% { background-color: rgba(16, 185, 129, 0.05); }
+        }
+
+        .schema-controller {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .realtime-monitor {
+            background: #1f2937;
+            color: #f9fafb;
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-connected {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .status-disconnected {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .module-header {
+            background: linear-gradient(45deg, #f8fafc, #e5e7eb);
+            border-bottom: 1px solid #d1d5db;
+            padding: 1rem;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .module-title {
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #6b7280;
+            transition: background-color 0.3s ease;
+        }
+
+        .sync-indicator.active {
+            background-color: var(--success-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .attribute-control {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .grid-2x2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2x2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="demo-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="mb-3">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>
+                        Demo Multi-Modulo Real-time
+                    </h1>
+                    <p class="lead mb-4">
+                        Test completo del layer di traduzione semantica con sincronizzazione real-time cross-modulo
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-layers me-1"></i>Schema-driven UI
+                        </span>
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-arrow-repeat me-1"></i>Real-time Sync
+                        </span>
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-puzzle me-1"></i>Multi-Module
+                        </span>
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-cpu me-1"></i>Zero-Config
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <!-- Sistema Status -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="schema-controller">
+                    <h5 class="mb-3">
+                        <i class="bi bi-gear me-2"></i>Schema Controller & System Status
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="entityTypeSelector" class="form-label">Tipo Entità</label>
+                                <select id="entityTypeSelector" class="form-select">
+                                    <option value="Persona">Persona</option>
+                                    <option value="Contact">Contact</option>
+                                    <option value="Progetto">Progetto</option>
+                                </select>
+                            </div>
+                            <div class="d-flex gap-2 mb-3">
+                                <button id="loadSchema" class="btn btn-primary">
+                                    <i class="bi bi-download me-1"></i>Carica Schema
+                                </button>
+                                <button id="addAttribute" class="btn btn-outline-success">
+                                    <i class="bi bi-plus me-1"></i>Aggiungi Attributo
+                                </button>
+                                <button id="evolveSchema" class="btn btn-outline-info">
+                                    <i class="bi bi-arrow-up me-1"></i>Evolvi Schema
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex flex-wrap gap-3">
+                                <div>
+                                    <strong>Backend:</strong>
+                                    <span id="backend-status" class="status-indicator status-disconnected ms-2">
+                                        <i class="bi bi-circle-fill me-1"></i>Checking...
+                                    </span>
+                                </div>
+                                <div>
+                                    <strong>WebSocket:</strong>
+                                    <span id="websocket-status" class="status-indicator status-disconnected ms-2">
+                                        <i class="bi bi-circle-fill me-1"></i>Disconnected
+                                    </span>
+                                </div>
+                                <div>
+                                    <strong>Moduli Attivi:</strong>
+                                    <span id="active-modules" class="badge bg-info">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Atomic Slots -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5 class="mb-3">
+                    <i class="bi bi-puzzle-fill me-2"></i>Slot Atomici Singoli
+                </h5>
+            </div>
+            <div class="col-md-4">
+                <div class="atomic-slot" id="atomic-nome">
+                    <label class="form-label">Nome</label>
+                    <div id="nome-slot-container"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="atomic-slot" id="atomic-email">
+                    <label class="form-label">Email</label>
+                    <div id="email-slot-container"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="atomic-slot" id="atomic-telefono">
+                    <label class="form-label">Telefono</label>
+                    <div id="telefono-slot-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-Module Grid -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5 class="mb-3">
+                    <i class="bi bi-grid-3x3 me-2"></i>Moduli Multipli Simultanei
+                </h5>
+            </div>
+        </div>
+
+        <div class="grid-2x2">
+            <!-- Modulo 1: SimpleTable -->
+            <div class="module-card" id="module-table">
+                <div class="module-header">
+                    <div class="module-title">
+                        <i class="bi bi-table"></i>
+                        <span>Spreadsheet View</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="sync-indicator" id="sync-table"></div>
+                        <button class="btn btn-sm btn-outline-primary" id="refresh-table">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-3" id="table-module-container">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modulo 2: Card View -->
+            <div class="module-card" id="module-card">
+                <div class="module-header">
+                    <div class="module-title">
+                        <i class="bi bi-card-text"></i>
+                        <span>Card View</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="sync-indicator" id="sync-card"></div>
+                        <button class="btn btn-sm btn-outline-primary" id="refresh-card">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-3" id="card-module-container">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modulo 3: Form View -->
+            <div class="module-card" id="module-form">
+                <div class="module-header">
+                    <div class="module-title">
+                        <i class="bi bi-form-text"></i>
+                        <span>Form View</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="sync-indicator" id="sync-form"></div>
+                        <button class="btn btn-sm btn-outline-primary" id="refresh-form">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-3" id="form-module-container">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modulo 4: List View -->
+            <div class="module-card" id="module-list">
+                <div class="module-header">
+                    <div class="module-title">
+                        <i class="bi bi-list-ul"></i>
+                        <span>List View</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="sync-indicator" id="sync-list"></div>
+                        <button class="btn btn-sm btn-outline-primary" id="refresh-list">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-3" id="list-module-container">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Monitor -->
+        <div class="row">
+            <div class="col-12">
+                <div class="module-card">
+                    <div class="module-header">
+                        <div class="module-title">
+                            <i class="bi bi-activity"></i>
+                            <span>Real-time Monitor</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" id="clear-monitor">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <div class="p-3">
+                        <div class="realtime-monitor" id="realtime-events">
+                            <div class="text-muted">Monitoring real-time events...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Core Services -->
+    <script src="../services/WebSocketService.js"></script>
+    <script src="../services/EntityService.js"></script>
+    <script src="../services/SchemaService.js"></script>
+    
+    <!-- Modules -->
+    <script src="../components/SimpleTableModule.js"></script>
+    <script src="../components/CardModule.js"></script>
+    <script src="../components/FormModule.js"></script>
+    <script src="../components/ListModule.js"></script>
+    <script src="../components/AtomicSlot.js"></script>
+
+    <!-- Demo Script -->
+    <script src="multi-module-demo.js"></script>
+</body>
+</html>
