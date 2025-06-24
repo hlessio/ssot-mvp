@@ -1,65 +1,43 @@
-# Documentazione SSOT-3005
+# Documentation Directory
 
-Benvenuto nella documentazione del progetto SSOT-3005. Questa documentazione è organizzata per riflettere fedelmente la struttura del codice sorgente.
+This directory contains all project documentation organized by purpose and relevance.
 
-## Struttura della Documentazione
+## Structure
 
-```
-docs/
-├── backend/           # Documentazione backend
-│   ├── core/         # Funzionalità core
-│   ├── dao/          # Data Access Objects
-│   └── services/     # Servizi e business logic
-├── frontend/          # Documentazione frontend
-│   ├── components/   # Componenti UI
-│   ├── definitions/  # Tipi e interfacce
-│   ├── modules/      # Moduli applicativi
-│   ├── services/     # Servizi frontend
-│   └── views/        # Viste e pagine
-├── demos/            # Documentazione demo
-├── logs/             # Log e documentazione operativa
-└── mvp/              # Documentazione MVP
-```
+- **`current/`** - Active project documentation and architecture
+  - Current system architecture documents
+  - MVP and evolved system documentation
+  - Main technical references
 
-## Mappatura con il Codice Sorgente
+- **`phases/`** - Development phase reports and planning
+  - Phase-specific implementation reports
+  - Development roadmap and planning documents
+  - Historical development phases
 
-La struttura della documentazione rispecchia quella del codice:
+- **`guides/`** - Implementation guides and API documentation
+  - API reference guides
+  - Implementation tutorials
+  - Development manuals
+  - Integration guides
 
-```
-src/                  ←→  docs/
-├── backend/         ←→  ├── backend/
-│   ├── core/       ←→  │   ├── core/
-│   ├── dao/        ←→  │   ├── dao/
-│   └── services/   ←→  │   └── services/
-└── frontend/        ←→  └── frontend/
-    ├── components/ ←→      ├── components/
-    ├── definitions/←→      ├── definitions/
-    ├── modules/    ←→      ├── modules/
-    ├── services/   ←→      ├── services/
-    └── views/      ←→      └── views/
-```
+- **`api/`** - API-specific documentation (reserved for future use)
 
-## Come Navigare
+## Key Documents
 
-1. **Per documentazione backend**: Vai a `backend/` e scegli la sottocartella appropriata
-2. **Per documentazione frontend**: Vai a `frontend/` e scegli la sottocartella appropriata
-3. Ogni cartella contiene un README con linee guida specifiche
+### Current Architecture
+- `current/Architettura-Semantica-Reale-SSOT-3005.md` - Main system architecture
+- `current/architettura_mvp.md` - MVP architecture foundation
+- `current/architettura_mvp_evoluto.md` - Evolved system architecture
 
-## Principi Guida
+### Implementation Guides
+- `guides/API-Reference-Guide.md` - Complete API reference
+- `guides/SearchService-Implementation-Guide.md` - SearchService architecture
+- `guides/manuale_sviluppo_mvp.md` - MVP development manual
 
-- **Sincronizzazione**: La documentazione deve sempre riflettere la struttura del codice
-- **Granularità**: Ogni componente/servizio/modulo ha la sua documentazione specifica
-- **Chiarezza**: Template e linee guida standard per mantenere coerenza
-- **Manutenibilità**: Struttura che facilita gli aggiornamenti e la ricerca
+### Development History
+- `phases/Phase-7-Advanced-Table-Sync-System.md` - Phase 7 implementation
+- `phases/SSOT-4000-implementation-plan.md` - SSOT-4000 platform planning
 
-## Migrazione dalla Documentazione Precedente
+## Usage
 
-- `docs/core/doc_tecnico_evoluzione_core_v1.md` → `docs/backend/core/`
-- `docs/frontend/doc_tecnico_evoluzione_frontend_v1.md` → conservato come backup, da suddividere nelle nuove cartelle tematiche
-
-## Come Contribuire
-
-1. Per nuove funzionalità, crea la documentazione nella cartella appropriata
-2. Segui i template forniti nei README di ciascuna sezione
-3. Mantieni sempre la sincronizzazione tra codice e documentazione
-4. Aggiorna questo README se aggiungi nuove sezioni principali 
+Start with the current architecture documents to understand the system, then refer to implementation guides for specific development tasks. 
