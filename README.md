@@ -29,11 +29,25 @@ Open http://localhost:3000 to access the dashboard.
     ├── /components/   # Web Components
     ├── /services/     # Frontend services
     ├── /modules/      # UI modules
-    └── /definitions/  # JSON templates
+    ├── /definitions/  # JSON templates
+    └── /views/        # Empty - demos moved to /examples/
+
+/examples/             # Demo and example files
+├── /basic/           # Simple demos and tests
+├── /advanced/        # Complex integration demos
+└── /phase-demos/     # Phase-specific demonstrations
 
 /tests/                # Test files
 /docs/                 # Documentation
+├── /current/         # Active architecture docs
+├── /phases/          # Development phase reports
+├── /guides/          # Implementation guides
+└── /api/             # API documentation
+
+/logs/                 # Log files
 /archive/              # Legacy files and backups
+├── /mvp-baseline/    # Clean MVP reference
+└── /development-history/ # Historical documentation
 ```
 
 ## Key Features
@@ -54,10 +68,11 @@ See `CLAUDE.md` for detailed development guidance and architecture overview.
 
 ## Documentation
 
-- `/docs/architecture/` - System architecture documents
-- `/docs/development/` - Development guides and manuals
+- `/docs/current/` - Active system architecture documents
+- `/docs/phases/` - Development phase reports
+- `/docs/guides/` - Implementation guides and manuals
 - `CLAUDE.md` - AI assistant context and development guide
 
 ## Evolution
 
-This project has evolved from an MVP to a full-featured dynamic SSOT system. Historical files and the original MVP implementation are preserved in `/archive/mvp-original/` for reference.
+This project has evolved from an MVP to a full-featured dynamic SSOT system. Historical files and the original MVP implementation are preserved in `/archive/mvp-baseline/mvp-original/` for reference.

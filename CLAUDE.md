@@ -115,12 +115,16 @@ npm run test:legacy # Run legacy test files
 - Complex view implementations that may use template-module-renderer internally
 
 **Views and Pages (src/frontend/views/):**
-- Demo and test pages for different components and features
-- Development and debugging interfaces
-- **✨ NEW - realtime-sync-demo.html:** Complete working real-time sync demo with entity cards and cross-window synchronization
-- **✨ NEW - callsheet-demo.html:** Comprehensive callsheet + contact card demo showing intrinsic vs contextual attributes
-- **✨ NEW - websocket-test.html:** WebSocket debugging and testing interface with message monitoring
-- **✨ NEW - simple-evolved-table-demo.html:** Advanced admin table + SimpleTableModule integration demo with bidirectional real-time synchronization
+- Empty after reorganization - demos moved to /examples/
+
+**Demo & Examples (examples/):**
+- **basic/**: Simple functionality demos and component tests
+- **advanced/**: Complex integration demos and advanced features
+- **phase-demos/**: Phase-specific development demonstrations
+- **✨ realtime-sync-demo.html**: Complete working real-time sync demo (in advanced/)
+- **✨ callsheet-demo.html**: Comprehensive callsheet + contact card demo (in advanced/)
+- **✨ websocket-test.html**: WebSocket debugging and testing interface (in basic/)
+- **✨ simple-evolved-table-demo.html**: Advanced table sync demo (in advanced/)
 
 ### III. Database (Neo4j)
 
@@ -183,10 +187,15 @@ Stores:
 │       ├── /services/         # Frontend services
 │       ├── /modules/          # UI modules
 │       ├── /definitions/      # JSON templates
-│       ├── /views/           # Demo/test pages
+│       ├── /views/           # Empty - demos moved to /examples/
 │       ├── app.js            # Main application
 │       ├── index.html        # Main page
 │       └── style.css         # Styles
+│
+├── /examples/                  # Demo and example files
+│   ├── /basic/               # Simple demos and tests
+│   ├── /advanced/            # Complex integration demos
+│   └── /phase-demos/         # Phase-specific demonstrations
 │
 ├── /tests/                    # Test files
 │   ├── test-runner.js        # Main test runner
@@ -197,13 +206,18 @@ Stores:
 │   └── /backend/            # Legacy test files
 │
 ├── /docs/                     # Documentation
-│   ├── /architecture/        # Architecture docs
-│   ├── /development/         # Development guides
+│   ├── /current/             # Active architecture docs
+│   ├── /phases/              # Development phase reports
+│   ├── /guides/              # Implementation guides
 │   └── /api/                 # API documentation
 │
+├── /logs/                     # Log files
+│   ├── server.log
+│   └── server_output.log
+│
 └── /archive/                  # Legacy and backup files
-    ├── /mvp-original/        # Original MVP implementation
-    └── /legacy-docs/         # Historical documentation
+    ├── /mvp-baseline/        # Clean MVP reference
+    └── /development-history/ # Historical documentation
 ```
 
 ## Important Architecture Files
@@ -221,10 +235,11 @@ Stores:
 - `src/frontend/app.js`: Main application coordinator
 
 ### Documentation
-- `docs/architecture/`: Architecture and technical documentation
-- `docs/development/`: Development guides and manuals
-- `archive/legacy-docs/context.md`: Development diary (historical)
-- `archive/mvp-original/`: Original MVP implementation for reference
+- `docs/current/`: Active architecture and technical documentation
+- `docs/phases/`: Development phase reports and evolution
+- `docs/guides/`: Implementation guides and manuals
+- `archive/development-history/legacy-docs/context.md`: Development diary (historical)
+- `archive/mvp-baseline/mvp-original/`: Original MVP implementation for reference
 
 ## Dual-Track Architecture
 
@@ -241,13 +256,13 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 **Status**: Phase 8 Completed - Enterprise-grade Semantic Platform (23 June 2025)
 
 **Active Task**: Semantic Rendering Architecture (Phase 8) ✅ **SYSTEM COMPLETE**
-- **Documentation**: `docs/architecture/Architettura-Semantica-Reale-SSOT-3005.md`
+- **Documentation**: `docs/current/Architettura-Semantica-Reale-SSOT-3005.md`
 - **Goal**: Complete data-driven UI platform with semantic rendering ✅ **ACHIEVED**
 - **Key Innovation**: UI metadata-driven dynamic interfaces with AI-like suggestions ✅ **IMPLEMENTED**
 - **Enterprise Ready**: Production-grade system rivaling commercial platforms ✅ **DELIVERED**
 
 **Previous Phase - Phase 7 Completed**: Advanced Table Sync System
-- **Planning Document**: `docs/development/Phase-7-Advanced-Table-Sync-System.md`
+- **Planning Document**: `docs/phases/Phase-7-Advanced-Table-Sync-System.md`
 - **Goal**: Enterprise-grade real-time collaboration spreadsheet system ✅ **ACHIEVED**
 - **Key Innovation**: Smart debounce with bidirectional real-time sync ✅ **IMPLEMENTED**
 - **UX Revolution**: Professional spreadsheet experience with real-time collaboration ✅ **DELIVERED**
@@ -256,7 +271,7 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - ✅ **AttributeDefinition Extended**: Complete UI metadata support (component, label, placeholder, validation, groups, rendering hints)
 - ✅ **Semantic APIs**: `/api/attribute-suggestions` with intelligent pattern-based suggestions (intrinsic/relational/common)
 - ✅ **Enhanced Schema APIs**: Multiple formats (standard, semantic-ui, ui-metadata-only) with GET/PUT endpoints
-- ✅ **Demo Platform**: Complete interactive demo at `src/frontend/views/semantic-platform-demo.html`
+- ✅ **Demo Platform**: Complete interactive demo at `examples/advanced/semantic-platform-demo.html`
 - ✅ **CRUD Test Suite**: Automated testing framework with WebSocket event validation
 - ✅ **Complete Documentation**: Comprehensive architecture documentation reflecting real system capabilities
 - ✅ **Production Ready**: Enterprise-grade semantic platform rivaling commercial solutions
@@ -271,7 +286,7 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - ✅ Support for CONTAINS_MODULE relations with layout attributes
 
 **Phase 2 Completed (15 June 2025)**:
-- ✅ **Complete Interactive Demo**: `src/frontend/views/ssot-4000-complete-demo.html`
+- ✅ **Complete Interactive Demo**: `examples/phase-demos/ssot-4000-complete-demo.html`
 - ✅ **Dynamic Workspace**: 3-panel layout with documents, workspace, and real-time monitor
 - ✅ **Module Management**: Full CRUD for modules in documents with visual grid layout
 - ✅ **Real-time Sync**: WebSocket events with client-side subscription filtering
@@ -319,7 +334,7 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - **Demo Completa**: ✅ Interfaccia funzionale con 6 tipi di moduli e real-time sync
 - **WebSocket Filtering**: ✅ Sottoscrizioni client-side con pattern matching
 - **Multi-window Sync**: ✅ BroadcastChannel per sincronizzazione tra finestre
-- **Documento di Riferimento**: `docs/development/SSOT-4000-implementation-plan.md`
+- **Documento di Riferimento**: `docs/phases/SSOT-4000-implementation-plan.md`
 
 **Phase 6**: Real-time Sync Framework (✅ COMPLETED - 15 June 2025)
 - **realtime-sync-demo.html**: ✅ Complete working real-time sync demo with bidirectional synchronization
@@ -338,7 +353,7 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - **Performance Optimization**: ✅ Clean console output, 90% reduction in verbose logging
 - **Loop Prevention**: ✅ Robust instance ID system prevents infinite message loops
 - **Professional UX**: ✅ Spreadsheet-like experience rivaling modern collaboration tools
-- **Planning Document**: `docs/development/Phase-7-Advanced-Table-Sync-System.md`
+- **Planning Document**: `docs/phases/Phase-7-Advanced-Table-Sync-System.md`
 
 **Phase 8**: Semantic Rendering Architecture (✅ COMPLETED - 23 June 2025)
 - **UI Metadata System**: ✅ Complete AttributeDefinition extension with component, label, validation, groups, rendering hints
@@ -349,7 +364,7 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - **Production Documentation**: ✅ Complete architecture documentation reflecting real system state
 - **Enterprise Ready**: ✅ System rivals commercial platforms like Strapi, Sanity, Retool
 - **✨ NEW - SearchService Architecture**: ✅ 3-layer reusable search system (API → Service → Component) with Svelte integration
-- **Planning Document**: `docs/architecture/Architettura-Semantica-Reale-SSOT-3005.md`
+- **Planning Document**: `docs/current/Architettura-Semantica-Reale-SSOT-3005.md`
 
 **Phase 9**: Future Enhancements (Optional)
 - **Virtual Scrolling**: For large datasets (1000+ entities)
@@ -382,8 +397,8 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - Bidirectional queries (entity→projects, project→entities)
 
 ### Working with SSOT-4000 Platform (✅ COMPLETED)
-- **Reference Document**: `docs/development/SSOT-4000-implementation-plan.md`
-- **Demo URL**: http://localhost:3000/views/ssot-4000-complete-demo.html
+- **Reference Document**: `docs/phases/SSOT-4000-implementation-plan.md`
+- **Demo URL**: http://localhost:3000/examples/phase-demos/ssot-4000-complete-demo.html
 - **CompositeDocument**: ✅ Meta-meta-entity that orchestrates multiple modules
   - Schema defined in `initializeBaseSchemas()` in server.js
   - Attributes: name, description, projectId, layout, ownerId, metadata, status
@@ -395,7 +410,7 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - **Base Schemas**: ✅ Project, ModuleInstance, CompositeDocument automatically initialized on server start
 
 ### Using the Complete Demo
-1. **Access Demo**: Navigate to http://localhost:3000/views/ssot-4000-complete-demo.html
+1. **Access Demo**: Navigate to http://localhost:3000/examples/phase-demos/ssot-4000-complete-demo.html
 2. **Create Documents**: Use "+ New" to create CompositeDocument instances
 3. **Add Modules**: Select document → "+ Add Module" → Choose from library
 4. **Real-time Test**: Open second window to see instant synchronization
@@ -409,21 +424,21 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - **Bidirectional Queries**: `/api/entities/:entityId/projects` for entity's project history
 
 ### Working with Real-time Sync Framework (✅ NEW - Phase 6)
-- **Demo URL**: http://localhost:3000/views/realtime-sync-demo.html
+- **Demo URL**: http://localhost:3000/examples/advanced/realtime-sync-demo.html
 - **Architecture**: Direct WebSocket connection with BroadcastChannel for cross-window sync
 - **Message Format**: Server sends `{type: 'change', entityId, attributeName, data: {newValue, oldValue}}`
-- **Testing**: Use `test-callsheet-sync.js` for automated end-to-end validation
-- **Debugging**: WebSocket test interface at http://localhost:3000/views/websocket-test.html
+- **Testing**: Use `tests/test-callsheet-sync.js` for automated end-to-end validation
+- **Debugging**: WebSocket test interface at http://localhost:3000/examples/basic/websocket-test.html
 
 ### Working with Callsheet + Contact Card Demo (✅ NEW)
-- **Demo URL**: http://localhost:3000/views/callsheet-demo.html
+- **Demo URL**: http://localhost:3000/examples/advanced/callsheet-demo.html
 - **Intrinsic Attributes**: Entity properties (nome, email, telefono) sync across all instances
 - **Contextual Attributes**: Relationship properties (fee, role, dates) remain in specific module context
 - **Components**: callsheet-module.js + realtime-contact-card.js + entity-autocomplete.js
 - **Real-time Sync**: Bidirectional synchronization between callsheet table and contact cards
 
 ### Working with Advanced Table Sync System (✅ NEW - Phase 7)
-- **Demo URL**: http://localhost:3000/views/simple-evolved-table-demo.html
+- **Demo URL**: http://localhost:3000/examples/advanced/simple-evolved-table-demo.html
 - **Architecture**: Enterprise-grade real-time collaboration system
 - **Features**:
   - **Bidirectional Sync**: Admin interface ↔ SimpleTableModule perfect synchronization
@@ -448,7 +463,7 @@ The system maintains **MVP compatibility** while introducing **evolved features*
   - **Performance**: 300ms debounce, ~1-3ms cache hits
   - **Reusability**: Drop-in component for any entity type
 - **Usage**: `<SmartInput entityType="Persona" bind:value={entity} on:select={handler} />`
-- **Documentation**: `docs/development/SearchService-Implementation-Guide.md`
+- **Documentation**: `docs/guides/SearchService-Implementation-Guide.md`
 
 This system prevents duplication by centralizing schema definitions and providing schema-aware, reusable UI components that adapt to any entity type.
 
