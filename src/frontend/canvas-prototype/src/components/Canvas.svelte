@@ -11,13 +11,75 @@
   let isDragging = false
   let currentBlock = null
   let dragOffset = { x: 0, y: 0 }
+  let isResizing = false
+  let adjacentBlocks = []
   
   // Grid settings
   const gridSize = 25
   const showGrid = true
+  const edgeThreshold = 5 // Pixel threshold for edge detection
+  
+  // Reactive computation of adjacent blocks for each edge
+  $: adjacentMap = blocks.reduce((map, block) => {
+    map[block.id] = {
+      right: findAdjacentBlocks(block, 'right'),
+      left: findAdjacentBlocks(block, 'left'),
+      bottom: findAdjacentBlocks(block, 'bottom')
+    }
+    return map
+  }, {})
   
   function snapToGrid(value) {
     return Math.round(value / gridSize) * gridSize
+  }
+  
+  // Find blocks that share an edge with the given block
+  function findAdjacentBlocks(block, edge) {
+    const adjacent = []
+    
+    blocks.forEach(b => {
+      if (b.id === block.id) return
+      
+      switch (edge) {
+        case 'right':
+          // Check if block's right edge aligns with another block's left edge
+          if (Math.abs((block.x + block.width) - b.x) < edgeThreshold) {
+            // Check vertical overlap
+            const overlapStart = Math.max(block.y, b.y)
+            const overlapEnd = Math.min(block.y + block.height, b.y + b.height)
+            if (overlapEnd > overlapStart) {
+              adjacent.push({ block: b, edge: 'left', overlap: overlapEnd - overlapStart })
+            }
+          }
+          break
+          
+        case 'left':
+          // Check if block's left edge aligns with another block's right edge
+          if (Math.abs(block.x - (b.x + b.width)) < edgeThreshold) {
+            // Check vertical overlap
+            const overlapStart = Math.max(block.y, b.y)
+            const overlapEnd = Math.min(block.y + block.height, b.y + b.height)
+            if (overlapEnd > overlapStart) {
+              adjacent.push({ block: b, edge: 'right', overlap: overlapEnd - overlapStart })
+            }
+          }
+          break
+          
+        case 'bottom':
+          // Check if block's bottom edge aligns with another block's top edge
+          if (Math.abs((block.y + block.height) - b.y) < edgeThreshold) {
+            // Check horizontal overlap
+            const overlapStart = Math.max(block.x, b.x)
+            const overlapEnd = Math.min(block.x + block.width, b.x + b.width)
+            if (overlapEnd > overlapStart) {
+              adjacent.push({ block: b, edge: 'top', overlap: overlapEnd - overlapStart })
+            }
+          }
+          break
+      }
+    })
+    
+    return adjacent
   }
   
   function handleMouseDown(event, block) {
@@ -61,6 +123,20 @@
     const startBlockX = block.x
     const startBlockY = block.y
     
+    // Find adjacent blocks that should resize together
+    isResizing = true
+    adjacentBlocks = findAdjacentBlocks(block, direction)
+    
+    // Store initial state of adjacent blocks
+    const adjacentStartStates = adjacentBlocks.map(adj => ({
+      block: adj.block,
+      edge: adj.edge,
+      startWidth: adj.block.width,
+      startHeight: adj.block.height,
+      startX: adj.block.x,
+      startY: adj.block.y
+    }))
+    
     function onMouseMove(e) {
       const deltaX = e.clientX - startX
       const deltaY = e.clientY - startY
@@ -73,22 +149,71 @@
       // Handle horizontal resizing
       if (direction.includes('right')) {
         newWidth = snapToGrid(startWidth + deltaX)
+        
+        // Update adjacent blocks with left edge
+        adjacentStartStates.forEach(adj => {
+          if (adj.edge === 'left') {
+            const adjNewX = snapToGrid(adj.startX + deltaX)
+            const adjNewWidth = snapToGrid(adj.startWidth - deltaX)
+            
+            if (adjNewWidth >= 200) { // Minimum width check
+              dispatch('blockUpdate', {
+                id: adj.block.id,
+                data: { 
+                  x: adjNewX,
+                  width: adjNewWidth
+                }
+              })
+            }
+          }
+        })
       }
+      
       if (direction.includes('left')) {
         newWidth = snapToGrid(startWidth - deltaX)
         newX = snapToGrid(startBlockX + deltaX)
+        
+        // Update adjacent blocks with right edge
+        adjacentStartStates.forEach(adj => {
+          if (adj.edge === 'right') {
+            const adjNewWidth = snapToGrid(adj.startWidth + deltaX)
+            
+            if (adjNewWidth >= 200) { // Minimum width check
+              dispatch('blockUpdate', {
+                id: adj.block.id,
+                data: { 
+                  width: adjNewWidth
+                }
+              })
+            }
+          }
+        })
       }
       
       // Handle vertical resizing
       if (direction.includes('bottom')) {
         newHeight = snapToGrid(startHeight + deltaY)
-      }
-      if (direction.includes('top')) {
-        newHeight = snapToGrid(startHeight - deltaY)
-        newY = snapToGrid(startBlockY + deltaY)
+        
+        // Update adjacent blocks with top edge
+        adjacentStartStates.forEach(adj => {
+          if (adj.edge === 'top') {
+            const adjNewY = snapToGrid(adj.startY + deltaY)
+            const adjNewHeight = snapToGrid(adj.startHeight - deltaY)
+            
+            if (adjNewHeight >= 150) { // Minimum height check
+              dispatch('blockUpdate', {
+                id: adj.block.id,
+                data: { 
+                  y: adjNewY,
+                  height: adjNewHeight
+                }
+              })
+            }
+          }
+        })
       }
       
-      // Apply minimum constraints
+      // Apply minimum constraints for main block
       const minWidth = 200
       const minHeight = 150
       
@@ -120,6 +245,8 @@
     function onMouseUp() {
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
+      isResizing = false
+      adjacentBlocks = []
     }
     
     window.addEventListener('mousemove', onMouseMove)
@@ -156,16 +283,19 @@
         <!-- Resize handles -->
         <!-- Edges -->
         <div 
-          class="resize-handle resize-handle-right"
+          class="resize-handle resize-handle-right {adjacentMap[block.id]?.right?.length > 0 ? 'has-adjacent' : ''}"
           on:mousedown={(e) => handleResize(e, block, 'right')}
+          title={adjacentMap[block.id]?.right?.length > 0 ? 'Resize sincronizzato' : ''}
         />
         <div 
-          class="resize-handle resize-handle-bottom"
+          class="resize-handle resize-handle-bottom {adjacentMap[block.id]?.bottom?.length > 0 ? 'has-adjacent' : ''}"
           on:mousedown={(e) => handleResize(e, block, 'bottom')}
+          title={adjacentMap[block.id]?.bottom?.length > 0 ? 'Resize sincronizzato' : ''}
         />
         <div 
-          class="resize-handle resize-handle-left"
+          class="resize-handle resize-handle-left {adjacentMap[block.id]?.left?.length > 0 ? 'has-adjacent' : ''}"
           on:mousedown={(e) => handleResize(e, block, 'left')}
+          title={adjacentMap[block.id]?.left?.length > 0 ? 'Resize sincronizzato' : ''}
         />
         
         <!-- Corners -->
@@ -224,6 +354,20 @@
   
   .resize-handle:hover {
     opacity: 1 !important;
+  }
+  
+  /* Synchronized resize indicator */
+  .resize-handle.has-adjacent {
+    background: #10b981;
+  }
+  
+  .resize-handle.has-adjacent:hover {
+    background: #059669;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  }
+  
+  .block-wrapper:hover .resize-handle.has-adjacent {
+    opacity: 0.7;
   }
   
   /* Edge handles */
