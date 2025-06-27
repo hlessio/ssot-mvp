@@ -1,10 +1,15 @@
 <script>
   import { createEventDispatcher } from 'svelte'
-  import { layoutLoadModalOpen, savedLayouts, loadLayout, deleteLayout, hasUnsavedChanges, exportLayout, refreshLayoutsList } from '../stores/canvas.js'
+  import { layoutLoadModalOpen, savedLayouts, loadLayout, deleteLayout, hasUnsavedChanges, exportLayout, refreshLayoutsList, canvasDocuments, documentMode, getCurrentLayoutsList } from '../stores/canvas.js'
   
   const dispatch = createEventDispatcher()
   
   export let isOpen = false
+  
+  // Load documents when modal opens
+  $: if (isOpen) {
+    getCurrentLayoutsList()
+  }
   
   let searchQuery = ''
   let selectedLayoutId = null
@@ -13,10 +18,13 @@
   let showDeleteConfirm = null
   let confirmOverwrite = false
   
+  // Get layouts sempre dal backend - ensure it's always an array
+  $: currentLayouts = Array.isArray($canvasDocuments) ? $canvasDocuments : []
+  
   // Filter layouts based on search
-  $: filteredLayouts = $savedLayouts.filter(layout => 
-    layout.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    layout.description.toLowerCase().includes(searchQuery.toLowerCase())
+  $: filteredLayouts = currentLayouts.filter(layout => 
+    layout.name && layout.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (layout.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   )
   
   // Check for unsaved changes
@@ -33,7 +41,7 @@
     isLoading = true
     
     try {
-      const layout = loadLayout(layoutId)
+      const layout = await loadLayout(layoutId)
       dispatch('loaded', { layoutId, layout })
       closeModal()
     } catch (err) {
@@ -43,12 +51,18 @@
     }
   }
   
-  function handleDelete(layoutId) {
-    if (deleteLayout(layoutId)) {
-      showDeleteConfirm = null
-      refreshLayoutsList()
-    } else {
-      error = 'Errore durante l\'eliminazione del layout'
+  async function handleDelete(layoutId) {
+    try {
+      const success = await deleteLayout(layoutId)
+      if (success) {
+        showDeleteConfirm = null
+        // Refresh the appropriate list based on mode
+        await getCurrentLayoutsList()
+      } else {
+        error = 'Errore durante l\'eliminazione del layout'
+      }
+    } catch (err) {
+      error = err.message || 'Errore durante l\'eliminazione del layout'
     }
   }
   
@@ -99,11 +113,11 @@
     })
   }
   
-  function getLayoutPreview(preview) {
-    if (!preview || preview.length === 0) {
+  function getLayoutPreview(blocks) {
+    if (!blocks || !Array.isArray(blocks) || blocks.length === 0) {
       return []
     }
-    return preview.slice(0, 8) // Limit to 8 blocks for preview
+    return blocks.slice(0, 8) // Limit to 8 blocks for preview
   }
 </script>
 
@@ -148,10 +162,10 @@
           
           {#if filteredLayouts.length === 0}
             <div class="empty-state">
-              {#if $savedLayouts.length === 0}
+              {#if currentLayouts.length === 0}
                 <div class="empty-icon">📄</div>
-                <h3>Nessun layout salvato</h3>
-                <p>I tuoi layout salvati appariranno qui</p>
+                <h3>Nessun documento salvato</h3>
+                <p>I tuoi documenti canvas appariranno qui</p>
               {:else}
                 <div class="empty-icon">🔍</div>
                 <h3>Nessun risultato</h3>
@@ -164,14 +178,14 @@
                 <div class="layout-card">
                   <div class="layout-preview">
                     <div class="preview-canvas">
-                      {#each getLayoutPreview(layout.preview) as block}
+                      {#each getLayoutPreview(layout.canvasLayout?.blocks || []) as block}
                         <div 
                           class="preview-block"
                           style="
-                            left: {block.x * 3}px; 
-                            top: {block.y * 3}px; 
-                            width: {Math.max(block.w * 3, 8)}px; 
-                            height: {Math.max(block.h * 3, 6)}px;
+                            left: {(block.x || 0) / 10}px; 
+                            top: {(block.y || 0) / 10}px; 
+                            width: {Math.max((block.width || block.w || 50) / 10, 8)}px; 
+                            height: {Math.max((block.height || block.h || 50) / 10, 6)}px;
                           "
                         ></div>
                       {/each}
@@ -184,8 +198,8 @@
                       <p class="layout-description">{layout.description}</p>
                     {/if}
                     <div class="layout-meta">
-                      <span class="layout-date">📅 {formatDate(layout.timestamp)}</span>
-                      <span class="layout-blocks">🧩 {layout.blockCount} blocchi</span>
+                      <span class="layout-date">📅 {formatDate(layout.modifiedAt || layout.createdAt || layout.timestamp || Date.now())}</span>
+                      <span class="layout-blocks">🧩 {(layout.canvasLayout?.blocks || []).length} blocchi</span>
                     </div>
                   </div>
                   
@@ -249,7 +263,8 @@
       
       <div class="modal-footer">
         <div class="footer-info">
-          <span>{$savedLayouts.length} layout salvati</span>
+          <span>{currentLayouts.length} documenti backend salvati</span>
+          <span class="mode-indicator">(Backend)</span>
         </div>
         
         <button 
@@ -598,6 +613,17 @@
   .footer-info {
     font-size: 12px;
     color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .mode-indicator {
+    font-size: 11px;
+    color: #9ca3af;
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
   }
   
   @keyframes fadeIn {

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐛 Debug Logger - SSOT Real-time</title>
+    <style>
+        body {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        
+        .header {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4444;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.connected {
+            background: #44ff44;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .btn-clear { background: #ff6b6b; color: white; }
+        .btn-pause { background: #ffd93d; color: black; }
+        .btn-resume { background: #6bcf7f; color: white; }
+        .btn-export { background: #4dabf7; color: white; }
+        
+        .log-container {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            height: 70vh;
+            overflow-y: auto;
+            padding: 15px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border-left: 3px solid transparent;
+        }
+        
+        .log-timestamp {
+            color: #888;
+            font-size: 11px;
+            margin-right: 10px;
+        }
+        
+        .log-type {
+            font-weight: bold;
+            margin-right: 8px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        
+        /* Log Level Colors */
+        .log-info {
+            border-left-color: #4dabf7;
+            background: rgba(77, 171, 247, 0.1);
+        }
+        
+        .log-info .log-type {
+            background: #4dabf7;
+            color: white;
+        }
+        
+        .log-success {
+            border-left-color: #51cf66;
+            background: rgba(81, 207, 102, 0.1);
+        }
+        
+        .log-success .log-type {
+            background: #51cf66;
+            color: white;
+        }
+        
+        .log-warning {
+            border-left-color: #ffd43b;
+            background: rgba(255, 212, 59, 0.1);
+        }
+        
+        .log-warning .log-type {
+            background: #ffd43b;
+            color: black;
+        }
+        
+        .log-error {
+            border-left-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+        
+        .log-error .log-type {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .log-debug {
+            border-left-color: #9775fa;
+            background: rgba(151, 117, 250, 0.1);
+        }
+        
+        .log-debug .log-type {
+            background: #9775fa;
+            color: white;
+        }
+        
+        .log-websocket {
+            border-left-color: #20c997;
+            background: rgba(32, 201, 151, 0.1);
+        }
+        
+        .log-websocket .log-type {
+            background: #20c997;
+            color: white;
+        }
+        
+        .log-message {
+            word-wrap: break-word;
+        }
+        
+        .json-data {
+            background: #2d2d2d;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+            white-space: pre-wrap;
+            font-family: 'Monaco', monospace;
+            font-size: 11px;
+            color: #e9ecef;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .counter {
+            background: #2d2d2d;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        
+        .paused-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 212, 59, 0.1);
+            pointer-events: none;
+            display: none;
+        }
+        
+        .paused-overlay.active {
+            display: block;
+        }
+        
+        .search-box {
+            margin-bottom: 15px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background: #2d2d2d;
+            color: white;
+            font-family: inherit;
+        }
+        
+        .highlight {
+            background: rgba(255, 212, 59, 0.3);
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐛 Debug Logger - SSOT Backend Events</h1>
+        <div class="status">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Disconnesso</span>
+        </div>
+        <div class="controls">
+            <button class="btn-clear" onclick="clearLogs()">🗑️ Clear</button>
+            <button class="btn-pause" id="pauseBtn" onclick="togglePause()">⏸️ Pause</button>
+            <button class="btn-export" onclick="exportLogs()">💾 Export</button>
+        </div>
+    </div>
+    
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Filtra log... (es: ModuleInstance, deleted, documento)" onkeyup="filterLogs()">
+    </div>
+    
+    <div class="log-container" id="logContainer">
+        <div class="log-entry log-info">
+            <span class="log-timestamp">--:--:--</span>
+            <span class="log-type">INFO</span>
+            <span class="log-message">🚀 Debug Logger avviato - In attesa di connessione WebSocket...</span>
+        </div>
+    </div>
+    
+    <div class="stats">
+        <div class="counter">📥 Ricevuti: <span id="totalCount">0</span></div>
+        <div class="counter">✅ Successi: <span id="successCount">0</span></div>
+        <div class="counter">⚠️ Warning: <span id="warningCount">0</span></div>
+        <div class="counter">❌ Errori: <span id="errorCount">0</span></div>
+        <div class="counter">🔗 WebSocket: <span id="wsCount">0</span></div>
+    </div>
+    
+    <div class="paused-overlay" id="pausedOverlay"></div>
+
+    <script>
+        let ws = null;
+        let logs = [];
+        let counters = {
+            total: 0,
+            success: 0,
+            warning: 0,
+            error: 0,
+            websocket: 0
+        };
+        let isPaused = false;
+        let pendingLogs = [];
+        
+        // Initialize WebSocket connection
+        function connectWebSocket() {
+            try {
+                ws = new WebSocket('ws://localhost:3000');
+                
+                ws.onopen = () => {
+                    updateStatus(true, 'Connesso al server SSOT');
+                    addLog('success', 'WebSocket connesso al server SSOT (localhost:3000)');
+                    
+                    // Subscribe to all events
+                    ws.send(JSON.stringify({
+                        type: 'subscribe',
+                        pattern: {
+                            entityType: '*',
+                            changeType: '*'
+                        }
+                    }));
+                    
+                    addLog('info', 'Sottoscritto a tutti gli eventi del server');
+                };
+                
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleServerMessage(data);
+                    } catch (e) {
+                        addLog('error', 'Errore parsing messaggio WebSocket: ' + e.message, event.data);
+                    }
+                };
+                
+                ws.onerror = (error) => {
+                    addLog('error', 'Errore WebSocket: ' + error.message);
+                };
+                
+                ws.onclose = () => {
+                    updateStatus(false, 'Disconnesso - Riconnessione in 3s...');
+                    addLog('warning', 'WebSocket disconnesso - Tentativo riconnessione in 3 secondi');
+                    setTimeout(connectWebSocket, 3000);
+                };
+                
+            } catch (error) {
+                addLog('error', 'Errore inizializzazione WebSocket: ' + error.message);
+                setTimeout(connectWebSocket, 3000);
+            }
+        }
+        
+        function handleServerMessage(data) {
+            counters.websocket++;
+            updateCounters();
+            
+            // Determina il tipo di log basato sul messaggio
+            let logType = 'websocket';
+            let message = '';
+            let jsonData = null;
+            
+            switch (data.type) {
+                case 'entity-created':
+                case 'module-instance-created':
+                    logType = 'success';
+                    message = `✅ Entità creata: ${data.data?.instance?.entityType || data.entityType} (${data.data?.instance?.id || data.entityId})`;
+                    jsonData = data.data?.instance || data;
+                    break;
+                    
+                case 'entity-updated':
+                case 'module-instance-updated':
+                    logType = 'info';
+                    message = `🔄 Entità aggiornata: ${data.data?.instance?.entityType || data.entityType} (${data.data?.instance?.id || data.entityId})`;
+                    jsonData = data.data?.instance || data;
+                    break;
+                    
+                case 'entity-deleted':
+                case 'module-instance-deleted':
+                    logType = 'error';
+                    message = `🗑️ Entità eliminata: ${data.data?.instanceId || data.entityId}`;
+                    jsonData = data;
+                    break;
+                    
+                case 'change':
+                    if (data.changeType === 'deleted') {
+                        logType = 'error';
+                        message = `🗑️ ELIMINAZIONE: ${data.entityType} (${data.entityId})`;
+                    } else if (data.changeType === 'created') {
+                        logType = 'success';
+                        message = `✅ CREAZIONE: ${data.entityType} (${data.entityId})`;
+                    } else {
+                        logType = 'info';
+                        message = `🔄 MODIFICA: ${data.entityType} (${data.entityId}) - ${data.changeType}`;
+                    }
+                    jsonData = data;
+                    break;
+                    
+                default:
+                    message = `📡 Messaggio server: ${data.type}`;
+                    jsonData = data;
+            }
+            
+            addLog(logType, message, jsonData);
+        }
+        
+        function addLog(type, message, data = null) {
+            const timestamp = new Date().toLocaleTimeString('it-IT');
+            const logEntry = {
+                timestamp,
+                type,
+                message,
+                data
+            };
+            
+            if (isPaused) {
+                pendingLogs.push(logEntry);
+                return;
+            }
+            
+            logs.push(logEntry);
+            counters.total++;
+            
+            if (type === 'success') counters.success++;
+            else if (type === 'warning') counters.warning++;
+            else if (type === 'error') counters.error++;
+            
+            updateCounters();
+            renderLog(logEntry);
+            scrollToBottom();
+        }
+        
+        function renderLog(logEntry) {
+            const container = document.getElementById('logContainer');
+            const logDiv = document.createElement('div');
+            logDiv.className = `log-entry log-${logEntry.type}`;
+            
+            let content = `
+                <span class="log-timestamp">${logEntry.timestamp}</span>
+                <span class="log-type">${logEntry.type.toUpperCase()}</span>
+                <span class="log-message">${logEntry.message}</span>
+            `;
+            
+            if (logEntry.data) {
+                content += `<div class="json-data">${JSON.stringify(logEntry.data, null, 2)}</div>`;
+            }
+            
+            logDiv.innerHTML = content;
+            container.appendChild(logDiv);
+            
+            // Keep only last 500 logs for performance
+            if (container.children.length > 500) {
+                container.removeChild(container.firstChild);
+            }
+        }
+        
+        function updateStatus(connected, text) {
+            const dot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            dot.className = `status-dot ${connected ? 'connected' : ''}`;
+            statusText.textContent = text;
+        }
+        
+        function updateCounters() {
+            document.getElementById('totalCount').textContent = counters.total;
+            document.getElementById('successCount').textContent = counters.success;
+            document.getElementById('warningCount').textContent = counters.warning;
+            document.getElementById('errorCount').textContent = counters.error;
+            document.getElementById('wsCount').textContent = counters.websocket;
+        }
+        
+        function clearLogs() {
+            logs = [];
+            counters = { total: 0, success: 0, warning: 0, error: 0, websocket: 0 };
+            document.getElementById('logContainer').innerHTML = '';
+            updateCounters();
+            addLog('info', '🧹 Log cancellati');
+        }
+        
+        function togglePause() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('pauseBtn');
+            const overlay = document.getElementById('pausedOverlay');
+            
+            if (isPaused) {
+                btn.innerHTML = '▶️ Resume';
+                btn.className = 'btn-resume';
+                overlay.classList.add('active');
+                addLog('warning', '⏸️ Logger in pausa');
+            } else {
+                btn.innerHTML = '⏸️ Pause';
+                btn.className = 'btn-pause';
+                overlay.classList.remove('active');
+                
+                // Process pending logs
+                pendingLogs.forEach(log => {
+                    logs.push(log);
+                    renderLog(log);
+                });
+                pendingLogs = [];
+                
+                addLog('info', '▶️ Logger riattivato');
+                scrollToBottom();
+            }
+        }
+        
+        function exportLogs() {
+            const logData = {
+                timestamp: new Date().toISOString(),
+                stats: counters,
+                logs: logs
+            };
+            
+            const blob = new Blob([JSON.stringify(logData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ssot-debug-logs-${new Date().toISOString().slice(0, 19)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            URL.revokeObjectURL(url);
+            addLog('success', '💾 Log esportati in file JSON');
+        }
+        
+        function filterLogs() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const container = document.getElementById('logContainer');
+            const entries = container.children;
+            
+            Array.from(entries).forEach(entry => {
+                const text = entry.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    entry.style.display = 'block';
+                    // Highlight search term
+                    if (searchTerm) {
+                        const message = entry.querySelector('.log-message');
+                        if (message) {
+                            let html = message.innerHTML;
+                            html = html.replace(new RegExp(`(${searchTerm})`, 'gi'), '<span class="highlight">$1</span>');
+                            message.innerHTML = html;
+                        }
+                    }
+                } else {
+                    entry.style.display = 'none';
+                }
+            });
+        }
+        
+        function scrollToBottom() {
+            const container = document.getElementById('logContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // Start the logger
+        connectWebSocket();
+        
+        // Add some initial info
+        addLog('info', `🌐 Connessione a WebSocket server: ws://localhost:3000`);
+        addLog('debug', `📊 Logger configurato per monitorare tutti gli eventi SSOT`);
+    </script>
+</body>
+</html>

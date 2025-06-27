@@ -414,14 +414,15 @@ class Neo4jDAO {
             return [];
         }
 
-        // Costruisce query batch per tutti gli attributi
-        let cypher = `MATCH (s) WHERE s.schemaId = $schemaId\n`;
+        // FIX: Create AttributeDefinition first, then link to schema to prevent duplicates
+        let cypher = '';
         const parameters = { schemaId };
         
+        // First, create all AttributeDefinition nodes
         attributesBatch.forEach(([attrName, attrDef], index) => {
             const paramPrefix = `attr${index}`;
             cypher += `
-                MERGE (s)-[:HAS_ATTRIBUTE]->(a${index}:AttributeDefinition {name: $${paramPrefix}_name, schemaId: $schemaId})
+                MERGE (a${index}:AttributeDefinition {name: $${paramPrefix}_name, schemaId: $schemaId})
                 ON CREATE SET 
                     a${index}.type = $${paramPrefix}_type,
                     a${index}.required = $${paramPrefix}_required,
@@ -431,6 +432,14 @@ class Neo4jDAO {
             parameters[`${paramPrefix}_type`] = attrDef.type || 'string';
             parameters[`${paramPrefix}_required`] = attrDef.required || false;
             parameters[`${paramPrefix}_description`] = attrDef.description || '';
+        });
+        
+        // Then, link all to schema
+        cypher += `\nWITH `;
+        cypher += attributesBatch.map((_, index) => `a${index}`).join(', ');
+        cypher += `\nMATCH (s) WHERE s.schemaId = $schemaId\n`;
+        attributesBatch.forEach((_, index) => {
+            cypher += `MERGE (s)-[:HAS_ATTRIBUTE]->(a${index})\n`;
         });
 
         cypher += `\nRETURN ${attributesBatch.map((_, i) => `a${i}`).join(', ')}`;
@@ -454,13 +463,16 @@ class Neo4jDAO {
      */
     async saveAttributeDefinitionSeparateTransaction(schemaId, attributeName, attributeDefinition) {
         // Query semplificata - solo le proprietà base sempre presenti
+        // FIX: Use MERGE directly on AttributeDefinition to prevent duplicates
         const cypher = `
-            MATCH (s) WHERE s.schemaId = $schemaId
-            MERGE (s)-[:HAS_ATTRIBUTE]->(a:AttributeDefinition {name: $name, schemaId: $schemaId})
+            MERGE (a:AttributeDefinition {name: $name, schemaId: $schemaId})
             ON CREATE SET 
                 a.type = $type,
                 a.required = $required,
                 a.description = $description
+            WITH a
+            MATCH (s) WHERE s.schemaId = $schemaId
+            MERGE (s)-[:HAS_ATTRIBUTE]->(a)
             RETURN a
         `;
         

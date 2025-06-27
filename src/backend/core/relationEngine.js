@@ -96,8 +96,8 @@ class RelationEngine {
         // Strategia: utilizziamo nodi Relation collegati alle entità
         // Questo permette attributi ricchi e query flessibili
         const cypher = `
-            MATCH (source:Entity {id: $sourceEntityId})
-            MATCH (target:Entity {id: $targetEntityId})
+            MATCH (source {id: $sourceEntityId})
+            MATCH (target {id: $targetEntityId})
             CREATE (r:Relation {
                 id: $id,
                 relationType: $relationType,
@@ -152,7 +152,7 @@ class RelationEngine {
      */
     async findRelations(pattern = {}) {
         try {
-            let cypher = 'MATCH (source:Entity)-[:HAS_RELATION]->(r:Relation)-[:TO_ENTITY]->(target:Entity) WHERE 1=1';
+            let cypher = 'MATCH (source)-[:HAS_RELATION]->(r:Relation)-[:TO_ENTITY]->(target) WHERE 1=1';
             const parameters = {};
 
             // Costruisci WHERE clause dinamica basata sul pattern
@@ -216,16 +216,16 @@ class RelationEngine {
 
             if (direction === 'out') {
                 cypher = `
-                    MATCH (e:Entity {id: $entityId})-[:HAS_RELATION]->(r:Relation)-[:TO_ENTITY]->(target:Entity)
+                    MATCH (e {id: $entityId})-[:HAS_RELATION]->(r:Relation)-[:TO_ENTITY]->(target)
                 `;
             } else if (direction === 'in') {
                 cypher = `
-                    MATCH (source:Entity)-[:HAS_RELATION]->(r:Relation)-[:TO_ENTITY]->(e:Entity {id: $entityId})
+                    MATCH (source)-[:HAS_RELATION]->(r:Relation)-[:TO_ENTITY]->(e {id: $entityId})
                 `;
             } else { // both
                 cypher = `
-                    MATCH (e:Entity {id: $entityId})
-                    MATCH (other:Entity)
+                    MATCH (e {id: $entityId})
+                    MATCH (other)
                     MATCH (r:Relation)
                     WHERE ((e)-[:HAS_RELATION]->(r)-[:TO_ENTITY]->(other)) OR 
                           ((other)-[:HAS_RELATION]->(r)-[:TO_ENTITY]->(e))
@@ -320,7 +320,7 @@ class RelationEngine {
     async deleteRelation(relationId) {
         try {
             const cypher = `
-                MATCH (source:Entity)-[:HAS_RELATION]->(r:Relation {id: $relationId})-[:TO_ENTITY]->(target:Entity)
+                MATCH (source)-[:HAS_RELATION]->(r:Relation {id: $relationId})-[:TO_ENTITY]->(target)
                 DETACH DELETE r
                 RETURN count(r) as deletedCount
             `;
@@ -356,7 +356,7 @@ class RelationEngine {
     async loadAllRelations() {
         try {
             const cypher = `
-                MATCH (source:Entity)-[:HAS_RELATION]->(r:Relation)-[:TO_ENTITY]->(target:Entity)
+                MATCH (source)-[:HAS_RELATION]->(r:Relation)-[:TO_ENTITY]->(target)
                 RETURN r, source, target
                 ORDER BY r.created
             `;

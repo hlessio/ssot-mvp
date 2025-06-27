@@ -163,11 +163,11 @@ class RelationSchema {
      */
     applyDefaults(relation) {
         for (const [attrName, attrDef] of this.attributes) {
-            if (attrDef.defaultValue !== null && (!relation.attributes || !relation.attributes.has(attrName))) {
+            if (attrDef.defaultValue !== null && (!relation.attributes || !relation.attributes.hasOwnProperty(attrName))) {
                 if (!relation.attributes) {
-                    relation.attributes = new Map();
+                    relation.attributes = {};
                 }
-                relation.attributes.set(attrName, attrDef.defaultValue);
+                relation.attributes[attrName] = attrDef.defaultValue;
             }
         }
     }

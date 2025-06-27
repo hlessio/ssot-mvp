@@ -6,7 +6,10 @@
     quickSaveLayout, 
     newCanvas, 
     hasUnsavedChanges,
-    initializeTemplates 
+    initializeTemplates,
+    backendSyncEnabled,
+    backendSyncStatus,
+    syncAllBlocksToBackend
   } from '../stores/canvas.js'
   
   const dispatch = createEventDispatcher()
@@ -29,8 +32,23 @@
     
     isQuickSaving = true
     try {
+      // 1. Salva layout frontend
       const layoutId = quickSaveLayout()
-      dispatch('layoutSaved', { layoutId, message: 'Layout salvato velocemente!' })
+      
+      // 2. Sincronizza posizioni con backend
+      const backendSuccess = await syncAllBlocksToBackend()
+      if (backendSuccess) {
+        dispatch('layoutSaved', { 
+          layoutId, 
+          message: `Layout e posizioni salvati: ${layoutId}` 
+        })
+      } else {
+        dispatch('layoutSaved', { 
+          layoutId, 
+          message: `Layout salvato (${layoutId}), ma errori nel backend sync`,
+          type: 'warning'
+        })
+      }
     } catch (error) {
       dispatch('error', { message: error.message })
     } finally {
@@ -61,6 +79,7 @@
     initializeTemplates()
     dispatch('templatesCreated', { message: 'Template predefiniti creati!' })
   }
+  
   
   // Keyboard shortcuts
   function handleKeydown(event) {
@@ -123,13 +142,13 @@
       class:loading={isQuickSaving}
       on:click={handleQuickSave}
       disabled={$blocks.length === 0 || isQuickSaving}
-      title="Salvataggio Rapido (Ctrl+S)"
+      title="Salvataggio Rapido + Sync Backend (Ctrl+S)"
     >
       {#if isQuickSaving}
         <span class="spinner"></span>
         Salvando...
       {:else}
-        ⚡ Quick Save
+        🔄 Quick Save
       {/if}
     </button>
   </div>
@@ -166,6 +185,22 @@
     >
       🎨 Template
     </button>
+    
+    <div class="toolbar-separator"></div>
+    
+    <div class="sync-status" title="Backend sync status">
+      <span class="sync-indicator" class:synced={$backendSyncStatus === 'synced'} class:pending={$backendSyncStatus === 'pending'} class:error={$backendSyncStatus === 'error'}>
+        {#if $backendSyncStatus === 'synced'}
+          ✅ Sincronizzato
+        {:else if $backendSyncStatus === 'pending'}
+          ⏳ Da sincronizzare
+        {:else if $backendSyncStatus === 'error'}
+          ❌ Errore sync
+        {/if}
+      </span>
+      <span class="module-count">({$blocks.length} moduli)</span>
+    </div>
+    
   </div>
 </div>
 
@@ -311,6 +346,36 @@
     to { transform: rotate(360deg); }
   }
   
+  .sync-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  
+  .sync-toggle:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+  }
+  
+  .sync-toggle input[type="checkbox"] {
+    cursor: pointer;
+  }
+  
+  .sync-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    user-select: none;
+  }
+  
   /* Responsive adjustments */
   @media (max-width: 768px) {
     .canvas-toolbar {
@@ -330,5 +395,42 @@
     .blocks-count {
       font-size: 11px;
     }
+  }
+  
+  /* Sync status styles */
+  .sync-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+  }
+  
+  .sync-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+  }
+  
+  .sync-indicator.synced {
+    color: #10b981;
+  }
+  
+  .sync-indicator.pending {
+    color: #f59e0b;
+  }
+  
+  .sync-indicator.error {
+    color: #ef4444;
+  }
+  
+  .module-count {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 400;
   }
 </style>

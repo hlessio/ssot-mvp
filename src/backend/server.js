@@ -55,14 +55,17 @@ class EvolvedServer {
         
         // ✨ Inizializzazione dei moduli evoluti (Fase 4 - AttributeSpace Evoluto)
         this.schemaManager = new SchemaManager(neo4jDAO);
-        this.relationEngine = new RelationEngine(this.entityEngine_MVP, this.schemaManager, neo4jDAO);
-        this.entityEngine = new EntityEngine(neo4jDAO, this.schemaManager, this.relationEngine, this.attributeSpace);
+        this.entityEngine = new EntityEngine(neo4jDAO, this.schemaManager, null, this.attributeSpace);
+        this.relationEngine = new RelationEngine(this.entityEngine, this.schemaManager, neo4jDAO);
+        
+        // Ora aggiorna EntityEngine con RelationEngine
+        this.entityEngine.relationEngine = this.relationEngine;
         
         // ✨ FASE 1 UI DINAMICA: Inizializzazione ModuleRelationService
         this.moduleRelationService = new ModuleRelationService(neo4jDAO, this.attributeSpace);
         
         // ✨ SSOT-4000: Inizializzazione DocumentService
-        this.documentService = new DocumentService(neo4jDAO, this.entityEngine, this.schemaManager, this.attributeSpace);
+        this.documentService = new DocumentService(neo4jDAO, this.entityEngine, this.schemaManager, this.attributeSpace, this.relationEngine);
         
         // Flag per modalità evoluta e organica
         this.enableEvolvedFeatures = true;
@@ -168,6 +171,14 @@ class EvolvedServer {
                             defaultValue: {},
                             description: 'Configurazione specifica del modulo'
                         },
+                        layout: {
+                            type: 'json',
+                            defaultValue: {
+                                position: { x: 0, y: 0 },
+                                size: { width: 300, height: 200 }
+                            },
+                            description: 'Layout del modulo nel canvas (posizione e dimensione)'
+                        },
                         projectId: {
                             type: 'reference',
                             referencesEntityType: 'Project',
@@ -182,7 +193,9 @@ class EvolvedServer {
             }
 
             // Schema per CompositeDocument (NUOVO per SSOT-4000)
-            if (!this.schemaManager.getEntitySchema('CompositeDocument')) {
+            // Forza aggiornamento schema esistente per aggiungere canvasLayout
+            const existingCompositeDocSchema = this.schemaManager.getEntitySchema('CompositeDocument');
+            if (!existingCompositeDocSchema || !existingCompositeDocSchema.attributes.canvasLayout) {
                 const compositeDocumentSchema = {
                     mode: 'strict',
                     attributes: {
@@ -210,6 +223,17 @@ class EvolvedServer {
                                 modules: []
                             },
                             description: 'Layout e configurazione dei moduli nel documento'
+                        },
+                        canvasLayout: {
+                            type: 'json',
+                            defaultValue: {
+                                enabled: false,
+                                blocks: [],
+                                gridSize: 25,
+                                version: '1.0',
+                                metadata: {}
+                            },
+                            description: 'Layout canvas per moduli drag & drop con coordinate assolute'
                         },
                         ownerId: {
                             type: 'string',
@@ -299,6 +323,9 @@ class EvolvedServer {
         
         // Servire i file statici del frontend
         this.app.use(express.static(path.join(__dirname, '../frontend')));
+        
+        // Servire i file statici degli esempi
+        this.app.use('/examples', express.static(path.join(__dirname, '../../examples')));
         
         // Log delle richieste per debug
         this.app.use((req, res, next) => {
@@ -603,7 +630,8 @@ class EvolvedServer {
         // POST /api/evolved/entities - Crea entità con validazione schema avanzata
         this.app.post('/api/evolved/entities', async (req, res) => {
             try {
-                const { entityType, initialData = {}, options = {} } = req.body;
+                // ✅ UNIFICATO: Stessa logica dell'API standard
+                const { entityType, attributes, initialData, ...directData } = req.body;
                 
                 if (!entityType) {
                     return res.status(400).json({
@@ -612,7 +640,12 @@ class EvolvedServer {
                     });
                 }
                 
-                const newEntity = await this.entityEngine.createEntity(entityType, initialData, options);
+                // Determina i dati da usare (stessa logica API standard)
+                delete directData.entityType;
+                const entityData = attributes || initialData || directData;
+                
+                // ✅ UNIFICATO: Usa sempre EntityEngine MVP (stabile)
+                const newEntity = await this.entityEngine_MVP.createEntity(entityType, entityData);
                 
                 // Notifica AttributeSpace per real-time sync
                 if (this.attributeSpace && newEntity) {
@@ -764,13 +797,13 @@ class EvolvedServer {
         // ✨ ENDPOINT MODULE INSTANCE (Fase 2 Frontend)
         // ============================================
 
-        // POST /api/module-instances - Crea una nuova istanza di modulo
+        // POST /api/module-instances - Crea una nuova istanza di modulo (Schema Evoluto)
         this.app.post('/api/module-instances', async (req, res) => {
             try {
                 const instanceData = req.body;
                 
-                // Validazione dati richiesti
-                const requiredFields = ['instanceName', 'templateModuleId', 'targetEntityType'];
+                // Validazione dati richiesti per schema evoluto
+                const requiredFields = ['templateId', 'name'];
                 const missingFields = requiredFields.filter(field => !instanceData[field]);
                 
                 if (missingFields.length > 0) {
@@ -780,22 +813,17 @@ class EvolvedServer {
                     });
                 }
 
-                // Aggiunge metadati di sistema
+                // Prepara i dati per la creazione
                 const instanceToCreate = {
-                    ...instanceData,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    version: 1
+                    templateId: instanceData.templateId,
+                    name: instanceData.name,
+                    configuration: instanceData.configuration || {},
+                    projectId: instanceData.projectId || null
                 };
 
-                // Serializza instanceConfigOverrides se è un oggetto
-                if (instanceToCreate.instanceConfigOverrides && typeof instanceToCreate.instanceConfigOverrides === 'object') {
-                    instanceToCreate.instanceConfigOverrides = JSON.stringify(instanceToCreate.instanceConfigOverrides);
-                }
+                console.log('📝 [ModuleInstance] Creando istanza (schema evoluto):', instanceToCreate);
 
-                console.log('📝 [ModuleInstance] Creando istanza:', instanceToCreate);
-
-                // Crea entità ModuleInstance tramite EntityEngine
+                // Crea entità ModuleInstance tramite EntityEngine evoluto
                 const createdInstance = await this.entityEngine.createEntity('ModuleInstance', instanceToCreate);
                 
                 // Notifica via WebSocket
@@ -894,6 +922,76 @@ class EvolvedServer {
                 res.json(updatedInstance);
             } catch (error) {
                 console.error('❌ Errore aggiornamento istanza modulo:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // DELETE /api/module-instances/cleanup-orphaned - Elimina tutti i ModuleInstance orfani (DEVE essere prima del path generico)
+        this.app.delete('/api/module-instances/cleanup-orphaned', async (req, res) => {
+            try {
+                console.log('🧹 [ModuleInstance] Cleanup ModuleInstance orfani...');
+                
+                // Query per trovare ModuleInstance non collegati a nessun documento
+                const findOrphanedQuery = `
+                    MATCH (m:ModuleInstance)
+                    WHERE NOT EXISTS {
+                        MATCH (d:CompositeDocument)-[:CONTAINS_MODULE]->(m)
+                    }
+                    RETURN m.id as instanceId, m.name as instanceName
+                `;
+                
+                const orphanedResult = await neo4jConnector.executeQuery(findOrphanedQuery);
+                const orphanedIds = orphanedResult.records.map(record => ({
+                    id: record.get('instanceId'),
+                    name: record.get('instanceName')
+                }));
+                
+                console.log(`🗑️ Trovati ${orphanedIds.length} ModuleInstance orfani da eliminare`);
+                
+                if (orphanedIds.length === 0) {
+                    return res.json({
+                        success: true,
+                        message: 'Nessun ModuleInstance orfano trovato',
+                        deletedCount: 0,
+                        deletedInstances: []
+                    });
+                }
+                
+                // Elimina tutti i ModuleInstance orfani (query corretta)
+                const deleteOrphanedQuery = `
+                    MATCH (m:ModuleInstance)
+                    WHERE NOT EXISTS {
+                        MATCH (d:CompositeDocument)-[:CONTAINS_MODULE]->(m)
+                    }
+                    DELETE m
+                `;
+                
+                await neo4jConnector.executeQuery(deleteOrphanedQuery);
+                const deletedCount = orphanedIds.length;
+                
+                // Notifica via WebSocket
+                this.broadcastMessage({
+                    type: 'module-instances-cleanup',
+                    data: {
+                        deletedCount,
+                        deletedInstances: orphanedIds
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+                console.log(`✅ Eliminati ${deletedCount} ModuleInstance orfani`);
+                
+                res.json({
+                    success: true,
+                    message: `${deletedCount} ModuleInstance orfani eliminati con successo`,
+                    deletedCount,
+                    deletedInstances: orphanedIds
+                });
+            } catch (error) {
+                console.error('❌ Errore cleanup ModuleInstance orfani:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -1148,13 +1246,8 @@ class EvolvedServer {
             try {
                 const { entityId } = req.params;
                 
-                // Usa EntityEngine evoluto se abilitato
-                let entity;
-                if (this.enableEvolvedFeatures) {
-                    entity = await this.entityEngine.getEntity(entityId);
-                } else {
-                    entity = await this.entityEngine_MVP.getEntity(entityId);
-                }
+                // ✅ UNIFICATO: Usa sempre EntityEngine MVP (più stabile) 
+                const entity = await this.entityEngine_MVP.getEntity(entityId);
                 
                 if (!entity) {
                     return res.status(404).json({
@@ -1181,11 +1274,15 @@ class EvolvedServer {
         // POST /api/entities - Crea una nuova entità (ORGANICO con soft validation)
         this.app.post('/api/entities', async (req, res) => {
             try {
-                // ✅ CORREZIONE: Estrae i dati sia da initialData che direttamente dal body
-                const { entityType, initialData, ...directData } = req.body;
+                // ✅ CORREZIONE: Supporta sia formato {attributes: {...}} che attributi diretti
+                const { entityType, attributes, initialData, ...directData } = req.body;
                 
-                // Determina i dati da usare: se c'è initialData lo usa, altrimenti usa i dati diretti
-                const entityData = initialData || directData;
+                // Determina i dati da usare:
+                // 1. Se attributes è presente, usalo
+                // 2. Se initialData è presente, usalo  
+                // 3. Altrimenti usa attributi diretti dal body (escluso entityType)
+                delete directData.entityType; // Remove entityType from attributes
+                const entityData = attributes || initialData || directData;
                 
                 console.log(`🔧 Creazione entità tipo ${entityType}`, entityData);
                 
@@ -1210,13 +1307,8 @@ class EvolvedServer {
                     }
                 }
                 
-                // Usa EntityEngine evoluto se abilitato
-                let newEntity;
-                if (this.enableEvolvedFeatures) {
-                    newEntity = await this.entityEngine.createEntity(entityType, entityData);
-                } else {
-                    newEntity = await this.entityEngine_MVP.createEntity(entityType, entityData);
-                }
+                // ✅ UNIFICATO: Usa sempre EntityEngine MVP (più stabile)
+                const newEntity = await this.entityEngine_MVP.createEntity(entityType, entityData);
                 
                 // Notifica AttributeSpace per real-time sync
                 if (this.attributeSpace && newEntity) {
@@ -1250,7 +1342,8 @@ class EvolvedServer {
         this.app.put('/api/entity/:entityId/attribute', async (req, res) => {
             try {
                 const { entityId } = req.params;
-                const { attributeName, value } = req.body;
+                const { attributeName, attributeValue, value } = req.body;
+                const attributeVal = attributeValue || value; // Support both field names
                 
                 if (!attributeName) {
                     return res.status(400).json({
@@ -1259,18 +1352,13 @@ class EvolvedServer {
                     });
                 }
                 
-                // Usa EntityEngine evoluto se abilitato
-                if (this.enableEvolvedFeatures) {
-                    await this.entityEngine.setEntityAttribute(entityId, attributeName, value);
-                } else {
-                    await this.entityEngine_MVP.setEntityAttribute(entityId, attributeName, value);
-                }
+                // ✅ UNIFICATO: Usa sempre EntityEngine MVP (più stabile)
+                await this.entityEngine_MVP.setEntityAttribute(entityId, attributeName, attributeVal);
                 
                 // Get entity type for WebSocket notification
                 let entityType = null;
                 try {
-                    const engine = this.enableEvolvedFeatures ? this.entityEngine : this.entityEngine_MVP;
-                    const entity = await engine.getEntity(entityId);
+                    const entity = await this.entityEngine_MVP.getEntity(entityId);
                     entityType = entity?.entityType;
                 } catch (error) {
                     console.warn('Could not get entity type for WebSocket notification:', error);
@@ -1384,19 +1472,31 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/schema/:entityType/attributes - Recupera attributi di un tipo (MVP)
+        // GET /api/schema/:entityType/attributes - Recupera attributi definiti nello schema
         this.app.get('/api/schema/:entityType/attributes', async (req, res) => {
             try {
                 const { entityType } = req.params;
-                const attributes = this.schemaManager_MVP.getAttributesForType(entityType);
+                
+                // Usa SchemaManager semplice per attributi definiti
+                const schemaAttributes = this.schemaManager_MVP.getAttributesForType(entityType) || [];
+                
+                // Formato standardizzato per compatibilità
+                const attributeList = schemaAttributes.map(attrName => ({
+                    name: attrName,
+                    type: 'string', // Default type
+                    required: false,
+                    source: 'schema'
+                }));
                 
                 res.json({
                     success: true,
-                    data: attributes,
-                    engine: 'mvp'
+                    data: attributeList,
+                    entityType: entityType,
+                    count: attributeList.length,
+                    source: 'schema_defined'
                 });
             } catch (error) {
-                console.error('Errore nel recupero attributi schema:', error);
+                console.error('Errore recupero attributi schema:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -1911,122 +2011,9 @@ class EvolvedServer {
         // ENDPOINT RELAZIONI (Fase 2)
         // ============================================
 
-        // POST /api/relations - Crea una nuova relazione tipizzata
-        this.app.post('/api/relations', async (req, res) => {
-            try {
-                const { relationType, sourceEntityId, targetEntityId, attributes = {}, ...otherFields } = req.body;
-                
-                if (!relationType || !sourceEntityId || !targetEntityId) {
-                    return res.status(400).json({
-                        success: false,
-                        error: 'relationType, sourceEntityId e targetEntityId sono richiesti'
-                    });
-                }
-                
-                // Merge attributes with other fields (for backward compatibility)
-                const relationAttributes = { ...attributes, ...otherFields };
-                
-                // Remove system fields from attributes
-                delete relationAttributes.relationType;
-                delete relationAttributes.sourceEntityId;
-                delete relationAttributes.targetEntityId;
-                delete relationAttributes.attributes;
-                
-                const relation = await this.relationEngine.createRelation(
-                    relationType, 
-                    sourceEntityId, 
-                    targetEntityId, 
-                    relationAttributes
-                );
-                
-                // Notifica creazione relazione via WebSocket
-                this.broadcastMessage({
-                    type: 'relation-created',
-                    data: relation,
-                    timestamp: new Date().toISOString()
-                });
-                
-                res.status(201).json({
-                    success: true,
-                    data: relation
-                });
-            } catch (error) {
-                console.error('❌ Errore creazione relazione:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
-
-        // GET /api/relations - Trova relazioni basate su pattern
-        this.app.get('/api/relations', async (req, res) => {
-            try {
-                const pattern = {};
-                
-                // Costruisci pattern dai query parameters
-                if (req.query.sourceEntityId) pattern.sourceEntityId = req.query.sourceEntityId;
-                if (req.query.targetEntityId) pattern.targetEntityId = req.query.targetEntityId;
-                if (req.query.relationType) pattern.relationType = req.query.relationType;
-                if (req.query.sourceEntityType) pattern.sourceEntityType = req.query.sourceEntityType;
-                if (req.query.targetEntityType) pattern.targetEntityType = req.query.targetEntityType;
-                
-                const relations = await this.relationEngine.findRelations(pattern);
-                
-                res.json({
-                    success: true,
-                    data: relations,
-                    count: relations.length,
-                    pattern: pattern
-                });
-            } catch (error) {
-                console.error('❌ Errore ricerca relazioni:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
-
-        // POST /api/relations/find - Trova relazioni con pattern nel body
-        this.app.post('/api/relations/find', async (req, res) => {
-            try {
-                const pattern = req.body || {};
-                
-                const relations = await this.relationEngine.findRelations(pattern);
-                
-                res.json({
-                    success: true,
-                    data: relations,
-                    count: relations.length,
-                    pattern: pattern
-                });
-            } catch (error) {
-                console.error('❌ Errore ricerca relazioni POST:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
-
-        // GET /api/relations/stats - Recupera statistiche sulle relazioni
-        this.app.get('/api/relations/stats', async (req, res) => {
-            try {
-                const stats = this.relationEngine.getRelationStats();
-                
-                res.json({
-                    success: true,
-                    data: stats
-                });
-            } catch (error) {
-                console.error('❌ Errore statistiche relazioni:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
+        // ❌ REMOVED: Relations API (POST/GET/POST/GET /api/relations)
+        // Motivo: Sistema usa relazioni Neo4j native (CONTAINS_MODULE)
+        // Alternativa: Usa DocumentService per relazioni documento-modulo
 
         // ============================================
         // ENDPOINT MODULE RELATION SERVICE (Fase 1 UI Dinamica)
@@ -2064,37 +2051,7 @@ class EvolvedServer {
             }
         });
 
-        // PUT /api/modules/:moduleId/members/:entityId/attributes - Aggiorna attributi relazione
-        this.app.put('/api/modules/:moduleId/members/:entityId/attributes', async (req, res) => {
-            try {
-                const { moduleId, entityId } = req.params;
-                const { attributes } = req.body;
-                
-                if (!attributes || typeof attributes !== 'object') {
-                    return res.status(400).json({
-                        success: false,
-                        error: 'attributes è richiesto e deve essere un oggetto'
-                    });
-                }
-                
-                const result = await this.moduleRelationService.updateMembershipAttributes(
-                    entityId, 
-                    moduleId, 
-                    attributes
-                );
-                
-                res.json({
-                    success: true,
-                    data: result
-                });
-            } catch (error) {
-                console.error('❌ Errore aggiornamento attributi membro:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
+        // ❌ REMOVED: PUT /api/modules/:moduleId/members/:entityId/attributes - Non implementato
 
         // GET /api/modules/:moduleId/members - Recupera membri del modulo con attributi
         this.app.get('/api/modules/:moduleId/members', async (req, res) => {
@@ -2194,113 +2151,10 @@ class EvolvedServer {
             }
         });
 
-        // POST /api/projects/:projectId/modules/:moduleId/link - Collega modulo a progetto
-        this.app.post('/api/projects/:projectId/modules/:moduleId/link', async (req, res) => {
-            try {
-                const { projectId, moduleId } = req.params;
-                
-                const result = await this.moduleRelationService.linkModuleToProject(projectId, moduleId);
-                
-                res.status(201).json({
-                    success: true,
-                    data: result
-                });
-            } catch (error) {
-                console.error('❌ Errore collegamento modulo a progetto:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
+        // ❌ REMOVED: POST /api/projects/:projectId/modules/:moduleId/link - Non funziona
 
-        // GET /api/relations/:relationId - Recupera una relazione specifica
-        this.app.get('/api/relations/:relationId', async (req, res) => {
-            try {
-                const { relationId } = req.params;
-                
-                const relations = await this.relationEngine.findRelations({});
-                const relation = relations.find(r => r.id === relationId);
-                
-                if (!relation) {
-                    return res.status(404).json({
-                        success: false,
-                        error: 'Relazione non trovata'
-                    });
-                }
-                
-                res.json({
-                    success: true,
-                    data: relation
-                });
-            } catch (error) {
-                console.error('❌ Errore recupero relazione:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
-
-        // PUT /api/relations/:relationId - Aggiorna attributi di una relazione
-        this.app.put('/api/relations/:relationId', async (req, res) => {
-            try {
-                const { relationId } = req.params;
-                const { attributes } = req.body;
-                
-                await this.relationEngine.updateRelationAttributes(relationId, attributes);
-                
-                // Notifica aggiornamento relazione via WebSocket
-                this.broadcastMessage({
-                    type: 'relation-updated',
-                    data: {
-                        relationId: relationId,
-                        attributes: attributes
-                    },
-                    timestamp: new Date().toISOString()
-                });
-                
-                res.json({
-                    success: true,
-                    message: 'Relazione aggiornata con successo'
-                });
-            } catch (error) {
-                console.error('❌ Errore aggiornamento relazione:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
-
-        // DELETE /api/relations/:relationId - Elimina una relazione
-        this.app.delete('/api/relations/:relationId', async (req, res) => {
-            try {
-                const { relationId } = req.params;
-                
-                await this.relationEngine.deleteRelation(relationId);
-                
-                // Notifica eliminazione relazione via WebSocket
-                this.broadcastMessage({
-                    type: 'relation-deleted',
-                    data: {
-                        relationId: relationId
-                    },
-                    timestamp: new Date().toISOString()
-                });
-                
-                res.json({
-                    success: true,
-                    message: 'Relazione eliminata con successo'
-                });
-            } catch (error) {
-                console.error('❌ Errore eliminazione relazione:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
+        // ❌ REMOVED: Relations CRUD endpoints (GET/PUT/DELETE /api/relations/:id)
+        // Sistema usa relazioni native Neo4j
 
         // ============================================
         // ADMIN ENDPOINTS - TEMPORARY FOR CLEANUP
@@ -2459,7 +2313,8 @@ class EvolvedServer {
                 
                 res.json({
                     success: true,
-                    data: updatedDocument
+                    data: JSON.parse(JSON.stringify(updatedDocument)),
+                    message: "Documento aggiornato con successo"
                 });
             } catch (error) {
                 console.error('❌ Errore aggiornamento documento:', error);
@@ -2497,93 +2352,9 @@ class EvolvedServer {
             }
         });
 
-        // PUT /api/documents/:id/modules - Gestione moduli nel documento
-        this.app.put('/api/documents/:id/modules', async (req, res) => {
-            try {
-                const { id } = req.params;
-                const { action, moduleId, layoutConfig } = req.body;
-                
-                let result;
-                
-                switch (action) {
-                    case 'add':
-                        result = await this.documentService.addModuleToDocument(id, moduleId, layoutConfig);
-                        break;
-                    case 'update':
-                        result = await this.documentService.updateModuleInDocument(id, moduleId, layoutConfig);
-                        break;
-                    case 'remove':
-                        result = await this.documentService.removeModuleFromDocument(id, moduleId);
-                        break;
-                    default:
-                        return res.status(400).json({
-                            success: false,
-                            error: 'Azione non valida. Usa "add", "update" o "remove"'
-                        });
-                }
-                
-                // Notifica modifica moduli via WebSocket
-                this.broadcastMessage({
-                    type: 'document-modules-updated',
-                    data: {
-                        documentId: id,
-                        action: action,
-                        moduleId: moduleId,
-                        result: result
-                    },
-                    timestamp: new Date().toISOString()
-                });
-                
-                res.json({
-                    success: true,
-                    data: result
-                });
-            } catch (error) {
-                console.error('❌ Errore gestione moduli documento:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
+        // ❌ REMOVED: PUT /api/documents/:id/modules - Obsoleto, usa Canvas API
 
-        // PUT /api/documents/:id/layout - Aggiorna il layout dei moduli
-        this.app.put('/api/documents/:id/layout', async (req, res) => {
-            try {
-                const { id } = req.params;
-                const { moduleLayouts } = req.body;
-                
-                if (!Array.isArray(moduleLayouts)) {
-                    return res.status(400).json({
-                        success: false,
-                        error: 'moduleLayouts deve essere un array'
-                    });
-                }
-                
-                const updatedDocument = await this.documentService.updateDocumentLayout(id, moduleLayouts);
-                
-                // Notifica aggiornamento layout via WebSocket
-                this.broadcastMessage({
-                    type: 'document-layout-updated',
-                    data: {
-                        documentId: id,
-                        layout: updatedDocument.document.layout
-                    },
-                    timestamp: new Date().toISOString()
-                });
-                
-                res.json({
-                    success: true,
-                    data: updatedDocument
-                });
-            } catch (error) {
-                console.error('❌ Errore aggiornamento layout documento:', error);
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
-        });
+        // ❌ REMOVED: PUT /api/documents/:id/layout - Obsoleto, usa Canvas API
 
         // GET /api/documents - Lista documenti con filtri
         this.app.get('/api/documents', async (req, res) => {
@@ -2619,30 +2390,98 @@ class EvolvedServer {
             }
         });
 
-        // POST /api/documents/:id/clone - Clona un documento
-        this.app.post('/api/documents/:id/clone', async (req, res) => {
+        // ❌ REMOVED: POST /api/documents/:id/clone - Non implementato
+
+        // ❌ REMOVED: GET /api/documents/:id/context - Non implementato
+
+        // ===== CANVAS DOCUMENT ENDPOINTS =====
+        
+        // PUT /api/documents/:id/canvas - Salva layout canvas in documento
+        this.app.put('/api/documents/:id/canvas', async (req, res) => {
             try {
                 const { id } = req.params;
-                const overrides = req.body;
+                const { canvasLayout } = req.body;
                 
-                const clonedDocument = await this.documentService.cloneDocument(id, overrides);
+                if (!canvasLayout) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'canvasLayout è richiesto'
+                    });
+                }
                 
-                // Notifica creazione clone via WebSocket
-                this.broadcastMessage({
-                    type: 'document-cloned',
-                    data: {
-                        originalId: id,
-                        clonedDocument: clonedDocument
-                    },
-                    timestamp: new Date().toISOString()
-                });
+                // Valida la struttura del canvas layout
+                const validatedLayout = {
+                    enabled: canvasLayout.enabled !== false,
+                    blocks: canvasLayout.blocks || [],
+                    gridSize: canvasLayout.gridSize || 25,
+                    version: canvasLayout.version || '1.0',
+                    metadata: canvasLayout.metadata || {},
+                    updatedAt: new Date().toISOString()
+                };
                 
-                res.status(201).json({
+                // Aggiorna il documento con il nuovo canvas layout
+                await this.entityEngine.setEntityAttribute(id, 'canvasLayout', validatedLayout);
+                
+                // ✨ NUOVO: Crea relazioni CONTAINS_MODULE per ogni ModuleInstance nel canvas
+                if (validatedLayout.blocks && validatedLayout.blocks.length > 0) {
+                    console.log(`🔗 Creando relazioni CONTAINS_MODULE per ${validatedLayout.blocks.length} blocchi canvas`);
+                    
+                    // Prima rimuovi tutte le relazioni esistenti per questo documento (relazioni dirette)
+                    const removeRelationsQuery = `
+                        MATCH (d:CompositeDocument {id: $documentId})-[r:CONTAINS_MODULE]->()
+                        DELETE r
+                    `;
+                    await neo4jConnector.executeQuery(removeRelationsQuery, { documentId: id });
+                    
+                    // Poi crea le nuove relazioni per ogni blocco con instanceId
+                    let relationsCreated = 0;
+                    for (let i = 0; i < validatedLayout.blocks.length; i++) {
+                        const block = validatedLayout.blocks[i];
+                        if (block.instanceId) {
+                            try {
+                                await this.documentService.addModuleToDocument(id, block.instanceId, {
+                                    order: i,
+                                    position: { x: block.x, y: block.y },
+                                    size: { width: block.width, height: block.height },
+                                    collapsed: false,
+                                    config: {
+                                        blockId: block.id,
+                                        type: block.type,
+                                        title: block.title,
+                                        templateId: block.templateId,
+                                        entityType: block.entityType
+                                    }
+                                });
+                                relationsCreated++;
+                                console.log(`✅ Relazione CONTAINS_MODULE creata: ${id} -> ${block.instanceId}`);
+                            } catch (relationError) {
+                                console.warn(`⚠️ Errore creazione relazione per blocco ${block.id}:`, relationError.message);
+                            }
+                        }
+                    }
+                    console.log(`🔗 Relazioni CONTAINS_MODULE create: ${relationsCreated}/${validatedLayout.blocks.length}`);
+                }
+                
+                // Notifica AttributeSpace per real-time sync
+                if (this.attributeSpace) {
+                    this.attributeSpace.notifyChange({
+                        type: 'entity',
+                        entityType: 'CompositeDocument',
+                        entityId: id,
+                        attributeName: 'canvasLayout',
+                        newValue: validatedLayout,
+                        changeType: 'update',
+                        timestamp: Date.now()
+                    });
+                }
+                
+                res.json({
                     success: true,
-                    data: clonedDocument
+                    data: validatedLayout,
+                    message: 'Canvas layout salvato con successo'
                 });
             } catch (error) {
-                console.error('❌ Errore clonazione documento:', error);
+                console.error('❌ Errore salvataggio canvas layout:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -2650,19 +2489,128 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/documents/:id/context - Recupera il contesto ereditabile del documento
-        this.app.get('/api/documents/:id/context', async (req, res) => {
+        // GET /api/documents/:id/canvas - Recupera layout canvas da documento
+        this.app.get('/api/documents/:id/canvas', async (req, res) => {
             try {
                 const { id } = req.params;
                 
-                const context = await this.documentService.getDocumentContext(id);
+                // Recupera il documento
+                const document = await this.entityEngine.getEntity(id);
+                
+                if (!document) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Documento non trovato'
+                    });
+                }
+                
+                // Restituisce il canvas layout (con default se non esiste)
+                const canvasLayout = document.canvasLayout || {
+                    enabled: false,
+                    blocks: [],
+                    gridSize: 25,
+                    version: '1.0',
+                    metadata: {}
+                };
                 
                 res.json({
                     success: true,
-                    data: context
+                    data: canvasLayout,
+                    documentId: id,
+                    documentName: document.name
                 });
             } catch (error) {
-                console.error('❌ Errore recupero contesto documento:', error);
+                console.error('❌ Errore recupero canvas layout:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error.message
+                });
+            }
+        });
+
+        // POST /api/documents/:id/canvas/sync - Sincronizza canvas blocks con ModuleInstances
+        this.app.post('/api/documents/:id/canvas/sync', async (req, res) => {
+            try {
+                const { id } = req.params;
+                
+                // Recupera il documento e il suo canvas layout
+                const document = await this.entityEngine.getEntity(id);
+                
+                if (!document) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'Documento non trovato'
+                    });
+                }
+                
+                const canvasLayout = document.canvasLayout;
+                if (!canvasLayout || !canvasLayout.blocks) {
+                    return res.json({
+                        success: true,
+                        message: 'Nessun blocco canvas da sincronizzare',
+                        syncedModules: 0
+                    });
+                }
+                
+                let syncedCount = 0;
+                let errorCount = 0;
+                
+                // Per ogni blocco canvas, crea o aggiorna un ModuleInstance
+                for (const block of canvasLayout.blocks) {
+                    try {
+                        // Crea ModuleInstance per il blocco se non esiste
+                        const moduleData = {
+                            templateId: block.type || 'canvas-module',
+                            name: block.title || `Canvas Module ${block.id}`,
+                            configuration: {
+                                canvasBlock: true,
+                                blockId: block.id,
+                                blockType: block.type,
+                                content: block.content || []
+                            },
+                            projectId: document.projectId
+                        };
+                        
+                        const moduleInstance = await this.entityEngine.createEntity('ModuleInstance', moduleData);
+                        
+                        // Crea relazione CONTAINS_MODULE con posizione canvas
+                        await this.relationEngine.createRelation({
+                            type: 'CONTAINS_MODULE',
+                            sourceId: id,
+                            targetId: moduleInstance.id,
+                            attributes: {
+                                order: syncedCount,
+                                position: {
+                                    x: block.x,
+                                    y: block.y
+                                },
+                                size: {
+                                    width: block.width,
+                                    height: block.height
+                                },
+                                collapsed: false,
+                                config: {
+                                    canvasMode: true,
+                                    blockId: block.id
+                                }
+                            }
+                        });
+                        
+                        syncedCount++;
+                    } catch (error) {
+                        console.error(`❌ Errore sync blocco ${block.id}:`, error);
+                        errorCount++;
+                    }
+                }
+                
+                res.json({
+                    success: true,
+                    message: `Sincronizzati ${syncedCount} blocchi canvas con ModuleInstances`,
+                    syncedModules: syncedCount,
+                    errors: errorCount
+                });
+            } catch (error) {
+                console.error('❌ Errore sincronizzazione canvas:', error);
                 res.status(500).json({
                     success: false,
                     error: error.message
@@ -3224,6 +3172,7 @@ if (require.main === module) {
             console.log(`   - API MVP compatibili per fallback`);
             console.log(`   - API evolute per SchemaService`);
             console.log(`   - File statici frontend da /frontend/`);
+            console.log(`   - File esempi da /examples/`);
             console.log(`   - WebSocket per real-time updates`);
             console.log(`   - Template test page: http://localhost:${PORT}/views/template-test.html`);
             console.log('=' .repeat(60));

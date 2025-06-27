@@ -15,28 +15,23 @@
     wsStatus,
     layoutSaveModalOpen,
     layoutLoadModalOpen,
-    initializeTemplates
+    initializeTemplates,
+    syncAllBlocksToBackend
   } from './stores/canvas.js'
   import { onMount } from 'svelte'
   
   let notifications = []
   
   // Inizializza l'applicazione
-  onMount(() => {
+  onMount(async () => {
     // Inizializza WebSocket
     initWebSocket()
     
     // Inizializza template predefiniti se è la prima volta
     initializeTemplates()
     
-    // Carica blocchi di esempio se non ci sono layout salvati
-    const initialBlocks = [
-      { id: 'block1', type: 'container', title: 'Modulo 1', x: 100, y: 100, width: 300, height: 200, content: [] },
-      { id: 'block2', type: 'container', title: 'Modulo 2', x: 450, y: 100, width: 300, height: 200, content: [] },
-      { id: 'block3', type: 'container', title: 'Modulo 3', x: 100, y: 350, width: 300, height: 200, content: [] }
-    ]
-    
-    blocks.set(initialBlocks)
+    // Inizia con canvas vuoto - i blocchi verranno aggiunti dall'utente o caricati da layout salvati
+    blocks.set([])
   })
   
   function handleBlockUpdate(event) {
@@ -48,7 +43,7 @@
     selectedBlockId.set(event.detail.id)
   }
   
-  function addNewBlock(type) {
+  async function addNewBlock(type) {
     const newBlock = {
       id: `block${Date.now()}`,
       type: 'container',
@@ -57,9 +52,12 @@
       y: 150,
       width: 300,
       height: 200,
-      content: []
+      content: [],
+      // Additional metadata for ModuleInstance
+      templateId: type === 'table' ? 'table-template' : 'default-template',
+      entityType: type === 'contact-list' ? 'Persona' : 'GenericEntity'
     }
-    addBlock(newBlock)
+    await addBlock(newBlock)
   }
   
   // Layout management event handlers
@@ -151,6 +149,7 @@
   isOpen={$layoutLoadModalOpen}
   on:loaded={handleLayoutLoaded}
 />
+
 
 <!-- Notifications -->
 {#if notifications.length > 0}

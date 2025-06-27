@@ -13,13 +13,14 @@ const { v4: uuidv4 } = require('uuid');
  * - Appartiene a un Project per contesto globale
  */
 class DocumentService {
-    constructor(dao, entityEngine, schemaManager, attributeSpace) {
+    constructor(dao, entityEngine, schemaManager, attributeSpace, relationEngine) {
         this.dao = dao;
         this.entityEngine = entityEngine;
         this.schemaManager = schemaManager;
         this.attributeSpace = attributeSpace;
+        this.relationEngine = relationEngine;
         
-        console.log('📄 DocumentService inizializzato per SSOT-4000');
+        console.log('📄 DocumentService inizializzato per SSOT-4000 con RelationEngine');
     }
 
     /**
@@ -115,21 +116,23 @@ class DocumentService {
                     const moduleData = record.get('m').properties;
                     const relationProps = record.get('relationProps');
                     
-                    // Parse JSON fields
-                    const position = typeof relationProps.position === 'string' 
-                        ? JSON.parse(relationProps.position) 
-                        : relationProps.position;
-                    const size = typeof relationProps.size === 'string'
-                        ? JSON.parse(relationProps.size)
-                        : relationProps.size;
-                    const config = typeof relationProps.config === 'string'
-                        ? JSON.parse(relationProps.config)
-                        : relationProps.config;
+                    // Ricostruisci gli oggetti da attributi appiattiti
+                    const position = {
+                        x: relationProps.positionX || 0,
+                        y: relationProps.positionY || 0
+                    };
+                    const size = {
+                        width: relationProps.width || 4,
+                        height: relationProps.height || 6
+                    };
+                    const config = relationProps.configJSON 
+                        ? JSON.parse(relationProps.configJSON) 
+                        : {};
                     
                     return {
                         moduleId: moduleData.id,
-                        instanceName: moduleData.instanceName,
-                        templateModuleId: moduleData.templateModuleId,
+                        instanceName: moduleData.instanceName || moduleData.name,
+                        templateModuleId: moduleData.templateModuleId || moduleData.templateId,
                         targetEntityType: moduleData.targetEntityType,
                         targetEntityId: moduleData.targetEntityId,
                         description: moduleData.description,
@@ -197,6 +200,7 @@ class DocumentService {
             // Recupera il documento aggiornato
             const updatedDocument = await this.entityEngine.getEntity(documentId);
             
+            
             // Notifica l'aggiornamento
             this.attributeSpace.notifyChange({
                 type: 'entity',
@@ -258,73 +262,61 @@ class DocumentService {
                 ? maxOrder.low + 1 
                 : (maxOrder || 0) + 1;
             
-            // Crea la relazione CONTAINS_MODULE
-            const relationId = uuidv4();
-            const createQuery = `
+            // Crea la relazione CONTAINS_MODULE diretta in Neo4j
+            console.log(`🔗 Creando relazione CONTAINS_MODULE: ${documentId} -> ${moduleId}`);
+            
+            // Prepara gli attributi appiattiti per Neo4j
+            const relationQuery = `
                 MATCH (d:CompositeDocument {id: $documentId})
                 MATCH (m:ModuleInstance {id: $moduleId})
                 CREATE (d)-[r:CONTAINS_MODULE {
-                    id: $relationId,
                     order: $order,
-                    position: $position,
-                    size: $size,
+                    positionX: $positionX,
+                    positionY: $positionY,
+                    width: $width,
+                    height: $height,
                     collapsed: $collapsed,
-                    config: $config,
+                    configJSON: $configJSON,
                     addedAt: $addedAt
                 }]->(m)
-                RETURN d, r, m
+                RETURN r
             `;
             
-            const parameters = {
+            const relationParams = {
                 documentId,
                 moduleId,
-                relationId,
                 order: newOrder,
-                position: JSON.stringify(layoutConfig.position || { x: 0, y: 0 }),
-                size: JSON.stringify(layoutConfig.size || { width: 4, height: 6 }),
+                positionX: layoutConfig.position?.x || 0,
+                positionY: layoutConfig.position?.y || 0,
+                width: layoutConfig.size?.width || 4,
+                height: layoutConfig.size?.height || 6,
                 collapsed: layoutConfig.collapsed || false,
-                config: JSON.stringify(layoutConfig.config || {}),
+                configJSON: JSON.stringify(layoutConfig.config || {}),
                 addedAt: new Date().toISOString()
             };
             
-            const result = await this.dao.connector.executeQuery(createQuery, parameters);
+            const relationResult = await this.dao.connector.executeQuery(relationQuery, relationParams);
             
-            if (result.records.length === 0) {
-                throw new Error('Errore nella creazione della relazione CONTAINS_MODULE');
+            if (relationResult.records.length === 0) {
+                throw new Error('Errore creazione relazione CONTAINS_MODULE');
             }
             
-            const record = result.records[0];
-            const relation = record.get('r').properties;
-            
-            // Parse JSON fields
-            relation.position = JSON.parse(relation.position);
-            relation.size = JSON.parse(relation.size);
-            relation.config = JSON.parse(relation.config);
-            
-            // Notifica l'aggiunta del modulo
-            this.attributeSpace.notifyChange({
-                type: 'relation',
-                relationType: 'CONTAINS_MODULE',
-                changeType: 'created',
-                sourceEntityId: documentId,
-                targetEntityId: moduleId,
-                relationId: relation.id,
-                attributes: relation,
-                metadata: {
-                    documentType: 'CompositeDocument',
-                    moduleType: 'ModuleInstance'
-                }
-            });
+            const relation = relationResult.records[0].get('r');
+            console.log(`✅ Relazione CONTAINS_MODULE creata con attributi`);
             
             // Aggiorna il timestamp del documento direttamente via DAO per evitare validazione schema
             await this.dao.updateEntityAttribute(documentId, 'modifiedAt', new Date().toISOString());
             
             console.log(`✅ ModuleInstance ${moduleId} aggiunto al documento ${documentId} con ordine ${newOrder}`);
             
+            // Recupera entità per il risultato
+            const document = await this.entityEngine.getEntity(documentId);
+            const module = await this.entityEngine.getEntity(moduleId);
+            
             return {
-                document: record.get('d').properties,
-                module: record.get('m').properties,
-                relation: relation
+                document,
+                module,
+                relation
             };
             
         } catch (error) {
@@ -406,23 +398,27 @@ class DocumentService {
                 throw new Error(`Modulo ${moduleId} non trovato nel documento ${documentId}`);
             }
             
-            // Aggiorna le proprietà della relazione CONTAINS_MODULE
+            // Aggiorna le proprietà della relazione CONTAINS_MODULE (attributi appiattiti)
             const updateQuery = `
                 MATCH (d:CompositeDocument {id: $documentId})-[r:CONTAINS_MODULE]->(m:ModuleInstance {id: $moduleId})
-                SET r.position = $position,
-                    r.size = $size,
+                SET r.positionX = $positionX,
+                    r.positionY = $positionY,
+                    r.width = $width,
+                    r.height = $height,
                     r.collapsed = $collapsed,
-                    r.config = $config
+                    r.configJSON = $configJSON
                 RETURN r, m
             `;
             
             const parameters = {
                 documentId,
                 moduleId,
-                position: JSON.stringify(layoutConfig.position || { x: 0, y: 0 }),
-                size: JSON.stringify(layoutConfig.size || { width: 4, height: 6 }),
+                positionX: layoutConfig.position?.x || 0,
+                positionY: layoutConfig.position?.y || 0,
+                width: layoutConfig.size?.width || 4,
+                height: layoutConfig.size?.height || 6,
                 collapsed: layoutConfig.collapsed || false,
-                config: JSON.stringify(layoutConfig.config || {})
+                configJSON: JSON.stringify(layoutConfig.config || {})
             };
             
             const result = await this.dao.connector.executeQuery(updateQuery, parameters);
@@ -432,12 +428,21 @@ class DocumentService {
             }
             
             const record = result.records[0];
-            const relation = record.get('r').properties;
+            const relationProps = record.get('r').properties;
             
-            // Parse JSON fields
-            relation.position = JSON.parse(relation.position);
-            relation.size = JSON.parse(relation.size);
-            relation.config = JSON.parse(relation.config);
+            // Ricostruisci gli oggetti da attributi appiattiti
+            const relation = {
+                ...relationProps,
+                position: {
+                    x: relationProps.positionX || 0,
+                    y: relationProps.positionY || 0
+                },
+                size: {
+                    width: relationProps.width || 4,
+                    height: relationProps.height || 6
+                },
+                config: relationProps.configJSON ? JSON.parse(relationProps.configJSON) : {}
+            };
             
             // Notifica l'aggiornamento del modulo
             this.attributeSpace.notifyChange({
@@ -546,15 +551,45 @@ class DocumentService {
      */
     async deleteDocument(documentId) {
         try {
-            // Prima rimuovi tutte le relazioni CONTAINS_MODULE
+            // Prima recupera tutti i ModuleInstance collegati per eliminarli (relazioni dirette)
+            const getModulesQuery = `
+                MATCH (d:CompositeDocument {id: $documentId})-[:CONTAINS_MODULE]->(m:ModuleInstance)
+                RETURN m.id as moduleId
+            `;
+            
+            const modulesResult = await this.dao.connector.executeQuery(getModulesQuery, { documentId });
+            const moduleIds = modulesResult.records.map(record => record.get('moduleId'));
+            
+            console.log(`🗑️ Eliminando ${moduleIds.length} ModuleInstance collegati al documento ${documentId}`);
+            
+            // Elimina tutti i ModuleInstance collegati tramite EntityEngine
+            let deletedModules = 0;
+            for (const moduleId of moduleIds) {
+                try {
+                    const deleted = await this.entityEngine.deleteEntity(moduleId);
+                    if (deleted) {
+                        deletedModules++;
+                        console.log(`✅ ModuleInstance eliminato: ${moduleId}`);
+                    } else {
+                        console.warn(`⚠️ ModuleInstance ${moduleId} non trovato o già eliminato`);
+                    }
+                } catch (moduleError) {
+                    console.error(`❌ Errore eliminazione ModuleInstance ${moduleId}:`, moduleError.message);
+                    // Continua con gli altri moduli anche se uno fallisce
+                }
+            }
+            
+            console.log(`🗑️ Eliminati ${deletedModules}/${moduleIds.length} ModuleInstance`)
+            
+            // Poi rimuovi tutte le relazioni CONTAINS_MODULE (formato RelationEngine)
             const deleteRelationsQuery = `
-                MATCH (d:CompositeDocument {id: $documentId})-[r:CONTAINS_MODULE]->()
-                DELETE r
+                MATCH (d:CompositeDocument {id: $documentId})-[:HAS_RELATION]->(r:Relation {relationType: 'CONTAINS_MODULE'})
+                DETACH DELETE r
             `;
             
             await this.dao.connector.executeQuery(deleteRelationsQuery, { documentId });
             
-            // Poi elimina il documento usando EntityEngine
+            // Infine elimina il documento usando EntityEngine
             await this.entityEngine.deleteEntity(documentId);
             
             // Notifica l'eliminazione
@@ -565,7 +600,7 @@ class DocumentService {
                 changeType: 'deleted'
             });
             
-            console.log(`✅ CompositeDocument ${documentId} eliminato con tutte le relazioni`);
+            console.log(`✅ CompositeDocument ${documentId} eliminato con ${moduleIds.length} ModuleInstance e tutte le relazioni`);
             
             return true;
             
@@ -610,9 +645,7 @@ class DocumentService {
             
             const query = `
                 MATCH ${whereClause}
-                OPTIONAL MATCH (d)-[r:CONTAINS_MODULE]->()
-                WITH d, COUNT(r) as moduleCount
-                RETURN d, moduleCount
+                RETURN d
                 ORDER BY d.${orderBy} ${orderDirection}
                 SKIP ${parseInt(offset)}
                 LIMIT ${parseInt(limit)}
@@ -622,13 +655,7 @@ class DocumentService {
             
             const documents = result.records.map(record => {
                 const doc = record.get('d').properties;
-                const count = record.get('moduleCount');
-                return {
-                    ...doc,
-                    moduleCount: (typeof count === 'object' && count.low !== undefined) 
-                        ? count.low 
-                        : (count || 0)
-                };
+                return doc;
             });
             
             console.log(`✅ Trovati ${documents.length} documenti con filtri:`, filters);

@@ -1,5 +1,14 @@
 <script>
+  import { removeBlock } from '../stores/canvas.js'
+  
   export let selectedBlock = null
+  
+  // Function to handle block removal
+  function handleRemoveBlock() {
+    if (selectedBlock && confirm(`Are you sure you want to remove "${selectedBlock.title}"?`)) {
+      removeBlock(selectedBlock.id)
+    }
+  }
   
   // Mock data per mostrare il pannello
   $: moduleData = selectedBlock ? {
@@ -139,7 +148,7 @@
           <button class="action-btn primary">🔄 Refresh Data</button>
           <button class="action-btn">⚙️ Configure</button>
           <button class="action-btn">📤 Export</button>
-          <button class="action-btn danger">🗑️ Remove</button>
+          <button class="action-btn danger" on:click={handleRemoveBlock}>🗑️ Remove</button>
         </div>
       </div>
     </div>
