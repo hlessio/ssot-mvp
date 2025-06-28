@@ -38,6 +38,7 @@ This is a dynamic Single Source of Truth (SSOT) system where information (entiti
 ```bash
 npm install     # Install dependencies  
 npm start       # Starts backend server on http://localhost:3000
+            # API documentation available at http://localhost:3000/api-docs
 
 # Canvas Prototype (separate Svelte app)
 cd src/frontend/canvas-prototype
@@ -72,6 +73,7 @@ npm run test:legacy # Run legacy test files
   - Module instances: `/api/module-instances/*` (UI module configurations)
   - Canvas: `/api/documents/:id/canvas` (canvas layout persistence)
 - **WebSocket Server:** Handles frontend connections, used by AttributeSpace for change events
+- **Swagger UI Documentation:** Interactive API documentation at `/api-docs` with full OpenAPI 3.0 spec
 
 **Core Engine (src/backend/core/):**
 - **schemaManager_evolved.js:** Structural semantic custodian. Manages definition, persistence (via DAO to Neo4j), dynamic evolution and versioning of entity/relation schemas
@@ -167,6 +169,7 @@ Stores:
 - DAO pattern for database operations
 - Observer pattern for change notifications
 - Dual-track: MVP compatibility + evolved features
+- Swagger/OpenAPI documentation with JSDoc comments
 
 ## Project Structure
 
@@ -255,6 +258,7 @@ Stores:
 - `docs/current/API-Optimization-Report.md`: Complete API optimization results
 - `docs/current/Canvas-Svelte-Prototype-Documentation.md`: Canvas system documentation
 - `docs/guides/API-Reference-Guide.md`: Complete API reference (35 endpoints)
+- `docs/guides/Swagger-Setup-Guide.md`: Swagger UI integration and usage guide
 - `docs/phases/`: Development phase reports and evolution  
 - `archive/development-history/`: Historical documentation and development diary
 
@@ -278,6 +282,7 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - **Real-time Sync**: WebSocket + BroadcastChannel for instant collaboration
 - **Entity Management**: Unified MVP+Evolved engine with schema evolution
 - **Documentation**: Complete API guides and system documentation
+- **Swagger UI**: Interactive API documentation with OpenAPI 3.0 spec at `/api-docs`
 
 **Previous Phase - Phase 7 Completed**: Advanced Table Sync System
 - **Planning Document**: `docs/phases/Phase-7-Advanced-Table-Sync-System.md`
@@ -410,6 +415,13 @@ The system maintains **MVP compatibility** while introducing **evolved features*
 - Smart inputs with contextual autocomplete
 - Relational attributes on entity-module relationships
 - Bidirectional queries (entity→projects, project→entities)
+
+### API Documentation with Swagger
+- **Access Swagger UI**: Navigate to http://localhost:3000/api-docs
+- **Add New Endpoints**: Add JSDoc comments with @swagger tags above endpoints
+- **Auto-update**: Documentation automatically updates on server restart
+- **Test APIs**: Use "Try it out" feature to test endpoints directly from browser
+- **Export OpenAPI**: Generate client SDKs from the OpenAPI 3.0 specification
 
 ### Working with SSOT-4000 Platform (✅ COMPLETED)
 - **Reference Document**: `docs/phases/SSOT-4000-implementation-plan.md`

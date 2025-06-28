@@ -4,6 +4,10 @@ const http = require('http');
 const path = require('path');
 const cors = require('cors');
 
+// Swagger dependencies
+const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+
 // Import dei moduli core implementati nelle fasi precedenti (MVP)
 const neo4jConnector = require('./neo4j_connector');
 const neo4jDAO = require('./dao/neo4j_dao');
@@ -73,6 +77,7 @@ class EvolvedServer {
         this.enableRelationSchemaValidation = process.env.ENABLE_RELATION_SCHEMA !== 'true'; // Default: false per memory
         
         this.setupMiddleware();
+        this.setupSwagger();
         this.setupWebSocket();
         this.setupRoutes();
         this.setupAttributeSpaceNotifications();
@@ -332,6 +337,113 @@ class EvolvedServer {
             console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
             next();
         });
+    }
+
+    /**
+     * Configura Swagger UI per documentazione API automatica
+     */
+    setupSwagger() {
+        const swaggerOptions = {
+            definition: {
+                openapi: '3.0.0',
+                info: {
+                    title: 'SSOT-3005 API',
+                    version: '2.0.0',
+                    description: 'Single Source of Truth - Dynamic System API Documentation',
+                    contact: {
+                        name: 'SSOT-3005 Development Team',
+                        email: 'dev@ssot-3005.com'
+                    }
+                },
+                servers: [
+                    {
+                        url: 'http://localhost:3000',
+                        description: 'Development server'
+                    }
+                ],
+                tags: [
+                    {
+                        name: 'Documents',
+                        description: 'CompositeDocument management and canvas operations'
+                    },
+                    {
+                        name: 'Modules',
+                        description: 'ModuleInstance creation and management'
+                    },
+                    {
+                        name: 'Entities',
+                        description: 'Entity CRUD operations with dynamic attributes'
+                    },
+                    {
+                        name: 'Schema',
+                        description: 'Schema management and attribute definitions'
+                    },
+                    {
+                        name: 'Search',
+                        description: 'Full-text search across entities'
+                    },
+                    {
+                        name: 'Module Members',
+                        description: 'Module-entity relationship management'
+                    }
+                ],
+                components: {
+                    schemas: {
+                        Entity: {
+                            type: 'object',
+                            properties: {
+                                id: { type: 'string', description: 'Unique entity identifier' },
+                                entityType: { type: 'string', description: 'Type of entity (e.g., Persona, Progetto)' },
+                                createdAt: { type: 'string', format: 'date-time' },
+                                modifiedAt: { type: 'string', format: 'date-time' }
+                            }
+                        },
+                        CompositeDocument: {
+                            type: 'object',
+                            properties: {
+                                id: { type: 'string' },
+                                name: { type: 'string' },
+                                description: { type: 'string' },
+                                ownerId: { type: 'string' },
+                                projectId: { type: 'string' },
+                                entityType: { type: 'string', example: 'CompositeDocument' }
+                            }
+                        },
+                        ModuleInstance: {
+                            type: 'object',
+                            properties: {
+                                id: { type: 'string' },
+                                moduleType: { type: 'string' },
+                                configuration: { type: 'object' },
+                                position: { type: 'object' },
+                                entityType: { type: 'string', example: 'ModuleInstance' }
+                            }
+                        },
+                        ApiResponse: {
+                            type: 'object',
+                            properties: {
+                                success: { type: 'boolean' },
+                                data: { type: 'object' },
+                                message: { type: 'string' },
+                                error: { type: 'string' }
+                            }
+                        }
+                    }
+                }
+            },
+            apis: [__filename] // paths to files containing OpenAPI definitions
+        };
+
+        const specs = swaggerJSDoc(swaggerOptions);
+        
+        // Serve Swagger UI at /api-docs
+        this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+            explorer: true,
+            customCss: '.swagger-ui .topbar { display: none }',
+            customSiteTitle: 'SSOT-3005 API Documentation'
+        }));
+
+        console.log('📚 Swagger UI configurato su http://localhost:3000/api-docs');
     }
 
     setupWebSocket() {
@@ -797,7 +909,58 @@ class EvolvedServer {
         // ✨ ENDPOINT MODULE INSTANCE (Fase 2 Frontend)
         // ============================================
 
-        // POST /api/module-instances - Crea una nuova istanza di modulo (Schema Evoluto)
+        /**
+         * @swagger
+         * /api/module-instances:
+         *   post:
+         *     summary: Create module instance
+         *     description: Creates a new ModuleInstance entity for use in documents
+         *     tags: [Modules]
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             required:
+         *               - templateId
+         *               - name
+         *             properties:
+         *               templateId:
+         *                 type: string
+         *                 description: Module template identifier
+         *                 example: "contact-card"
+         *               name:
+         *                 type: string
+         *                 description: Instance name
+         *                 example: "Customer Contact Card"
+         *               configuration:
+         *                 type: object
+         *                 description: Module-specific configuration
+         *                 example:
+         *                   displayMode: "compact"
+         *                   showPhoto: true
+         *               projectId:
+         *                 type: string
+         *                 description: Associated project ID
+         *                 example: "project-123"
+         *     responses:
+         *       201:
+         *         description: Module instance created successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               allOf:
+         *                 - $ref: '#/components/schemas/ApiResponse'
+         *                 - type: object
+         *                   properties:
+         *                     data:
+         *                       $ref: '#/components/schemas/ModuleInstance'
+         *       400:
+         *         description: Invalid input data
+         *       500:
+         *         description: Internal server error
+         */
         this.app.post('/api/module-instances', async (req, res) => {
             try {
                 const instanceData = req.body;
@@ -845,7 +1008,38 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/module-instances/:instanceId - Recupera istanza specifica
+        /**
+         * @swagger
+         * /api/module-instances/{instanceId}:
+         *   get:
+         *     summary: Get module instance by ID
+         *     description: Retrieves a specific ModuleInstance by its ID
+         *     tags: [Modules]
+         *     parameters:
+         *       - in: path
+         *         name: instanceId
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Module instance ID
+         *         example: "mod-123"
+         *     responses:
+         *       200:
+         *         description: Module instance retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               allOf:
+         *                 - $ref: '#/components/schemas/ApiResponse'
+         *                 - type: object
+         *                   properties:
+         *                     data:
+         *                       $ref: '#/components/schemas/ModuleInstance'
+         *       404:
+         *         description: Module instance not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.get('/api/module-instances/:instanceId', async (req, res) => {
             try {
                 const { instanceId } = req.params;
@@ -929,7 +1123,39 @@ class EvolvedServer {
             }
         });
 
-        // DELETE /api/module-instances/cleanup-orphaned - Elimina tutti i ModuleInstance orfani (DEVE essere prima del path generico)
+        /**
+         * @swagger
+         * /api/module-instances/cleanup-orphaned:
+         *   delete:
+         *     summary: Cleanup orphaned module instances
+         *     description: Deletes all ModuleInstance entities that are not associated with any document
+         *     tags: [Modules]
+         *     responses:
+         *       200:
+         *         description: Cleanup completed successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                   example: true
+         *                 message:
+         *                   type: string
+         *                   example: "Eliminati 5 ModuleInstance orfani"
+         *                 deletedCount:
+         *                   type: integer
+         *                   description: Number of orphaned instances deleted
+         *                   example: 5
+         *                 deletedInstances:
+         *                   type: array
+         *                   items:
+         *                     type: string
+         *                   description: IDs of deleted instances
+         *       500:
+         *         description: Internal server error
+         */
         this.app.delete('/api/module-instances/cleanup-orphaned', async (req, res) => {
             try {
                 console.log('🧹 [ModuleInstance] Cleanup ModuleInstance orfani...');
@@ -999,7 +1225,39 @@ class EvolvedServer {
             }
         });
 
-        // DELETE /api/module-instances/:instanceId - Elimina istanza
+        /**
+         * @swagger
+         * /api/module-instances/{instanceId}:
+         *   delete:
+         *     summary: Delete module instance
+         *     description: Deletes a ModuleInstance and removes all document associations
+         *     tags: [Modules]
+         *     parameters:
+         *       - in: path
+         *         name: instanceId
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Module instance ID to delete
+         *     responses:
+         *       200:
+         *         description: Module instance deleted successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                   example: true
+         *                 message:
+         *                   type: string
+         *                   example: "Istanza modulo eliminata con successo"
+         *       404:
+         *         description: Module instance not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.delete('/api/module-instances/:instanceId', async (req, res) => {
             try {
                 const { instanceId } = req.params;
@@ -1047,7 +1305,72 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/module-instances - Lista istanze con filtri
+        /**
+         * @swagger
+         * /api/module-instances:
+         *   get:
+         *     summary: List module instances
+         *     description: Retrieves a list of ModuleInstance entities with optional filters
+         *     tags: [Modules]
+         *     parameters:
+         *       - in: query
+         *         name: templateModuleId
+         *         schema:
+         *           type: string
+         *         description: Filter by template module ID
+         *       - in: query
+         *         name: ownerEntityId
+         *         schema:
+         *           type: string
+         *         description: Filter by owner entity ID
+         *       - in: query
+         *         name: projectId
+         *         schema:
+         *           type: string
+         *         description: Filter by project ID
+         *       - in: query
+         *         name: documentId
+         *         schema:
+         *           type: string
+         *         description: Filter by document ID
+         *       - in: query
+         *         name: limit
+         *         schema:
+         *           type: integer
+         *           default: 50
+         *         description: Maximum results
+         *       - in: query
+         *         name: offset
+         *         schema:
+         *           type: integer
+         *           default: 0
+         *         description: Results offset
+         *     responses:
+         *       200:
+         *         description: Module instances retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 data:
+         *                   type: array
+         *                   items:
+         *                     $ref: '#/components/schemas/ModuleInstance'
+         *                 count:
+         *                   type: integer
+         *                 pagination:
+         *                   type: object
+         *                   properties:
+         *                     limit:
+         *                       type: integer
+         *                     offset:
+         *                       type: integer
+         *       500:
+         *         description: Internal server error
+         */
         this.app.get('/api/module-instances', async (req, res) => {
             try {
                 const {
@@ -1105,7 +1428,75 @@ class EvolvedServer {
         // ENDPOINT ESISTENTI MVP (per compatibilità)
         // ============================================
 
-        // GET /api/entities/search - Ricerca generale entità (endpoint dedicato per evitare conflitti)
+        /**
+         * @swagger
+         * /api/entities/search:
+         *   get:
+         *     summary: Search entities
+         *     description: Full-text search across all entity types with optional filters
+         *     tags: [Search]
+         *     parameters:
+         *       - in: query
+         *         name: q
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Search query text
+         *         example: "mario"
+         *       - in: query
+         *         name: type
+         *         schema:
+         *           type: string
+         *         description: Filter by entity type
+         *         example: "Persona"
+         *       - in: query
+         *         name: limit
+         *         schema:
+         *           type: integer
+         *           default: 20
+         *         description: Maximum results to return
+         *       - in: query
+         *         name: offset
+         *         schema:
+         *           type: integer
+         *           default: 0
+         *         description: Results offset for pagination
+         *       - in: query
+         *         name: attributes
+         *         schema:
+         *           type: string
+         *         description: Comma-separated list of attributes to search
+         *         example: "nome,email,telefono"
+         *     responses:
+         *       200:
+         *         description: Search results
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 data:
+         *                   type: array
+         *                   items:
+         *                     $ref: '#/components/schemas/Entity'
+         *                 meta:
+         *                   type: object
+         *                   properties:
+         *                     total:
+         *                       type: integer
+         *                     limit:
+         *                       type: integer
+         *                     offset:
+         *                       type: integer
+         *                     query:
+         *                       type: string
+         *       400:
+         *         description: Invalid search parameters
+         *       500:
+         *         description: Internal server error
+         */
         this.app.get('/api/entities/search', async (req, res) => {
             try {
                 const { search, entityType, limit = 50, offset = 0 } = req.query;
@@ -1183,7 +1574,67 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/entities/:entityType - Ottiene tutte le entità di un tipo (mantenuto per compatibilità)
+        /**
+         * @swagger
+         * /api/entities/{entityType}:
+         *   get:
+         *     summary: List entities by type
+         *     description: Retrieves all entities of a specific type
+         *     tags: [Entities]
+         *     parameters:
+         *       - in: path
+         *         name: entityType
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Entity type to filter by
+         *         example: "Persona"
+         *       - in: query
+         *         name: limit
+         *         schema:
+         *           type: integer
+         *           default: 100
+         *         description: Maximum results
+         *       - in: query
+         *         name: offset
+         *         schema:
+         *           type: integer
+         *           default: 0
+         *         description: Results offset
+         *       - in: query
+         *         name: orderBy
+         *         schema:
+         *           type: string
+         *           default: createdAt
+         *         description: Field to sort by
+         *       - in: query
+         *         name: orderDirection
+         *         schema:
+         *           type: string
+         *           enum: [ASC, DESC]
+         *           default: DESC
+         *         description: Sort direction
+         *     responses:
+         *       200:
+         *         description: Entities retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 data:
+         *                   type: array
+         *                   items:
+         *                     $ref: '#/components/schemas/Entity'
+         *                 count:
+         *                   type: integer
+         *                 entityType:
+         *                   type: string
+         *       500:
+         *         description: Internal server error
+         */
         this.app.get('/api/entities/:entityType', async (req, res) => {
             try {
                 const { entityType } = req.params;
@@ -1241,7 +1692,38 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/entity/:entityId - Ottiene una specifica entità
+        /**
+         * @swagger
+         * /api/entity/{entityId}:
+         *   get:
+         *     summary: Get entity by ID
+         *     description: Retrieves a specific entity with all its attributes
+         *     tags: [Entities]
+         *     parameters:
+         *       - in: path
+         *         name: entityId
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Entity ID
+         *         example: "entity-123"
+         *     responses:
+         *       200:
+         *         description: Entity retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               allOf:
+         *                 - $ref: '#/components/schemas/ApiResponse'
+         *                 - type: object
+         *                   properties:
+         *                     data:
+         *                       $ref: '#/components/schemas/Entity'
+         *       404:
+         *         description: Entity not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.get('/api/entity/:entityId', async (req, res) => {
             try {
                 const { entityId } = req.params;
@@ -1271,7 +1753,76 @@ class EvolvedServer {
             }
         });
 
-        // POST /api/entities - Crea una nuova entità (ORGANICO con soft validation)
+        /**
+         * @swagger
+         * /api/entities:
+         *   post:
+         *     summary: Create a new entity
+         *     description: Creates a new entity with dynamic attributes and organic schema discovery
+         *     tags: [Entities]
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             required:
+         *               - entityType
+         *             properties:
+         *               entityType:
+         *                 type: string
+         *                 description: Type of entity to create
+         *                 example: "Persona"
+         *               attributes:
+         *                 type: object
+         *                 description: Entity attributes (legacy format)
+         *                 example:
+         *                   nome: "Mario Rossi"
+         *                   email: "mario@example.com"
+         *               nome:
+         *                 type: string
+         *                 description: Direct attribute (recommended format)
+         *                 example: "Mario Rossi"
+         *               email:
+         *                 type: string
+         *                 description: Direct attribute
+         *                 example: "mario@example.com"
+         *               telefono:
+         *                 type: string
+         *                 description: Direct attribute
+         *                 example: "+39 123 456 7890"
+         *           examples:
+         *             directAttributes:
+         *               summary: Direct attributes (recommended)
+         *               value:
+         *                 entityType: "Persona"
+         *                 nome: "Mario Rossi"
+         *                 email: "mario@example.com"
+         *                 telefono: "+39 123 456 7890"
+         *             legacyFormat:
+         *               summary: Legacy attributes format
+         *               value:
+         *                 entityType: "Persona"
+         *                 attributes:
+         *                   nome: "Mario Rossi"
+         *                   email: "mario@example.com"
+         *     responses:
+         *       200:
+         *         description: Entity created successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               allOf:
+         *                 - $ref: '#/components/schemas/ApiResponse'
+         *                 - type: object
+         *                   properties:
+         *                     data:
+         *                       $ref: '#/components/schemas/Entity'
+         *       400:
+         *         description: Invalid input data
+         *       500:
+         *         description: Internal server error
+         */
         this.app.post('/api/entities', async (req, res) => {
             try {
                 // ✅ CORREZIONE: Supporta sia formato {attributes: {...}} che attributi diretti
@@ -1338,7 +1889,61 @@ class EvolvedServer {
             }
         });
 
-        // PUT /api/entity/:entityId/attribute - Aggiorna un attributo di un'entità
+        /**
+         * @swagger
+         * /api/entity/{entityId}/attribute:
+         *   put:
+         *     summary: Update entity attribute
+         *     description: Updates a single attribute value for an entity
+         *     tags: [Entities]
+         *     parameters:
+         *       - in: path
+         *         name: entityId
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Entity ID
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             required:
+         *               - attributeName
+         *               - value
+         *             properties:
+         *               attributeName:
+         *                 type: string
+         *                 description: Name of the attribute to update
+         *                 example: "email"
+         *               value:
+         *                 description: New value for the attribute
+         *                 example: "new.email@example.com"
+         *     responses:
+         *       200:
+         *         description: Attribute updated successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 message:
+         *                   type: string
+         *                   example: "Attributo aggiornato con successo"
+         *                 entityId:
+         *                   type: string
+         *                 attributeName:
+         *                   type: string
+         *                 newValue:
+         *                   type: string
+         *       404:
+         *         description: Entity not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.put('/api/entity/:entityId/attribute', async (req, res) => {
             try {
                 const { entityId } = req.params;
@@ -1403,7 +2008,39 @@ class EvolvedServer {
             }
         });
 
-        // DELETE /api/entity/:entityId - Elimina un'entità
+        /**
+         * @swagger
+         * /api/entity/{entityId}:
+         *   delete:
+         *     summary: Delete entity
+         *     description: Deletes an entity and all its associated data
+         *     tags: [Entities]
+         *     parameters:
+         *       - in: path
+         *         name: entityId
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Entity ID to delete
+         *     responses:
+         *       200:
+         *         description: Entity deleted successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                   example: true
+         *                 message:
+         *                   type: string
+         *                   example: "Entità eliminata con successo"
+         *       404:
+         *         description: Entity not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.delete('/api/entity/:entityId', async (req, res) => {
             try {
                 const { entityId } = req.params;
@@ -1472,7 +2109,48 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/schema/:entityType/attributes - Recupera attributi definiti nello schema
+        /**
+         * @swagger
+         * /api/schema/{entityType}/attributes:
+         *   get:
+         *     summary: Get entity type attributes
+         *     description: Returns the list of attributes defined in the schema for an entity type
+         *     tags: [Schema]
+         *     parameters:
+         *       - in: path
+         *         name: entityType
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Entity type name
+         *         example: "Persona"
+         *     responses:
+         *       200:
+         *         description: Attribute list retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 data:
+         *                   type: array
+         *                   items:
+         *                     type: string
+         *                   example: ["nome", "email", "telefono"]
+         *                 entityType:
+         *                   type: string
+         *                 count:
+         *                   type: integer
+         *                 source:
+         *                   type: string
+         *                   enum: [schema_defined, discovered]
+         *       404:
+         *         description: Entity type not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.get('/api/schema/:entityType/attributes', async (req, res) => {
             try {
                 const { entityType } = req.params;
@@ -1508,7 +2186,68 @@ class EvolvedServer {
         // ENDPOINT SCHEMA EVOLUTI (Fase 1)
         // ============================================
 
-        // POST /api/schema/entity/:entityType - Crea nuovo schema entità
+        /**
+         * @swagger
+         * /api/schema/entity/{entityType}:
+         *   post:
+         *     summary: Define entity schema
+         *     description: Creates or updates an entity type schema with explicit attribute definitions
+         *     tags: [Schema]
+         *     parameters:
+         *       - in: path
+         *         name: entityType
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Entity type name
+         *         example: "Customer"
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             properties:
+         *               mode:
+         *                 type: string
+         *                 enum: [strict, flexible]
+         *                 default: flexible
+         *                 description: Schema validation mode
+         *               attributes:
+         *                 type: array
+         *                 items:
+         *                   type: object
+         *                   properties:
+         *                     name:
+         *                       type: string
+         *                     type:
+         *                       type: string
+         *                       enum: [string, number, boolean, date, email, json, reference]
+         *                     required:
+         *                       type: boolean
+         *                     defaultValue:
+         *                       type: string
+         *                     description:
+         *                       type: string
+         *     responses:
+         *       200:
+         *         description: Schema defined successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 data:
+         *                   type: object
+         *                 message:
+         *                   type: string
+         *       400:
+         *         description: Invalid schema definition
+         *       500:
+         *         description: Internal server error
+         */
         this.app.post('/api/schema/entity/:entityType', async (req, res) => {
             try {
                 const { entityType } = req.params;
@@ -1756,7 +2495,48 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/schema/entities - Lista tutti gli schemi entità (ORGANICO)
+        /**
+         * @swagger
+         * /api/schema/entities:
+         *   get:
+         *     summary: List all entity schemas
+         *     description: Retrieves all defined entity type schemas
+         *     tags: [Schema]
+         *     responses:
+         *       200:
+         *         description: Entity schemas retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 data:
+         *                   type: array
+         *                   items:
+         *                     type: object
+         *                     properties:
+         *                       entityType:
+         *                         type: string
+         *                       mode:
+         *                         type: string
+         *                         enum: [strict, flexible]
+         *                       version:
+         *                         type: integer
+         *                       attributes:
+         *                         type: array
+         *                         items:
+         *                           type: object
+         *                       created:
+         *                         type: string
+         *                         format: date-time
+         *                       modified:
+         *                         type: string
+         *                         format: date-time
+         *       500:
+         *         description: Internal server error
+         */
         this.app.get('/api/schema/entities', async (req, res) => {
             try {
                 if (this.enableOrganicMode) {
@@ -2019,7 +2799,77 @@ class EvolvedServer {
         // ENDPOINT MODULE RELATION SERVICE (Fase 1 UI Dinamica)
         // ============================================
 
-        // POST /api/modules/:moduleId/members - Aggiunge un membro al modulo con attributi
+        /**
+         * @swagger
+         * /api/modules/{moduleId}/members:
+         *   post:
+         *     summary: Add member to module
+         *     description: Creates a MEMBER_OF relationship between an entity and a module with contextual attributes
+         *     tags: [Module Members]
+         *     parameters:
+         *       - in: path
+         *         name: moduleId
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Module instance ID
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             required:
+         *               - entityId
+         *             properties:
+         *               entityId:
+         *                 type: string
+         *                 description: Entity ID to add as member
+         *                 example: "entity-123"
+         *               relationAttributes:
+         *                 type: object
+         *                 description: Contextual attributes for the relationship
+         *                 properties:
+         *                   fee:
+         *                     type: number
+         *                     example: 1500
+         *                   ruolo:
+         *                     type: string
+         *                     example: "Lead Developer"
+         *                   startDate:
+         *                     type: string
+         *                     format: date
+         *                   endDate:
+         *                     type: string
+         *                     format: date
+         *     responses:
+         *       201:
+         *         description: Member added successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 message:
+         *                   type: string
+         *                 data:
+         *                   type: object
+         *                   properties:
+         *                     moduleId:
+         *                       type: string
+         *                     entityId:
+         *                       type: string
+         *                     relationAttributes:
+         *                       type: object
+         *       400:
+         *         description: Invalid input
+         *       404:
+         *         description: Module or entity not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.post('/api/modules/:moduleId/members', async (req, res) => {
             try {
                 const { moduleId } = req.params;
@@ -2053,7 +2903,84 @@ class EvolvedServer {
 
         // ❌ REMOVED: PUT /api/modules/:moduleId/members/:entityId/attributes - Non implementato
 
-        // GET /api/modules/:moduleId/members - Recupera membri del modulo con attributi
+        /**
+         * @swagger
+         * /api/modules/{moduleId}/members:
+         *   get:
+         *     summary: Get module members
+         *     description: Retrieves all entities that are members of this module with relationship attributes
+         *     tags: [Module Members]
+         *     parameters:
+         *       - in: path
+         *         name: moduleId
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Module instance ID
+         *       - in: query
+         *         name: limit
+         *         schema:
+         *           type: integer
+         *           default: 100
+         *         description: Maximum results
+         *       - in: query
+         *         name: offset
+         *         schema:
+         *           type: integer
+         *           default: 0
+         *         description: Results offset
+         *       - in: query
+         *         name: orderBy
+         *         schema:
+         *           type: string
+         *           default: addedAt
+         *           enum: [addedAt, fee, ruolo]
+         *         description: Field to sort by
+         *     responses:
+         *       200:
+         *         description: Members retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 data:
+         *                   type: object
+         *                   properties:
+         *                     moduleId:
+         *                       type: string
+         *                     members:
+         *                       type: array
+         *                       items:
+         *                         type: object
+         *                         properties:
+         *                           entity:
+         *                             $ref: '#/components/schemas/Entity'
+         *                           relationAttributes:
+         *                             type: object
+         *                             properties:
+         *                               fee:
+         *                                 type: number
+         *                               ruolo:
+         *                                 type: string
+         *                               startDate:
+         *                                 type: string
+         *                               endDate:
+         *                                 type: string
+         *                               addedAt:
+         *                                 type: string
+         *                                 format: date-time
+         *                     count:
+         *                       type: integer
+         *                     pagination:
+         *                       type: object
+         *       404:
+         *         description: Module not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.get('/api/modules/:moduleId/members', async (req, res) => {
             try {
                 const { moduleId } = req.params;
@@ -2239,7 +3166,55 @@ class EvolvedServer {
         // SSOT-4000: ENDPOINTS COMPOSITE DOCUMENTS
         // ============================================
 
-        // POST /api/documents - Crea un nuovo CompositeDocument
+        /**
+         * @swagger
+         * /api/documents:
+         *   post:
+         *     summary: Create a new CompositeDocument
+         *     description: Creates a new CompositeDocument entity for orchestrating multiple modules
+         *     tags: [Documents]
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             required:
+         *               - name
+         *             properties:
+         *               name:
+         *                 type: string
+         *                 description: Document name
+         *                 example: "Project Dashboard"
+         *               description:
+         *                 type: string
+         *                 description: Optional document description
+         *                 example: "Main project dashboard with key metrics"
+         *               ownerId:
+         *                 type: string
+         *                 description: Owner user ID
+         *                 example: "user-123"
+         *               projectId:
+         *                 type: string
+         *                 description: Associated project ID
+         *                 example: "project-456"
+         *     responses:
+         *       200:
+         *         description: Document created successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               allOf:
+         *                 - $ref: '#/components/schemas/ApiResponse'
+         *                 - type: object
+         *                   properties:
+         *                     data:
+         *                       $ref: '#/components/schemas/CompositeDocument'
+         *       400:
+         *         description: Invalid input data
+         *       500:
+         *         description: Internal server error
+         */
         this.app.post('/api/documents', async (req, res) => {
             try {
                 const documentData = req.body;
@@ -2268,7 +3243,58 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/documents/:id - Recupera un documento con i suoi moduli
+        /**
+         * @swagger
+         * /api/documents/{id}:
+         *   get:
+         *     summary: Get document by ID
+         *     description: Retrieves a CompositeDocument with optional module inclusion
+         *     tags: [Documents]
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Document ID
+         *         example: "doc-789"
+         *       - in: query
+         *         name: includeModules
+         *         schema:
+         *           type: boolean
+         *           default: true
+         *         description: Include related modules in response
+         *       - in: query
+         *         name: includeProject
+         *         schema:
+         *           type: boolean
+         *           default: false
+         *         description: Include project details
+         *     responses:
+         *       200:
+         *         description: Document retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               allOf:
+         *                 - $ref: '#/components/schemas/ApiResponse'
+         *                 - type: object
+         *                   properties:
+         *                     data:
+         *                       type: object
+         *                       allOf:
+         *                         - $ref: '#/components/schemas/CompositeDocument'
+         *                         - type: object
+         *                           properties:
+         *                             modules:
+         *                               type: array
+         *                               items:
+         *                                 $ref: '#/components/schemas/ModuleInstance'
+         *       404:
+         *         description: Document not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.get('/api/documents/:id', async (req, res) => {
             try {
                 const { id } = req.params;
@@ -2292,7 +3318,60 @@ class EvolvedServer {
             }
         });
 
-        // PUT /api/documents/:id - Aggiorna un documento
+        /**
+         * @swagger
+         * /api/documents/{id}:
+         *   put:
+         *     summary: Update document
+         *     description: Updates a CompositeDocument's attributes
+         *     tags: [Documents]
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Document ID to update
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             properties:
+         *               name:
+         *                 type: string
+         *                 description: Updated document name
+         *               description:
+         *                 type: string
+         *                 description: Updated description
+         *               status:
+         *                 type: string
+         *                 enum: [draft, published, archived]
+         *                 description: Document status
+         *               metadata:
+         *                 type: object
+         *                 description: Additional metadata
+         *     responses:
+         *       200:
+         *         description: Document updated successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               allOf:
+         *                 - $ref: '#/components/schemas/ApiResponse'
+         *                 - type: object
+         *                   properties:
+         *                     data:
+         *                       $ref: '#/components/schemas/CompositeDocument'
+         *                     message:
+         *                       type: string
+         *                       example: "Documento aggiornato con successo"
+         *       404:
+         *         description: Document not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.put('/api/documents/:id', async (req, res) => {
             try {
                 const { id } = req.params;
@@ -2325,7 +3404,43 @@ class EvolvedServer {
             }
         });
 
-        // DELETE /api/documents/:id - Elimina un documento
+        /**
+         * @swagger
+         * /api/documents/{id}:
+         *   delete:
+         *     summary: Delete document
+         *     description: Deletes a CompositeDocument and all its related modules (cascade delete)
+         *     tags: [Documents]
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Document ID to delete
+         *     responses:
+         *       200:
+         *         description: Document deleted successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                   example: true
+         *                 message:
+         *                   type: string
+         *                   example: "Documento eliminato con successo"
+         *                 deletedModules:
+         *                   type: integer
+         *                   description: Number of cascade-deleted modules
+         *                   example: 3
+         *       404:
+         *         description: Document not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.delete('/api/documents/:id', async (req, res) => {
             try {
                 const { id } = req.params;
@@ -2356,7 +3471,83 @@ class EvolvedServer {
 
         // ❌ REMOVED: PUT /api/documents/:id/layout - Obsoleto, usa Canvas API
 
-        // GET /api/documents - Lista documenti con filtri
+        /**
+         * @swagger
+         * /api/documents:
+         *   get:
+         *     summary: List documents with filters
+         *     description: Retrieves a list of CompositeDocument entities with optional filtering and pagination
+         *     tags: [Documents]
+         *     parameters:
+         *       - in: query
+         *         name: projectId
+         *         schema:
+         *           type: string
+         *         description: Filter by project ID
+         *         example: "project-456"
+         *       - in: query
+         *         name: ownerId
+         *         schema:
+         *           type: string
+         *         description: Filter by owner ID
+         *         example: "user-123"
+         *       - in: query
+         *         name: status
+         *         schema:
+         *           type: string
+         *           enum: [draft, published, archived]
+         *         description: Filter by document status
+         *       - in: query
+         *         name: limit
+         *         schema:
+         *           type: integer
+         *           default: 50
+         *         description: Maximum number of results
+         *       - in: query
+         *         name: offset
+         *         schema:
+         *           type: integer
+         *           default: 0
+         *         description: Number of results to skip
+         *       - in: query
+         *         name: orderBy
+         *         schema:
+         *           type: string
+         *           default: modifiedAt
+         *         description: Field to order by
+         *       - in: query
+         *         name: orderDirection
+         *         schema:
+         *           type: string
+         *           enum: [ASC, DESC]
+         *           default: DESC
+         *         description: Sort direction
+         *     responses:
+         *       200:
+         *         description: Documents retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               allOf:
+         *                 - $ref: '#/components/schemas/ApiResponse'
+         *                 - type: object
+         *                   properties:
+         *                     data:
+         *                       type: array
+         *                       items:
+         *                         $ref: '#/components/schemas/CompositeDocument'
+         *                     pagination:
+         *                       type: object
+         *                       properties:
+         *                         total:
+         *                           type: integer
+         *                         limit:
+         *                           type: integer
+         *                         offset:
+         *                           type: integer
+         *       500:
+         *         description: Internal server error
+         */
         this.app.get('/api/documents', async (req, res) => {
             try {
                 const filters = {
@@ -2396,7 +3587,90 @@ class EvolvedServer {
 
         // ===== CANVAS DOCUMENT ENDPOINTS =====
         
-        // PUT /api/documents/:id/canvas - Salva layout canvas in documento
+        /**
+         * @swagger
+         * /api/documents/{id}/canvas:
+         *   put:
+         *     summary: Save canvas layout
+         *     description: Saves or updates the canvas layout for a document with drag & drop blocks
+         *     tags: [Documents]
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Document ID
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             required:
+         *               - canvasLayout
+         *             properties:
+         *               canvasLayout:
+         *                 type: object
+         *                 properties:
+         *                   enabled:
+         *                     type: boolean
+         *                     default: true
+         *                   blocks:
+         *                     type: array
+         *                     items:
+         *                       type: object
+         *                       properties:
+         *                         id:
+         *                           type: string
+         *                         x:
+         *                           type: number
+         *                         y:
+         *                           type: number
+         *                         width:
+         *                           type: number
+         *                         height:
+         *                           type: number
+         *                         title:
+         *                           type: string
+         *                         type:
+         *                           type: string
+         *                         instanceId:
+         *                           type: string
+         *                   gridSize:
+         *                     type: number
+         *                     default: 25
+         *                   version:
+         *                     type: string
+         *                     default: "1.0"
+         *     responses:
+         *       200:
+         *         description: Canvas layout saved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 message:
+         *                   type: string
+         *                 data:
+         *                   type: object
+         *                   properties:
+         *                     documentId:
+         *                       type: string
+         *                     canvasLayout:
+         *                       type: object
+         *                     modulesCreated:
+         *                       type: integer
+         *                     modulesUpdated:
+         *                       type: integer
+         *       404:
+         *         description: Document not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.put('/api/documents/:id/canvas', async (req, res) => {
             try {
                 const { id } = req.params;
@@ -2489,7 +3763,57 @@ class EvolvedServer {
             }
         });
 
-        // GET /api/documents/:id/canvas - Recupera layout canvas da documento
+        /**
+         * @swagger
+         * /api/documents/{id}/canvas:
+         *   get:
+         *     summary: Get canvas layout
+         *     description: Retrieves the canvas layout for a document including all blocks and modules
+         *     tags: [Documents]
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Document ID
+         *     responses:
+         *       200:
+         *         description: Canvas layout retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 data:
+         *                   type: object
+         *                   properties:
+         *                     documentId:
+         *                       type: string
+         *                     canvasLayout:
+         *                       type: object
+         *                       properties:
+         *                         enabled:
+         *                           type: boolean
+         *                         blocks:
+         *                           type: array
+         *                           items:
+         *                             type: object
+         *                         gridSize:
+         *                           type: number
+         *                         version:
+         *                           type: string
+         *                     modules:
+         *                       type: array
+         *                       items:
+         *                         $ref: '#/components/schemas/ModuleInstance'
+         *       404:
+         *         description: Document not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.get('/api/documents/:id/canvas', async (req, res) => {
             try {
                 const { id } = req.params;
@@ -2528,7 +3852,64 @@ class EvolvedServer {
             }
         });
 
-        // POST /api/documents/:id/canvas/sync - Sincronizza canvas blocks con ModuleInstances
+        /**
+         * @swagger
+         * /api/documents/{id}/canvas/sync:
+         *   post:
+         *     summary: Sync canvas with modules
+         *     description: Synchronizes canvas blocks with ModuleInstance entities, creating missing instances
+         *     tags: [Documents]
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         required: true
+         *         schema:
+         *           type: string
+         *         description: Document ID
+         *     requestBody:
+         *       required: false
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             properties:
+         *               forceSync:
+         *                 type: boolean
+         *                 default: false
+         *                 description: Force recreation of all module instances
+         *     responses:
+         *       200:
+         *         description: Canvas synchronized successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 message:
+         *                   type: string
+         *                   example: "Canvas sincronizzato con successo"
+         *                 data:
+         *                   type: object
+         *                   properties:
+         *                     documentId:
+         *                       type: string
+         *                     blocksProcessed:
+         *                       type: integer
+         *                     modulesCreated:
+         *                       type: integer
+         *                     modulesSynced:
+         *                       type: integer
+         *                     errors:
+         *                       type: array
+         *                       items:
+         *                         type: string
+         *       404:
+         *         description: Document not found
+         *       500:
+         *         description: Internal server error
+         */
         this.app.post('/api/documents/:id/canvas/sync', async (req, res) => {
             try {
                 const { id } = req.params;

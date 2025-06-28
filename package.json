@@ -29,6 +29,8 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "neo4j-driver": "^5.28.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0",
     "ws": "^8.18.2"
   },
